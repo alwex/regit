@@ -1,0 +1,36 @@
+{
+    "name": "regit",
+    "version": "1.0.0",
+    "description": "git helper cli",
+    "main": "build/src/index.js",
+    "bin": "build/src/index.js",
+    "author": "Alexandre Guidet",
+    "license": "MIT",
+    "type": "module",
+    "dependencies": {
+        "@types/node": "^18.16.3",
+        "chalk": "^5.2.0",
+        "commander": "^10.0.1",
+        "figlet": "^1.6.0",
+        "semver": "^7.5.0",
+        "simple-git": "^3.18.0",
+        "typescript": "^5.0.4",
+        "winston": "^3.8.2"
+    },
+    "scripts": {
+        "predev": "yarn build",
+        "dev": "node build/src/index.js",
+        "build": "rimraf ./build && tsc",
+        "postbuild": "chmod u+x ./build/src/index.js"
+    },
+    "devDependencies": {
+        "@types/chalk": "^2.2.0",
+        "@types/figlet": "^1.5.6",
+        "@types/npmlog": "^4.1.4",
+        "@types/semver": "^7.3.13",
+        "jest": "^29.5.0",
+        "rimraf": "^5.0.0",
+        "ts-node": "^10.9.1",
+        "tsc": "^2.0.4"
+    }
+}
