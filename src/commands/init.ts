@@ -20,7 +20,7 @@ const action = async (version: string) => {
     }
 
     const sanitizedVersion = semver.clean(version) as string
-    await initStableBranch(sanitizedVersion)
+    await initStableBranch(`v${sanitizedVersion}`)
 }
 
 export default (program: Command) => {

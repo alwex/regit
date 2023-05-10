@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { listBranchStargingWith } from '../../services/gitHelpers.js'
+import { listBranchStartingWith } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
 import chalk from 'chalk'
 
@@ -10,7 +10,7 @@ import chalk from 'chalk'
 // Date:   Tue Jul 26 10:09:39 2022 +1200
 
 const action = async () => {
-    const branches = await listBranchStargingWith(branchFeature)
+    const branches = await listBranchStartingWith(branchFeature)
     branches.forEach((data) => {
         const { from, name, show } = data
         console.log(

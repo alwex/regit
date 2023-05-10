@@ -1,4 +1,4 @@
-import { branchStable } from '../const.js'
+import { branchFeature, branchRelease, branchStable } from '../const.js'
 import { git } from './git.js'
 
 export const assertCurrentBranchIsClean = async () => {
@@ -17,8 +17,36 @@ export const getLatestTag = async () => {
     return lastTag
 }
 
-export const createTag = async (version: string) => {
-    await git.addAnnotatedTag(version, `[regit] ${version}.`)
+export const getLatestTags = async () => {
+    const tagResult = await git.tags()
+
+    return tagResult.all
+}
+
+export const getBranchDetails = async (branch: string) => {
+    const result = await git.show([branch])
+    const lines = result.split('\n')
+
+    return {
+        author: lines[2].split(':')[1].trim(),
+        date: lines[3].split(': ')[1].trim(),
+    }
+}
+export const getTagDetails = async (tag: string) => {
+    const result = await git.show([tag])
+    const lines = result.split('\n')
+
+    return {
+        author: lines[1].split(':')[1].trim(),
+        date: lines[2].split(': ')[1].trim(),
+    }
+}
+
+export const createTag = async (version: string, included: string[] = []) => {
+    await git.addAnnotatedTag(
+        version,
+        `[regit] ${version}. (${included.join(',')})`
+    )
     await git.push(['origin', version])
 }
 
@@ -47,6 +75,7 @@ export const remoteBranchExists = async (branchName: string) => {
 
 export const initStableBranch = async (version: string) => {
     await git.checkoutLocalBranch(branchStable)
+    await git.raw(['commit', '--allow-empty', '-m', `[regit] Init ${version}`])
     await git.push(['-u', 'origin', branchStable])
     await createTag(version)
 }
@@ -57,7 +86,7 @@ interface ListBranchStartingWithResult {
     show: string[]
 }
 
-export const listBranchStargingWith = async (branchName: string) => {
+export const listBranchStartingWith = async (branchName: string) => {
     const data: ListBranchStartingWithResult[] = []
 
     const result = await git.branch()
@@ -98,4 +127,98 @@ export const startOrCheckoutBranch = async (branchName: string) => {
         })
         await git.push(['-u', 'origin', branchName])
     }
+}
+
+export const mergeBranch = async (branchName: string) => {
+    const result = await git.merge(['--no-ff', `origin/${branchName}`])
+}
+
+interface ListBranchesInBranchResult extends ListBranchStartingWithResult {
+    upToDate: boolean
+}
+
+export const listBranchesInBranch = async (
+    targetBranch: string
+): Promise<ListBranchesInBranchResult[]> => {
+    const resultBranches = await git.branch([
+        '--no-color',
+        '-r',
+        '--merged',
+        targetBranch,
+    ])
+    const mergedBranches = resultBranches.all
+        .map((branch) => branch.replace('origin/', ''))
+        .filter((branch) => branch !== targetBranch)
+
+    const mergedFromCommit = await git.log([
+        '--merges',
+        `--grep=feature`,
+        targetBranch,
+    ])
+
+    const foundFeatureBranches = mergedFromCommit.all
+        .map((data) => {
+            const match = data.message.match(/'(.*)'/)
+            if (match) {
+                return match[1].replace('origin/', '')
+            }
+        })
+        .filter(Boolean)
+
+    const uniqFeatureBranches = [...new Set(foundFeatureBranches)]
+
+    const allFeatures = await listBranchStartingWith(branchFeature)
+    const matchingFeatures = allFeatures.filter((feature) => {
+        return uniqFeatureBranches.includes(feature.name)
+    })
+
+    const completeMerges = matchingFeatures.filter((feature) => {
+        return mergedBranches.includes(feature.name)
+    })
+
+    const incompleteMerges = matchingFeatures.filter((feature) => {
+        return !mergedBranches.includes(feature.name)
+    })
+
+    const result: ListBranchesInBranchResult[] = [
+        ...completeMerges.map((feature) => {
+            return {
+                ...feature,
+                upToDate: true,
+            }
+        }),
+        ...incompleteMerges.map((feature) => {
+            return {
+                ...feature,
+                upToDate: false,
+            }
+        }),
+    ]
+
+    return result
+}
+
+export const listBranchesBetweenTags = async (tag1: string, tag2: string) => {
+    const result = await git.raw([
+        'log',
+        '--no-merges',
+        '--pretty=format:"%s"',
+        '--abbrev-commit',
+        `${tag1}..${tag2}`,
+    ])
+    const branches = [...result.matchAll(/\[regit\] Init '(.*)'/g)].reduce<
+        string[]
+    >((acc, current) => {
+        const branchName = current[1] as string
+        acc.push(branchName)
+
+        return acc
+    }, [])
+
+    return branches
+}
+
+export const deleteBranch = async (branchName: string) => {
+    await git.deleteLocalBranch(branchName)
+    await git.push(['origin', '--delete', branchName])
 }

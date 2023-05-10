@@ -18,5 +18,29 @@ mkdir remote
 
 # set origin
 cd local
-git remote add origin /Users/alexandre/WorkspacePerso/regit-playground/remote/.git
+git remote add origin /Users/alexandre/WorkspacePerso/regit-playground/remote
+```
+
+# Doc
+
+## Features
+
+```shell
+regit feature start [feature-name]
+regit feature list
+```
+
+## Release
+
+```shell
+regit release start
+regit release add [feature-name]
+regit release status
+regit release finish
+```
+
+## Tags
+
+```shell
+regit tag list
 ```
