@@ -1,18 +1,18 @@
 import chalk from 'chalk'
+
 import {
     ListBranchResult,
     ListBranchesInBranchResult,
     ReleaseHeaderResult,
     TagHeaderResult,
 } from './gitHelpers.js'
-import axios from 'axios'
+import { getHooks } from './hooks.js'
 
 export const getRemoteFeatureName = async (branch: string) => {
-    const api = `https://random-word-api.vercel.app/api?words=4`
+    const hooks = await getHooks()
+    const name = await hooks.getFeatureName()
 
-    const result = await axios.get(api)
-
-    return result.data.toString().replaceAll(',', '-')
+    return name
 }
 
 export const displayFeatureBranch = async (branch: ListBranchResult) => {

@@ -11,8 +11,11 @@ import {
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
 import chalk from 'chalk'
+import { getHooks } from '../../services/hooks.js'
 
 const action = async () => {
+    const hooks = await getHooks()
+
     await assertCurrentBranchIsClean()
     const releaseBranches = await listBranchStartingWith(branchRelease)
     if (releaseBranches.length === 0) {
@@ -23,7 +26,7 @@ const action = async () => {
     const { from, name, show } = currentReleaseBranch
     const newVersion = `v${name.split('-')[1]}`
 
-    const result = await listBranchesInBranch(currentReleaseBranch.name)
+    const result = await listBranchesInBranch(name)
     const features = result.filter((data) =>
         data.name.startsWith(branchFeature)
     )
@@ -34,6 +37,10 @@ const action = async () => {
             'Not all features are merged into the release branch. Please merge all features into the release branch before finishing the release.'
         )
     }
+
+    const version = name.split('-')[1]
+
+    await hooks.preReleaseFinish(version)
 
     // push the release branch
     console.log(chalk.dim(`Push release to origin`))
@@ -59,6 +66,8 @@ const action = async () => {
         const feature = features[i]
         await deleteBranch(feature.name)
     }
+
+    await hooks.postReleaseFinish(version)
 }
 
 export default (program: Command) => {

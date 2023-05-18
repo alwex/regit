@@ -1,5 +1,12 @@
 import { branchFeature, branchRelease, branchStable } from '../const.js'
 import { git } from './git.js'
+import { uniqBy } from './utils.js'
+
+export const getProjectRootDirectory = async () => {
+    const result = await git.revparse(['--show-toplevel'])
+
+    return result
+}
 
 export const getCurrentBranch = async () => {
     const result = await git.branch()
@@ -39,8 +46,8 @@ export const getBranchDetails = async (branch: string) => {
     const lines = result.split('\n')
 
     return {
-        author: lines[2].split(':')[1].trim(),
-        date: lines[3].split(':')[1].trim(),
+        author: lines[1].split(': ')[1].trim(),
+        date: lines[2].split(': ')[1].trim(),
     } as ReleaseHeaderResult
 }
 
@@ -57,7 +64,7 @@ export const getTagDetails = async (tag: string) => {
     return {
         tag,
         author: lines[1].split(':')[1].trim(),
-        date: lines[2].split(':')[1].trim(),
+        date: lines[2].split(': ')[1].trim(),
     } as TagHeaderResult
 }
 
@@ -128,7 +135,9 @@ export const listBranchStartingWith = async (branchName: string) => {
         })
     }
 
-    return data
+    const uniq = uniqBy(data, 'name')
+
+    return uniq
 }
 
 export const startOrCheckoutBranch = async (branchName: string) => {
