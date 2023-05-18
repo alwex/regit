@@ -23,10 +23,10 @@ export const getLatestTag = async () => {
     return lastTag
 }
 
-export const getLatestTags = async () => {
+export const getLatestTags = async (tagCount: number) => {
     const tagResult = await git.tags()
 
-    return tagResult.all
+    return tagResult.all.slice(-tagCount)
 }
 
 export interface ReleaseHeaderResult {
@@ -40,17 +40,25 @@ export const getBranchDetails = async (branch: string) => {
 
     return {
         author: lines[2].split(':')[1].trim(),
-        date: lines[3].split(': ')[1].trim(),
+        date: lines[3].split(':')[1].trim(),
     } as ReleaseHeaderResult
 }
+
+export interface TagHeaderResult {
+    tag: string
+    author: string
+    date: string
+}
+
 export const getTagDetails = async (tag: string) => {
     const result = await git.show([tag])
     const lines = result.split('\n')
 
     return {
+        tag,
         author: lines[1].split(':')[1].trim(),
-        date: lines[2].split(': ')[1].trim(),
-    }
+        date: lines[2].split(':')[1].trim(),
+    } as TagHeaderResult
 }
 
 export const createTag = async (version: string, included: string[] = []) => {
@@ -103,9 +111,7 @@ export const listBranchStartingWith = async (branchName: string) => {
 
     const result = await git.branch()
 
-    const branches = result.all.filter((branch) =>
-        branch.startsWith(branchName)
-    )
+    const branches = result.all.filter((branch) => branch.includes(branchName))
 
     for (let i = 0; i < branches.length; i++) {
         const name = branches[i]
@@ -115,7 +121,7 @@ export const listBranchStartingWith = async (branchName: string) => {
         const showDetails = show.trim().split('\n').slice(0, 3)
 
         data.push({
-            name,
+            name: name.replace('remotes/origin/', ''),
             from: from.trim(),
             show: showDetails,
             remoteName: '',
@@ -228,7 +234,16 @@ export const listBranchesBetweenTags = async (tag1: string, tag2: string) => {
         return acc
     }, [])
 
-    return branches
+    const twgitBranchesCompat = [
+        ...result.matchAll(/\[twgit\] Init feature '(.*)'/g),
+    ].reduce<string[]>((acc, current) => {
+        const branchName = current[1] as string
+        acc.push(branchName)
+
+        return acc
+    }, [])
+
+    return [...branches, ...twgitBranchesCompat]
 }
 
 export const deleteBranch = async (branchName: string) => {

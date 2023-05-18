@@ -3,6 +3,7 @@ import {
     ListBranchResult,
     ListBranchesInBranchResult,
     ReleaseHeaderResult,
+    TagHeaderResult,
 } from './gitHelpers.js'
 import axios from 'axios'
 
@@ -49,6 +50,12 @@ export const displaySubFeatureBranch = async (
     )
 }
 
+export const displayTagFeatureBranch = async (name: string) => {
+    const remoteName = await getRemoteFeatureName(name)
+
+    console.log(chalk.bold(`    - ${name} ${chalk.blue(remoteName)}`))
+}
+
 export const displayReleaseHeader = (
     releaseHeader: ReleaseHeaderResult,
     releaseBranch: ListBranchResult
@@ -60,4 +67,13 @@ export const displayReleaseHeader = (
     console.log(`Author: ${author}`)
     console.log(`Date: ${date}`)
     console.log(chalk.bold(`Included features:`))
+}
+
+export const displayTagHeader = (tagHeader: TagHeaderResult) => {
+    const { tag, author, date } = tagHeader
+
+    console.log(chalk.bold(`Tag: ${tag}`))
+    console.log(`Tagger: ${author}`)
+    console.log(`Date: ${date}`)
+    console.log(`Included features:`)
 }
