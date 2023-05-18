@@ -1,6 +1,12 @@
 import { branchFeature, branchRelease, branchStable } from '../const.js'
 import { git } from './git.js'
 
+export const getCurrentBranch = async () => {
+    const result = await git.branch()
+
+    return result.current
+}
+
 export const assertCurrentBranchIsClean = async () => {
     const statusResult = await git.status()
     const isClean = statusResult.isClean()
@@ -23,6 +29,11 @@ export const getLatestTags = async () => {
     return tagResult.all
 }
 
+export interface ReleaseHeaderResult {
+    author: string
+    date: string
+}
+
 export const getBranchDetails = async (branch: string) => {
     const result = await git.show([branch])
     const lines = result.split('\n')
@@ -30,7 +41,7 @@ export const getBranchDetails = async (branch: string) => {
     return {
         author: lines[2].split(':')[1].trim(),
         date: lines[3].split(': ')[1].trim(),
-    }
+    } as ReleaseHeaderResult
 }
 export const getTagDetails = async (tag: string) => {
     const result = await git.show([tag])
@@ -80,14 +91,15 @@ export const initStableBranch = async (version: string) => {
     await createTag(version)
 }
 
-interface ListBranchStartingWithResult {
+export interface ListBranchResult {
     name: string
+    remoteName?: string
     from: string
     show: string[]
 }
 
 export const listBranchStartingWith = async (branchName: string) => {
-    const data: ListBranchStartingWithResult[] = []
+    const data: ListBranchResult[] = []
 
     const result = await git.branch()
 
@@ -106,6 +118,7 @@ export const listBranchStartingWith = async (branchName: string) => {
             name,
             from: from.trim(),
             show: showDetails,
+            remoteName: '',
         })
     }
 
@@ -133,7 +146,7 @@ export const mergeBranch = async (branchName: string) => {
     const result = await git.merge(['--no-ff', `origin/${branchName}`])
 }
 
-interface ListBranchesInBranchResult extends ListBranchStartingWithResult {
+export interface ListBranchesInBranchResult extends ListBranchResult {
     upToDate: boolean
 }
 

@@ -2,6 +2,7 @@ import { Command } from 'commander'
 import { listBranchStartingWith } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
 import chalk from 'chalk'
+import { displayFeatureBranch } from '../../services/helpers.js'
 
 // Feature: origin/feature-santiago (from v3.7.1) undefined
 // /!\ Tags not merged into this branch: at least 'v4.3.6' to 'v4.3.8'.
@@ -11,21 +12,10 @@ import chalk from 'chalk'
 
 const action = async () => {
     const branches = await listBranchStartingWith(branchFeature)
-    branches.forEach((data) => {
-        const { from, name, show } = data
-        console.log(
-            chalk.bold(
-                `Feature: origin/${name} ${chalk.dim(
-                    `(from ${from})`
-                )} ${chalk.blue('Title from remote server')}`
-            )
-        )
-        show.forEach((showLine) => {
-            console.log(showLine)
-        })
-        // new line
-        console.log('')
-    })
+
+    for (const branch of branches) {
+        await displayFeatureBranch(branch)
+    }
 }
 
 export default (program: Command) => {
