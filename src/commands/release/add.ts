@@ -7,6 +7,7 @@ import {
     mergeBranch,
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
+import { logger } from '../../services/logger.js'
 
 const action = async (id: string) => {
     await assertCurrentBranchIsClean()
@@ -27,6 +28,8 @@ const action = async (id: string) => {
     }
 
     await mergeBranch(branchName)
+
+    logger.success(`Feature ${id} merged into ${from}`)
 }
 
 export default (program: Command) => {

@@ -10,7 +10,7 @@ import { getHooks } from './hooks.js'
 
 export const getRemoteFeatureName = async (branch: string) => {
     const hooks = await getHooks()
-    const name = await hooks.getFeatureName()
+    const name = await hooks.getFeatureName(branch)
 
     return name
 }

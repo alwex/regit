@@ -14,12 +14,31 @@ export const getCurrentBranch = async () => {
     return result.current
 }
 
+export const getOpenReleaseBranch = async () => {
+    const result = await listBranchStartingWith(branchRelease)
+    return result[0]
+}
+
+export const assertOnSameBranch = async (branch: string) => {
+    const currentBranch = await getCurrentBranch()
+    if (branch !== currentBranch) {
+        throw new Error(`You are not on the branch ${branch}`)
+    }
+}
+
+export const assertNotOnSameBranch = async (branch: string) => {
+    const currentBranch = await getCurrentBranch()
+    if (branch === currentBranch) {
+        throw new Error(`You are already on the branch ${branch}`)
+    }
+}
+
 export const assertCurrentBranchIsClean = async () => {
     const statusResult = await git.status()
     const isClean = statusResult.isClean()
 
     if (!isClean) {
-        throw new Error('Cannot start feature from a dirty branch')
+        throw new Error('Current branch is dirty, cannot continue')
     }
 }
 

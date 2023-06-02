@@ -2,6 +2,7 @@ import { Command } from 'commander'
 import configureStatus from './status.js'
 import configureList from './list.js'
 import configureStart from './start.js'
+import configureRemove from './remove.js'
 
 export default (program: Command) => {
     const command = program.command('feature')
@@ -9,4 +10,5 @@ export default (program: Command) => {
     configureStatus(command)
     configureList(command)
     configureStart(command)
+    configureRemove(command)
 }

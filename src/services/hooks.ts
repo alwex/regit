@@ -3,7 +3,7 @@ import { getProjectRootDirectory } from './gitHelpers.js'
 import fs from 'fs'
 
 export interface Hooks {
-    getFeatureName: () => Promise<string>
+    getFeatureName: (id: string) => Promise<string>
     preFeatureStart: (id: string) => Promise<void>
     postFeatureStart: (id: string) => Promise<void>
     preReleaseFinish: (version: string) => Promise<void>
@@ -11,12 +11,14 @@ export interface Hooks {
 }
 
 const defaultHooks: Hooks = {
-    getFeatureName: async () => {
-        const api = `https://random-word-api.vercel.app/api?words=4`
+    getFeatureName: async (id: string) => {
+        // const api = `https://random-word-api.vercel.app/api?words=4`
 
-        const result = await axios.get(api)
+        // const result = await axios.get(api)
 
-        return result.data.toString().replaceAll(',', '-')
+        // return result.data.toString().replaceAll(',', '-')
+
+        return ''
     },
     preFeatureStart: async () => {},
     postFeatureStart: async () => {},

@@ -1,28 +1,29 @@
 import { Command } from 'commander'
+import { branchFeature, branchStable } from '../../const.js'
 import {
     assertCurrentBranchIsClean,
+    deleteBranch,
+    getCurrentBranch,
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
-import { branchFeature } from '../../const.js'
-import { getHooks } from '../../services/hooks.js'
 import { logger } from '../../services/logger.js'
 
 const action = async (id: string) => {
-    const hooks = await getHooks()
-
-    await assertCurrentBranchIsClean()
     const branchName = `${branchFeature}${id}`
+    await assertCurrentBranchIsClean()
 
-    await hooks.preFeatureStart(id)
-    await startOrCheckoutBranch(branchName)
-    await hooks.postFeatureStart(id)
+    const currentBranch = await getCurrentBranch()
+    if (currentBranch === branchName) {
+        await startOrCheckoutBranch(branchStable)
+    }
 
-    logger.success(`Feature ${id} started`)
+    await deleteBranch(branchName)
+    logger.success(`Feature ${id} removed`)
 }
 
 export default (program: Command) => {
     program
-        .command('start')
+        .command('remove')
         .argument('<feature_id>', 'Feature ID')
         .action(action)
 }
