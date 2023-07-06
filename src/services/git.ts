@@ -1,14 +1,9 @@
 import { simpleGit, SimpleGit } from 'simple-git'
 
-// TODO condition this base dir based on dev/build/test
 const baseDir = `/Users/alexandre/WorkspacePerso/regit-playground/local`
-// const baseDir = '/Users/alexandre/WorkspacePerso/blast-workout/MyWorkoutApp'
-// const baseDir =
-//     '/Users/alexandre/Workspace/autopilot/builder-v2-git-manip/builder-v2'
+const options = process.env.NODE_ENV === 'dev' ? { baseDir } : {}
 
-export const git: SimpleGit = simpleGit({
-    baseDir,
-})
+export const git: SimpleGit = simpleGit(options)
 
 git.outputHandler((bin, stdout, stderr, args) => {
     //   stdout.pipe(process.stdout)

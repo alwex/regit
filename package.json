@@ -2,6 +2,14 @@
     "name": "regit",
     "version": "1.0.0",
     "description": "git helper cli",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/alwex/regit.git"
+    },
+    "bugs": {
+        "url": "https://github.com/alwex/regit/issues"
+    },
+    "homepage": "https://github.com/alwex/regit/blob/main/README.md",
     "main": "build/src/index.js",
     "bin": "build/src/index.js",
     "author": "Alexandre Guidet",
@@ -21,7 +29,7 @@
     },
     "scripts": {
         "predev": "yarn build",
-        "dev": "node build/src/index.js",
+        "dev": "NODE_ENV=dev node build/src/index.js",
         "build": "rimraf ./build && tsc",
         "postbuild": "chmod u+x ./build/src/index.js",
         "test": "vitest"
