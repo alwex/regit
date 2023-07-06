@@ -1,5 +1,5 @@
 {
-    "name": "regit",
+    "name": "regit-cli",
     "version": "1.0.0",
     "description": "git helper cli",
     "repository": {
@@ -11,7 +11,14 @@
     },
     "homepage": "https://github.com/alwex/regit/blob/main/README.md",
     "main": "build/src/index.js",
-    "bin": "build/src/index.js",
+    "bin": {
+        "regit": "build/src/index.js"
+    },
+    "keywords": [
+        "commit",
+        "git",
+        "gitflow"
+    ],
     "author": "Alexandre Guidet",
     "license": "MIT",
     "type": "module",
