@@ -5,6 +5,7 @@ import {
     branchExists,
     listBranchStartingWith,
     mergeBranch,
+    pushBranch,
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
@@ -28,6 +29,7 @@ const action = async (id: string) => {
     }
 
     await mergeBranch(branchName)
+    await pushBranch(name)
 
     logger.success(`Feature ${id} merged into ${from}`)
 }

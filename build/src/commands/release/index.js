@@ -3,6 +3,7 @@ import configureAdd from './add.js';
 import configureStatus from './status.js';
 import configureFinish from './finish.js';
 import configureRemove from './remove.js';
+import configurePush from './push.js';
 export default (program) => {
     const command = program.command('release');
     configureStart(command);
@@ -10,4 +11,5 @@ export default (program) => {
     configureStatus(command);
     configureFinish(command);
     configureRemove(command);
+    configurePush(command);
 };

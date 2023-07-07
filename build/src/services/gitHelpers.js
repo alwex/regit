@@ -18,6 +18,9 @@ export const getCurrentBranch = () => __awaiter(void 0, void 0, void 0, function
     const result = yield git.branch();
     return result.current;
 });
+export const pushBranch = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
+    yield git.push(['-u', 'origin', branchName]);
+});
 export const getOpenReleaseBranch = () => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield listBranchStartingWith(branchRelease);
     return result[0];
@@ -54,6 +57,7 @@ export const getBranchDetails = (branch) => __awaiter(void 0, void 0, void 0, fu
     const result = yield git.show([branch]);
     const lines = result.split('\n');
     return {
+        commit: lines[0].split(' ')[1].trim(),
         author: lines[1].split(': ')[1].trim(),
         date: lines[2].split(': ')[1].trim(),
     };
@@ -131,44 +135,70 @@ export const mergeBranch = (branchName) => __awaiter(void 0, void 0, void 0, fun
     const result = yield git.merge(['--no-ff', `origin/${branchName}`]);
 });
 export const listBranchesInBranch = (targetBranch) => __awaiter(void 0, void 0, void 0, function* () {
-    const resultBranches = yield git.branch([
+    const allCommits = yield git.raw([
+        'reflog',
+        'show',
+        '--no-abbrev',
+        targetBranch,
+    ]);
+    const allCommitsHashes = allCommits
+        .trim()
+        .split('\n')
+        .map((line) => {
+        return line.split(' ')[0];
+    });
+    const firstCommit = allCommitsHashes[allCommitsHashes.length - 1];
+    const lastCommit = allCommitsHashes[0];
+    const allCommitsOnBranch = yield git.log([
+        targetBranch,
+        `${firstCommit}..${lastCommit}`,
+    ]);
+    const allMergedFeatureNames = allCommitsOnBranch.all
+        .filter((branch) => {
+        return branch.message.includes(branchFeature);
+    })
+        .map((branch) => {
+        const match = branch.message.match(/'(.*)'/);
+        if (match) {
+            return match[1];
+        }
+    })
+        .filter(Boolean)
+        .map((name) => {
+        return name.replace('origin/', '');
+    });
+    // get merged and up to date branches
+    const allCompletelyMergedFeatures = yield git.branch([
         '--no-color',
         '-r',
         '--merged',
         targetBranch,
     ]);
-    const mergedBranches = resultBranches.all
-        .map((branch) => branch.replace('origin/', ''))
-        .filter((branch) => branch !== targetBranch);
-    const mergedFromCommit = yield git.log([
-        '--merges',
-        `--grep=feature`,
-        targetBranch,
-    ]);
-    const foundFeatureBranches = mergedFromCommit.all
-        .map((data) => {
-        const match = data.message.match(/'(.*)'/);
-        if (match) {
-            return match[1].replace('origin/', '');
-        }
+    const allCompletelyMergedFeatureNames = allCompletelyMergedFeatures.all
+        .filter((name) => {
+        return name.includes(branchFeature);
     })
-        .filter(Boolean);
-    const uniqFeatureBranches = [...new Set(foundFeatureBranches)];
+        .map((name) => {
+        return name.replace('origin/', '');
+    });
+    const allPartiallyMergedFeatureNames = allMergedFeatureNames.filter((name) => {
+        return !allCompletelyMergedFeatureNames.includes(name);
+    });
+    // console.log(allMergedFeatureNames)
+    // console.log(allCompletelyMergedFeatureNames)
+    // console.log(allPartiallyMergedFeatureNames)
     const allFeatures = yield listBranchStartingWith(branchFeature);
-    const matchingFeatures = allFeatures.filter((feature) => {
-        return uniqFeatureBranches.includes(feature.name);
+    const mergedBranches = allFeatures.filter((feature) => {
+        return allCompletelyMergedFeatureNames.includes(feature.name);
     });
-    const completeMerges = matchingFeatures.filter((feature) => {
-        return mergedBranches.includes(feature.name);
-    });
-    const incompleteMerges = matchingFeatures.filter((feature) => {
-        return !mergedBranches.includes(feature.name);
+    const partiallyMergedBranches = allFeatures.filter((feature) => {
+        return allPartiallyMergedFeatureNames.includes(feature.name);
     });
     const result = [
-        ...completeMerges.map((feature) => {
+        ...mergedBranches.map((feature) => {
             return Object.assign(Object.assign({}, feature), { upToDate: true });
         }),
-        ...incompleteMerges.map((feature) => {
+        ...partiallyMergedBranches.map((feature) => {
             return Object.assign(Object.assign({}, feature), { upToDate: false });
         }),
     ];
@@ -197,6 +227,6 @@ export const listBranchesBetweenTags = (tag1, tag2) => __awaiter(void 0, void 0,
     return [...branches, ...twgitBranchesCompat];
 });
 export const deleteBranch = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
-    yield git.deleteLocalBranch(branchName);
+    yield git.deleteLocalBranch(branchName, true);
     yield git.push(['origin', '--delete', branchName]);
 });

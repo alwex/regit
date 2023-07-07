@@ -14,6 +14,10 @@ export const getCurrentBranch = async () => {
     return result.current
 }
 
+export const pushBranch = async (branchName: string) => {
+    await git.push(['-u', 'origin', branchName])
+}
+
 export const getOpenReleaseBranch = async () => {
     const result = await listBranchStartingWith(branchRelease)
     return result[0]
@@ -56,6 +60,7 @@ export const getLatestTags = async (tagCount: number) => {
 }
 
 export interface ReleaseHeaderResult {
+    commit: string
     author: string
     date: string
 }
@@ -65,6 +70,7 @@ export const getBranchDetails = async (branch: string) => {
     const lines = result.split('\n')
 
     return {
+        commit: lines[0].split(' ')[1].trim(),
         author: lines[1].split(': ')[1].trim(),
         date: lines[2].split(': ')[1].trim(),
     } as ReleaseHeaderResult
@@ -187,54 +193,83 @@ export interface ListBranchesInBranchResult extends ListBranchResult {
 export const listBranchesInBranch = async (
     targetBranch: string
 ): Promise<ListBranchesInBranchResult[]> => {
-    const resultBranches = await git.branch([
+    const allCommits = await git.raw([
+        'reflog',
+        'show',
+        '--no-abbrev',
+        targetBranch,
+    ])
+
+    const allCommitsHashes = allCommits
+        .trim()
+        .split('\n')
+        .map((line) => {
+            return line.split(' ')[0]
+        })
+
+    const firstCommit = allCommitsHashes[allCommitsHashes.length - 1]
+    const lastCommit = allCommitsHashes[0]
+
+    const allCommitsOnBranch = await git.log([
+        targetBranch,
+        `${firstCommit}..${lastCommit}`,
+    ])
+
+    const allMergedFeatureNames = allCommitsOnBranch.all
+        .filter((branch) => {
+            return branch.message.includes(branchFeature)
+        })
+        .map((branch) => {
+            const match = branch.message.match(/'(.*)'/)
+            if (match) {
+                return match[1]
+            }
+        })
+        .filter(Boolean)
+        .map((name) => {
+            return name!.replace('origin/', '')
+        })
+
+    // get merged and up to date branches
+    const allCompletelyMergedFeatures = await git.branch([
         '--no-color',
         '-r',
         '--merged',
         targetBranch,
     ])
-    const mergedBranches = resultBranches.all
-        .map((branch) => branch.replace('origin/', ''))
-        .filter((branch) => branch !== targetBranch)
 
-    const mergedFromCommit = await git.log([
-        '--merges',
-        `--grep=feature`,
-        targetBranch,
-    ])
-
-    const foundFeatureBranches = mergedFromCommit.all
-        .map((data) => {
-            const match = data.message.match(/'(.*)'/)
-            if (match) {
-                return match[1].replace('origin/', '')
-            }
+    const allCompletelyMergedFeatureNames = allCompletelyMergedFeatures.all
+        .filter((name) => {
+            return name.includes(branchFeature)
         })
-        .filter(Boolean)
+        .map((name) => {
+            return name.replace('origin/', '')
+        })
 
-    const uniqFeatureBranches = [...new Set(foundFeatureBranches)]
+    const allPartiallyMergedFeatureNames = allMergedFeatureNames.filter(
+        (name) => {
+            return !allCompletelyMergedFeatureNames.includes(name!)
+        }
+    )
 
     const allFeatures = await listBranchStartingWith(branchFeature)
-    const matchingFeatures = allFeatures.filter((feature) => {
-        return uniqFeatureBranches.includes(feature.name)
+
+    const mergedBranches = allFeatures.filter((feature) => {
+        return allCompletelyMergedFeatureNames.includes(feature.name)
     })
 
-    const completeMerges = matchingFeatures.filter((feature) => {
-        return mergedBranches.includes(feature.name)
-    })
-
-    const incompleteMerges = matchingFeatures.filter((feature) => {
-        return !mergedBranches.includes(feature.name)
+    const partiallyMergedBranches = allFeatures.filter((feature) => {
+        return allPartiallyMergedFeatureNames.includes(feature.name)
     })
 
     const result: ListBranchesInBranchResult[] = [
-        ...completeMerges.map((feature) => {
+        ...mergedBranches.map((feature) => {
             return {
                 ...feature,
                 upToDate: true,
             }
         }),
-        ...incompleteMerges.map((feature) => {
+        ...partiallyMergedBranches.map((feature) => {
             return {
                 ...feature,
                 upToDate: false,
@@ -275,6 +310,6 @@ export const listBranchesBetweenTags = async (tag1: string, tag2: string) => {
 }
 
 export const deleteBranch = async (branchName: string) => {
-    await git.deleteLocalBranch(branchName)
+    await git.deleteLocalBranch(branchName, true)
     await git.push(['origin', '--delete', branchName])
 }

@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature, branchRelease } from '../../const.js';
-import { assertCurrentBranchIsClean, branchExists, listBranchStartingWith, mergeBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, branchExists, listBranchStartingWith, mergeBranch, pushBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
 const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
@@ -25,6 +25,7 @@ const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error(`Feature ${id} does not exist`);
     }
     yield mergeBranch(branchName);
+    yield pushBranch(name);
     logger.success(`Feature ${id} merged into ${from}`);
 });
 export default (program) => {
