@@ -184,9 +184,6 @@ export const listBranchesInBranch = (targetBranch) => __awaiter(void 0, void 0, 
     const allPartiallyMergedFeatureNames = allMergedFeatureNames.filter((name) => {
         return !allCompletelyMergedFeatureNames.includes(name);
     });
-    // console.log(allMergedFeatureNames)
-    // console.log(allCompletelyMergedFeatureNames)
-    // console.log(allPartiallyMergedFeatureNames)
     const allFeatures = yield listBranchStartingWith(branchFeature);
     const mergedBranches = allFeatures.filter((feature) => {
         return allCompletelyMergedFeatureNames.includes(feature.name);
