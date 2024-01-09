@@ -15,17 +15,22 @@ export const getRemoteFeatureName = async (branch: string) => {
     return name
 }
 
-export const displayFeatureBranch = async (branch: ListBranchResult) => {
+export const formatFeatureForDisplay = async (branch: ListBranchResult) => {
     const { from, name, show } = branch
     const remoteName = await getRemoteFeatureName(name)
-
-    console.log(
-        chalk.bold(
-            `Feature: origin/${name} ${chalk.dim(
-                `(from ${from})`
-            )} ${chalk.blue(remoteName)}`
-        )
+    return chalk.bold(
+        `Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(
+            remoteName
+        )}`
     )
+}
+
+export const displayFeatureBranch = async (branch: ListBranchResult) => {
+    const { from, name, show } = branch
+    // const remoteName = await getRemoteFeatureName(name)
+
+    const formattedFeatureName = await formatFeatureForDisplay(branch)
+    console.log(formattedFeatureName)
     show.forEach((showLine) => {
         console.log(showLine)
     })

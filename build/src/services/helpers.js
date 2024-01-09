@@ -14,10 +14,16 @@ export const getRemoteFeatureName = (branch) => __awaiter(void 0, void 0, void 0
     const name = yield hooks.getFeatureName(branch);
     return name;
 });
-export const displayFeatureBranch = (branch) => __awaiter(void 0, void 0, void 0, function* () {
+export const formatFeatureForDisplay = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const { from, name, show } = branch;
     const remoteName = yield getRemoteFeatureName(name);
-    console.log(chalk.bold(`Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(remoteName)}`));
+    return chalk.bold(`Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(remoteName)}`);
+});
+export const displayFeatureBranch = (branch) => __awaiter(void 0, void 0, void 0, function* () {
+    const { from, name, show } = branch;
+    // const remoteName = await getRemoteFeatureName(name)
+    const formattedFeatureName = yield formatFeatureForDisplay(branch);
+    console.log(formattedFeatureName);
     show.forEach((showLine) => {
         console.log(showLine);
     });
