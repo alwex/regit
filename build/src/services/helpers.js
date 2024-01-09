@@ -8,7 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import chalk from 'chalk';
+import { listBranchStartingWith, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
+import { branchFeature } from '../const.js';
+import { checkbox } from '@inquirer/prompts';
 export const getRemoteFeatureName = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const hooks = yield getHooks();
     const name = yield hooks.getFeatureName(branch);
@@ -56,3 +59,19 @@ export const displayTagHeader = (tagHeader) => {
     console.log(`Date: ${date}`);
     console.log(`Included features:`);
 };
+export const promptSelectMultipleFeatures = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    const allFeatures = yield listBranchStartingWith(branchFeature);
+    const getAllRemoteNames = allFeatures.map((feature) => __awaiter(void 0, void 0, void 0, function* () {
+        const formattedName = yield formatFeatureForDisplay(feature);
+        return {
+            name: formattedName,
+            value: feature.name,
+        };
+    }));
+    const allFeaturesWithRemoteNames = yield Promise.all(getAllRemoteNames);
+    const selectedFeatures = yield checkbox({
+        message,
+        choices: allFeaturesWithRemoteNames,
+    });
+    return selectedFeatures;
+});

@@ -5,8 +5,11 @@ import {
     ListBranchesInBranchResult,
     ReleaseHeaderResult,
     TagHeaderResult,
+    listBranchStartingWith,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
+import { branchFeature } from '../const.js'
+import { checkbox } from '@inquirer/prompts'
 
 export const getRemoteFeatureName = async (branch: string) => {
     const hooks = await getHooks()
@@ -81,4 +84,25 @@ export const displayTagHeader = (tagHeader: TagHeaderResult) => {
     console.log(`Tagger: ${author}`)
     console.log(`Date: ${date}`)
     console.log(`Included features:`)
+}
+
+export const promptSelectMultipleFeatures = async (message: string) => {
+    const allFeatures = await listBranchStartingWith(branchFeature)
+    const getAllRemoteNames = allFeatures.map(async (feature) => {
+        const formattedName = await formatFeatureForDisplay(feature)
+
+        return {
+            name: formattedName,
+            value: feature.name,
+        }
+    })
+
+    const allFeaturesWithRemoteNames = await Promise.all(getAllRemoteNames)
+
+    const selectedFeatures = await checkbox({
+        message,
+        choices: allFeaturesWithRemoteNames,
+    })
+
+    return selectedFeatures
 }

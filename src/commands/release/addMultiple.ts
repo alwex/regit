@@ -1,8 +1,9 @@
 import { Command } from 'commander'
-import { branchPreview } from '../../const.js'
+import { branchRelease } from '../../const.js'
 import {
     assertCurrentBranchIsClean,
     branchExists,
+    listBranchStartingWith,
     mergeBranch,
     pushBranch,
     startOrCheckoutBranch,
@@ -10,20 +11,21 @@ import {
 import { promptSelectMultipleFeatures } from '../../services/helpers.js'
 import { logger } from '../../services/logger.js'
 
-const action = async (name: string) => {
+const action = async () => {
     await assertCurrentBranchIsClean()
 
-    const previewBranchName = `${branchPreview}${name}`
-
-    const previewExist = await branchExists(previewBranchName)
-    if (!previewExist) {
-        throw new Error(`Preview ${name} does not exist`)
+    const releaseBranches = await listBranchStartingWith(branchRelease)
+    if (releaseBranches.length === 0) {
+        throw new Error('No release branch found')
     }
 
-    await startOrCheckoutBranch(previewBranchName)
+    const currentReleaseBranch = releaseBranches[0]
+    const { from, name, show } = currentReleaseBranch
+
+    await startOrCheckoutBranch(name)
 
     const selectedFeatures = await promptSelectMultipleFeatures(
-        `Select features to add to preview ${previewBranchName}`
+        `Select features to add to release ${currentReleaseBranch.name}`
     )
 
     for (const featureBranchName of selectedFeatures) {
@@ -31,17 +33,14 @@ const action = async (name: string) => {
         if (!featureExists) {
             throw new Error(`Feature ${featureBranchName} does not exist`)
         }
+
         await mergeBranch(featureBranchName)
-        await pushBranch(previewBranchName)
-        logger.success(
-            `Feature ${featureBranchName} merged into ${previewBranchName}`
-        )
+        await pushBranch(name)
+
+        logger.success(`Feature ${featureBranchName} merged into ${from}`)
     }
 }
 
 export default (program: Command) => {
-    program
-        .command('add-multiple')
-        .argument('<name>', 'Preview Name')
-        .action(action)
+    program.command('add-multiple').action(action)
 }
