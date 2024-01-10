@@ -8,8 +8,8 @@ import {
     listBranchStartingWith,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
-import { branchFeature } from '../const.js'
-import { checkbox } from '@inquirer/prompts'
+import { branchFeature, branchPreview } from '../const.js'
+import { checkbox, select } from '@inquirer/prompts'
 
 export const getRemoteFeatureName = async (branch: string) => {
     const hooks = await getHooks()
@@ -105,4 +105,41 @@ export const promptSelectMultipleFeatures = async (message: string) => {
     })
 
     return selectedFeatures
+}
+
+export const promptSelectSingleFeature = async (message: string) => {
+    const allFeatures = await listBranchStartingWith(branchFeature)
+    const getAllRemoteNames = allFeatures.map(async (feature) => {
+        const formattedName = await formatFeatureForDisplay(feature)
+
+        return {
+            name: formattedName,
+            value: feature.name,
+        }
+    })
+
+    const allFeaturesWithRemoteNames = await Promise.all(getAllRemoteNames)
+
+    const selectedFeature = await select({
+        message,
+        choices: allFeaturesWithRemoteNames,
+    })
+
+    return selectedFeature
+}
+
+export const promptSelectSinglePreview = async (message: string) => {
+    const allBranches = await listBranchStartingWith(branchPreview)
+
+    const selectedFeature = await select({
+        message,
+        choices: allBranches.map((branch) => {
+            return {
+                name: branch.name,
+                value: branch.name,
+            }
+        }),
+    })
+
+    return selectedFeature
 }

@@ -8,28 +8,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { assertCurrentBranchIsClean, getBranchInfo, getLatestTag, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
-import { branchFeature } from '../../const.js';
-import { getHooks } from '../../services/hooks.js';
+import { promptSelectSingleFeature } from '../../services/helpers.js';
 import { logger } from '../../services/logger.js';
 import semver from 'semver';
-const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const hooks = yield getHooks();
+const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
-    const branchName = `${branchFeature}${id}`;
-    yield hooks.preFeatureStart(id);
-    yield startOrCheckoutBranch(branchName);
-    yield hooks.postFeatureStart(id);
+    const selectedFeature = yield promptSelectSingleFeature('Select feature to open');
+    yield startOrCheckoutBranch(selectedFeature);
     const latestTag = yield getLatestTag();
-    const branchInfo = yield getBranchInfo(branchName);
-    logger.success(`Feature ${id} started`);
+    const branchInfo = yield getBranchInfo(selectedFeature);
+    logger.success(`Feature ${selectedFeature} open`);
     if (semver.lt(branchInfo.from, latestTag)) {
-        logger.warn(`Feature ${branchName} is based on an old release`);
-        logger.warn(`Please run: git merge --no-ff ${latestTag} && git push origin ${branchName}`);
+        logger.warn(`Feature ${selectedFeature} is based on an old release`);
+        logger.warn(`Please run: git merge --no-ff ${latestTag} && git push origin ${selectedFeature}`);
     }
 });
 export default (program) => {
-    program
-        .command('start')
-        .argument('<feature_id>', 'Feature ID')
-        .action(action);
+    program.command('open').action(action);
 };

@@ -5,6 +5,7 @@ import configureAddMultiple from './addMultiple.js'
 import configureStatus from './status.js'
 import configureList from './list.js'
 import configureRemove from './remove.js'
+import configureOpen from './open.js'
 
 export default (program: Command) => {
     const command = program.command('preview')
@@ -15,4 +16,5 @@ export default (program: Command) => {
     configureStatus(command)
     configureList(command)
     configureRemove(command)
+    configureOpen(command)
 }

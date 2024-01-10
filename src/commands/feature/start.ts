@@ -1,11 +1,14 @@
 import { Command } from 'commander'
 import {
     assertCurrentBranchIsClean,
+    getBranchInfo,
+    getLatestTag,
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
 import { getHooks } from '../../services/hooks.js'
 import { logger } from '../../services/logger.js'
+import semver from 'semver'
 
 const action = async (id: string) => {
     const hooks = await getHooks()
@@ -17,7 +20,16 @@ const action = async (id: string) => {
     await startOrCheckoutBranch(branchName)
     await hooks.postFeatureStart(id)
 
+    const latestTag = await getLatestTag()
+    const branchInfo = await getBranchInfo(branchName)
+
     logger.success(`Feature ${id} started`)
+    if (semver.lt(branchInfo.from, latestTag!)) {
+        logger.warn(`Feature ${branchName} is based on an old release`)
+        logger.warn(
+            `Please run: git merge --no-ff ${latestTag} && git push origin ${branchName}`
+        )
+    }
 }
 
 export default (program: Command) => {
