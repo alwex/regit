@@ -13,7 +13,7 @@ export default (program: Command) => {
 
     configureStart(command)
     configureAdd(command)
-    configureAddMultiple(command)
+    // configureAddMultiple(command)
     configureStatus(command)
     configureFinish(command)
     configureRemove(command)
