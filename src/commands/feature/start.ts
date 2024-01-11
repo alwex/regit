@@ -9,8 +9,12 @@ import { branchFeature } from '../../const.js'
 import { getHooks } from '../../services/hooks.js'
 import { logger } from '../../services/logger.js'
 import semver from 'semver'
+import {
+    promptSelectMultipleFeatures,
+    promptSelectSingleFeature,
+} from '../../services/helpers.js'
 
-const action = async (id: string) => {
+const startFeatureWithId = async (id: string) => {
     const hooks = await getHooks()
 
     await assertCurrentBranchIsClean()
@@ -32,9 +36,26 @@ const action = async (id: string) => {
     }
 }
 
+const startFeatureWithPrompt = async () => {
+    const selectedFeatures = await promptSelectSingleFeature(
+        `Select features to start from`
+    )
+    const featureId = selectedFeatures.replace(branchFeature, '')
+
+    await startFeatureWithId(featureId)
+}
+
+const action = async (id?: string) => {
+    if (id) {
+        startFeatureWithId(id)
+    } else {
+        startFeatureWithPrompt()
+    }
+}
+
 export default (program: Command) => {
     program
         .command('start')
-        .argument('<feature_id>', 'Feature ID')
+        .argument('[feature_id]', 'Feature ID')
         .action(action)
 }
