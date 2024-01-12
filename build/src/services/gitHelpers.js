@@ -96,21 +96,25 @@ export const initStableBranch = (version) => __awaiter(void 0, void 0, void 0, f
     yield git.push(['-u', 'origin', branchStable]);
     yield createTag(version);
 });
+export const getBranchInfo = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
+    const from = yield git.raw(['describe', '--tags', '--abbrev=0', branchName]);
+    const show = yield git.show([branchName]);
+    const showDetails = show.trim().split('\n').slice(0, 3);
+    return {
+        name: branchName.replace('remotes/origin/', ''),
+        from: from.trim(),
+        show: showDetails,
+        remoteName: '',
+    };
+});
 export const listBranchStartingWith = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
     const data = [];
     const result = yield git.branch();
     const branches = result.all.filter((branch) => branch.includes(branchName));
     for (let i = 0; i < branches.length; i++) {
         const name = branches[i];
-        const from = yield git.raw(['describe', '--tags', '--abbrev=0', name]);
-        const show = yield git.show([name]);
-        const showDetails = show.trim().split('\n').slice(0, 3);
-        data.push({
-            name: name.replace('remotes/origin/', ''),
-            from: from.trim(),
-            show: showDetails,
-            remoteName: '',
-        });
+        const branchData = yield getBranchInfo(name);
+        data.push(branchData);
     }
     const uniq = uniqBy(data, 'name');
     return uniq;
@@ -184,9 +188,6 @@ export const listBranchesInBranch = (targetBranch) => __awaiter(void 0, void 0, 
     const allPartiallyMergedFeatureNames = allMergedFeatureNames.filter((name) => {
         return !allCompletelyMergedFeatureNames.includes(name);
     });
-    // console.log(allMergedFeatureNames)
-    // console.log(allCompletelyMergedFeatureNames)
-    // console.log(allPartiallyMergedFeatureNames)
     const allFeatures = yield listBranchStartingWith(branchFeature);
     const mergedBranches = allFeatures.filter((feature) => {
         return allCompletelyMergedFeatureNames.includes(feature.name);

@@ -7,28 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { branchFeature, branchPreview } from '../../const.js';
+import { branchPreview } from '../../const.js';
 import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
-import { logger } from '../../services/logger.js';
 import { promptSelectMultipleFeatures } from '../../services/helpers.js';
-const addSingleFeature = (name, id) => __awaiter(void 0, void 0, void 0, function* () {
-    yield assertCurrentBranchIsClean();
-    const previewBranchName = `${branchPreview}${name}`;
-    const previewExist = yield branchExists(previewBranchName);
-    if (!previewExist) {
-        throw new Error(`Preview ${name} does not exist`);
-    }
-    yield startOrCheckoutBranch(previewBranchName);
-    const featureBranchName = `${branchFeature}${id}`;
-    const featureExists = yield branchExists(featureBranchName);
-    if (!featureExists) {
-        throw new Error(`Feature ${id} does not exist`);
-    }
-    yield mergeBranch(featureBranchName);
-    yield pushBranch(previewBranchName);
-    logger.success(`Feature ${id} merged into ${previewBranchName}`);
-});
-const addMultipleFeatures = (name) => __awaiter(void 0, void 0, void 0, function* () {
+import { logger } from '../../services/logger.js';
+const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
     const previewBranchName = `${branchPreview}${name}`;
     const previewExist = yield branchExists(previewBranchName);
@@ -47,18 +30,9 @@ const addMultipleFeatures = (name) => __awaiter(void 0, void 0, void 0, function
         logger.success(`Feature ${featureBranchName} merged into ${previewBranchName}`);
     }
 });
-const action = (name, id) => __awaiter(void 0, void 0, void 0, function* () {
-    if (id) {
-        addSingleFeature(name, id);
-    }
-    else {
-        addMultipleFeatures(name);
-    }
-});
 export default (program) => {
     program
-        .command('add')
+        .command('add-multiple')
         .argument('<name>', 'Preview Name')
-        .argument('[feature_id]', 'Feature ID')
         .action(action);
 };

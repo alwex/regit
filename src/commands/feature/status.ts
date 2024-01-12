@@ -1,6 +1,8 @@
 import { Command } from 'commander'
 import {
+    getBranchInfo,
     getCurrentBranch,
+    getLatestTag,
     listBranchStartingWith,
 } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
@@ -9,6 +11,8 @@ import {
     displayFeatureBranch,
     getRemoteFeatureName,
 } from '../../services/helpers.js'
+import { logger } from '../../services/logger.js'
+import semver from 'semver'
 
 // Feature: origin/feature-santiago (from v3.7.1) undefined
 // /!\ Tags not merged into this branch: at least 'v4.3.6' to 'v4.3.8'.
@@ -24,7 +28,19 @@ const action = async () => {
     }
 
     const branches = await listBranchStartingWith(currentBranch)
-    await displayFeatureBranch(branches[0])
+    const selectedBranch = branches[0]
+    await displayFeatureBranch(selectedBranch)
+
+    const branchName = selectedBranch.name
+    const latestTag = await getLatestTag()
+    const branchInfo = await getBranchInfo(branchName)
+
+    if (semver.lt(branchInfo.from, latestTag!)) {
+        logger.warn(`Feature ${branchName} is based on an old release`)
+        logger.warn(
+            `Please run: git merge --no-ff ${latestTag} && git push origin ${branchName}`
+        )
+    }
 }
 
 export default (program: Command) => {

@@ -5,8 +5,11 @@ import {
     ListBranchesInBranchResult,
     ReleaseHeaderResult,
     TagHeaderResult,
+    listBranchStartingWith,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
+import { branchFeature, branchPreview } from '../const.js'
+import { checkbox, select } from '@inquirer/prompts'
 
 export const getRemoteFeatureName = async (branch: string) => {
     const hooks = await getHooks()
@@ -15,17 +18,22 @@ export const getRemoteFeatureName = async (branch: string) => {
     return name
 }
 
-export const displayFeatureBranch = async (branch: ListBranchResult) => {
+export const formatFeatureForDisplay = async (branch: ListBranchResult) => {
     const { from, name, show } = branch
     const remoteName = await getRemoteFeatureName(name)
-
-    console.log(
-        chalk.bold(
-            `Feature: origin/${name} ${chalk.dim(
-                `(from ${from})`
-            )} ${chalk.blue(remoteName)}`
-        )
+    return chalk.bold(
+        `Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(
+            remoteName
+        )}`
     )
+}
+
+export const displayFeatureBranch = async (branch: ListBranchResult) => {
+    const { from, name, show } = branch
+    // const remoteName = await getRemoteFeatureName(name)
+
+    const formattedFeatureName = await formatFeatureForDisplay(branch)
+    console.log(formattedFeatureName)
     show.forEach((showLine) => {
         console.log(showLine)
     })
@@ -76,4 +84,62 @@ export const displayTagHeader = (tagHeader: TagHeaderResult) => {
     console.log(`Tagger: ${author}`)
     console.log(`Date: ${date}`)
     console.log(`Included features:`)
+}
+
+export const promptSelectMultipleFeatures = async (message: string) => {
+    const allFeatures = await listBranchStartingWith(branchFeature)
+    const getAllRemoteNames = allFeatures.map(async (feature) => {
+        const formattedName = await formatFeatureForDisplay(feature)
+
+        return {
+            name: formattedName,
+            value: feature.name,
+        }
+    })
+
+    const allFeaturesWithRemoteNames = await Promise.all(getAllRemoteNames)
+
+    const selectedFeatures = await checkbox({
+        message,
+        choices: allFeaturesWithRemoteNames,
+    })
+
+    return selectedFeatures
+}
+
+export const promptSelectSingleFeature = async (message: string) => {
+    const allFeatures = await listBranchStartingWith(branchFeature)
+    const getAllRemoteNames = allFeatures.map(async (feature) => {
+        const formattedName = await formatFeatureForDisplay(feature)
+
+        return {
+            name: formattedName,
+            value: feature.name,
+        }
+    })
+
+    const allFeaturesWithRemoteNames = await Promise.all(getAllRemoteNames)
+
+    const selectedFeature = await select({
+        message,
+        choices: allFeaturesWithRemoteNames,
+    })
+
+    return selectedFeature
+}
+
+export const promptSelectSinglePreview = async (message: string) => {
+    const allBranches = await listBranchStartingWith(branchPreview)
+
+    const selectedFeature = await select({
+        message,
+        choices: allBranches.map((branch) => {
+            return {
+                name: branch.name,
+                value: branch.name,
+            }
+        }),
+    })
+
+    return selectedFeature
 }

@@ -7,29 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { branchFeature, branchRelease } from '../../const.js';
+import { branchRelease } from '../../const.js';
 import { assertCurrentBranchIsClean, branchExists, listBranchStartingWith, mergeBranch, pushBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
-import { logger } from '../../services/logger.js';
 import { promptSelectMultipleFeatures } from '../../services/helpers.js';
-const addSingleFeature = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    yield assertCurrentBranchIsClean();
-    const releaseBranches = yield listBranchStartingWith(branchRelease);
-    if (releaseBranches.length === 0) {
-        throw new Error('No release branch found');
-    }
-    const currentReleaseBranch = releaseBranches[0];
-    const { from, name, show } = currentReleaseBranch;
-    yield startOrCheckoutBranch(name);
-    const branchName = `${branchFeature}${id}`;
-    const featureExists = yield branchExists(branchName);
-    if (!featureExists) {
-        throw new Error(`Feature ${id} does not exist`);
-    }
-    yield mergeBranch(branchName);
-    yield pushBranch(name);
-    logger.success(`Feature ${id} merged into ${from}`);
-});
-const addMultipleFeatures = () => __awaiter(void 0, void 0, void 0, function* () {
+import { logger } from '../../services/logger.js';
+const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
     const releaseBranches = yield listBranchStartingWith(branchRelease);
     if (releaseBranches.length === 0) {
@@ -49,14 +31,6 @@ const addMultipleFeatures = () => __awaiter(void 0, void 0, void 0, function* ()
         logger.success(`Feature ${featureBranchName} merged into ${from}`);
     }
 });
-const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    if (id) {
-        addSingleFeature(id);
-    }
-    else {
-        addMultipleFeatures();
-    }
-});
 export default (program) => {
-    program.command('add').argument('[feature_id]', 'Feature ID').action(action);
+    program.command('add-multiple').action(action);
 };

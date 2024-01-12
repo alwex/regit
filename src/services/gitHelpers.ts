@@ -138,6 +138,20 @@ export interface ListBranchResult {
     show: string[]
 }
 
+export const getBranchInfo = async (branchName: string) => {
+    const from = await git.raw(['describe', '--tags', '--abbrev=0', branchName])
+    const show = await git.show([branchName])
+
+    const showDetails = show.trim().split('\n').slice(0, 3)
+
+    return {
+        name: branchName.replace('remotes/origin/', ''),
+        from: from.trim(),
+        show: showDetails,
+        remoteName: '',
+    }
+}
+
 export const listBranchStartingWith = async (branchName: string) => {
     const data: ListBranchResult[] = []
 
@@ -147,17 +161,9 @@ export const listBranchStartingWith = async (branchName: string) => {
 
     for (let i = 0; i < branches.length; i++) {
         const name = branches[i]
-        const from = await git.raw(['describe', '--tags', '--abbrev=0', name])
-        const show = await git.show([name])
+        const branchData = await getBranchInfo(name)
 
-        const showDetails = show.trim().split('\n').slice(0, 3)
-
-        data.push({
-            name: name.replace('remotes/origin/', ''),
-            from: from.trim(),
-            show: showDetails,
-            remoteName: '',
-        })
+        data.push(branchData)
     }
 
     const uniq = uniqBy(data, 'name')

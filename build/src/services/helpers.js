@@ -8,16 +8,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import chalk from 'chalk';
+import { listBranchStartingWith, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
+import { branchFeature, branchPreview } from '../const.js';
+import { checkbox, select } from '@inquirer/prompts';
 export const getRemoteFeatureName = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const hooks = yield getHooks();
     const name = yield hooks.getFeatureName(branch);
     return name;
 });
-export const displayFeatureBranch = (branch) => __awaiter(void 0, void 0, void 0, function* () {
+export const formatFeatureForDisplay = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const { from, name, show } = branch;
     const remoteName = yield getRemoteFeatureName(name);
-    console.log(chalk.bold(`Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(remoteName)}`));
+    return chalk.bold(`Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(remoteName)}`);
+});
+export const displayFeatureBranch = (branch) => __awaiter(void 0, void 0, void 0, function* () {
+    const { from, name, show } = branch;
+    // const remoteName = await getRemoteFeatureName(name)
+    const formattedFeatureName = yield formatFeatureForDisplay(branch);
+    console.log(formattedFeatureName);
     show.forEach((showLine) => {
         console.log(showLine);
     });
@@ -50,3 +59,48 @@ export const displayTagHeader = (tagHeader) => {
     console.log(`Date: ${date}`);
     console.log(`Included features:`);
 };
+export const promptSelectMultipleFeatures = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    const allFeatures = yield listBranchStartingWith(branchFeature);
+    const getAllRemoteNames = allFeatures.map((feature) => __awaiter(void 0, void 0, void 0, function* () {
+        const formattedName = yield formatFeatureForDisplay(feature);
+        return {
+            name: formattedName,
+            value: feature.name,
+        };
+    }));
+    const allFeaturesWithRemoteNames = yield Promise.all(getAllRemoteNames);
+    const selectedFeatures = yield checkbox({
+        message,
+        choices: allFeaturesWithRemoteNames,
+    });
+    return selectedFeatures;
+});
+export const promptSelectSingleFeature = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    const allFeatures = yield listBranchStartingWith(branchFeature);
+    const getAllRemoteNames = allFeatures.map((feature) => __awaiter(void 0, void 0, void 0, function* () {
+        const formattedName = yield formatFeatureForDisplay(feature);
+        return {
+            name: formattedName,
+            value: feature.name,
+        };
+    }));
+    const allFeaturesWithRemoteNames = yield Promise.all(getAllRemoteNames);
+    const selectedFeature = yield select({
+        message,
+        choices: allFeaturesWithRemoteNames,
+    });
+    return selectedFeature;
+});
+export const promptSelectSinglePreview = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    const allBranches = yield listBranchStartingWith(branchPreview);
+    const selectedFeature = yield select({
+        message,
+        choices: allBranches.map((branch) => {
+            return {
+                name: branch.name,
+                value: branch.name,
+            };
+        }),
+    });
+    return selectedFeature;
+});

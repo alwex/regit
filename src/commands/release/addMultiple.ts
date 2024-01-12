@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { branchFeature, branchRelease } from '../../const.js'
+import { branchRelease } from '../../const.js'
 import {
     assertCurrentBranchIsClean,
     branchExists,
@@ -8,34 +8,10 @@ import {
     pushBranch,
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
-import { logger } from '../../services/logger.js'
 import { promptSelectMultipleFeatures } from '../../services/helpers.js'
+import { logger } from '../../services/logger.js'
 
-const addSingleFeature = async (id: string) => {
-    await assertCurrentBranchIsClean()
-
-    const releaseBranches = await listBranchStartingWith(branchRelease)
-    if (releaseBranches.length === 0) {
-        throw new Error('No release branch found')
-    }
-    const currentReleaseBranch = releaseBranches[0]
-    const { from, name, show } = currentReleaseBranch
-
-    await startOrCheckoutBranch(name)
-
-    const branchName = `${branchFeature}${id}`
-    const featureExists = await branchExists(branchName)
-    if (!featureExists) {
-        throw new Error(`Feature ${id} does not exist`)
-    }
-
-    await mergeBranch(branchName)
-    await pushBranch(name)
-
-    logger.success(`Feature ${id} merged into ${from}`)
-}
-
-const addMultipleFeatures = async () => {
+const action = async () => {
     await assertCurrentBranchIsClean()
 
     const releaseBranches = await listBranchStartingWith(branchRelease)
@@ -65,14 +41,6 @@ const addMultipleFeatures = async () => {
     }
 }
 
-const action = async (id?: string) => {
-    if (id) {
-        addSingleFeature(id)
-    } else {
-        addMultipleFeatures()
-    }
-}
-
 export default (program: Command) => {
-    program.command('add').argument('[feature_id]', 'Feature ID').action(action)
+    program.command('add-multiple').action(action)
 }
