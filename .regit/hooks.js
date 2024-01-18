@@ -33,7 +33,7 @@ module.exports = {
     },
     preReleaseFinish: async (id) => {
         // do something clever before release finish
-        generateChangelog()
+        // generateChangelog()
         setPackageVersion(id)
     },
     postReleaseFinish: async (id) => {
