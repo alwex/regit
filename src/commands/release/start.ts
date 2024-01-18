@@ -8,6 +8,8 @@ import {
 } from '../../services/gitHelpers.js'
 import semver from 'semver'
 import { logger } from '../../services/logger.js'
+import { promptSelectNextVersion } from '../../services/helpers.js'
+import { confirm } from '@inquirer/prompts'
 
 const action = async (version: string) => {
     await assertCurrentBranchIsClean()
@@ -35,6 +37,22 @@ const action = async (version: string) => {
             }
 
             versionToUse = version
+        } else {
+            versionToUse = await promptSelectNextVersion(
+                'What version do you want to release?'
+            )
+
+            const isMajorIncrease =
+                semver.major(versionToUse) > semver.major(latestTag)
+            if (isMajorIncrease) {
+                const answer = await confirm({
+                    message: `Are you sure you want to use the major version (${versionToUse})?`,
+                    default: false,
+                })
+                if (!answer) {
+                    throw new Error('Aborted')
+                }
+            }
         }
 
         const branchName = `${branchRelease}${versionToUse}`

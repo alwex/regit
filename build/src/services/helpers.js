@@ -8,7 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import chalk from 'chalk';
-import { listBranchStartingWith, } from './gitHelpers.js';
+import semver from 'semver';
+import { getLatestTag, listBranchStartingWith, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
 import { branchFeature, branchPreview } from '../const.js';
 import { checkbox, select } from '@inquirer/prompts';
@@ -103,4 +104,29 @@ export const promptSelectSinglePreview = (message) => __awaiter(void 0, void 0, 
         }),
     });
     return selectedFeature;
+});
+export const promptSelectNextVersion = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const latestTag = (_a = (yield getLatestTag())) !== null && _a !== void 0 ? _a : '0.0.0';
+    const nextMajorTag = semver.inc(latestTag, 'major');
+    const nextMinorTag = semver.inc(latestTag, 'minor');
+    const nextPatchTag = semver.inc(latestTag, 'patch');
+    const selectedVersion = yield select({
+        message,
+        choices: [
+            {
+                name: `Minor ${nextMinorTag}`,
+                value: nextMinorTag,
+            },
+            {
+                name: `Patch ${nextPatchTag}`,
+                value: nextPatchTag,
+            },
+            {
+                name: `Major ${nextMajorTag}`,
+                value: nextMajorTag,
+            },
+        ],
+    });
+    return selectedVersion;
 });

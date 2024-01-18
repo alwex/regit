@@ -1,10 +1,11 @@
 import chalk from 'chalk'
-
+import semver from 'semver'
 import {
     ListBranchResult,
     ListBranchesInBranchResult,
     ReleaseHeaderResult,
     TagHeaderResult,
+    getLatestTag,
     listBranchStartingWith,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
@@ -142,4 +143,31 @@ export const promptSelectSinglePreview = async (message: string) => {
     })
 
     return selectedFeature
+}
+
+export const promptSelectNextVersion = async (message: string) => {
+    const latestTag = (await getLatestTag()) ?? '0.0.0'
+    const nextMajorTag = semver.inc(latestTag, 'major') as string
+    const nextMinorTag = semver.inc(latestTag, 'minor') as string
+    const nextPatchTag = semver.inc(latestTag, 'patch') as string
+
+    const selectedVersion = await select({
+        message,
+        choices: [
+            {
+                name: `Minor ${nextMinorTag}`,
+                value: nextMinorTag,
+            },
+            {
+                name: `Patch ${nextPatchTag}`,
+                value: nextPatchTag,
+            },
+            {
+                name: `Major ${nextMajorTag}`,
+                value: nextMajorTag,
+            },
+        ],
+    })
+
+    return selectedVersion
 }
