@@ -41,7 +41,8 @@
         "dev": "NODE_ENV=dev node build/src/index.js",
         "build": "rimraf ./build && tsc",
         "postbuild": "chmod u+x ./build/src/index.js",
-        "test": "vitest"
+        "test": "vitest",
+        "v": "yarn version --no-git-tag-version"
     },
     "devDependencies": {
         "@types/chalk": "^2.2.0",
