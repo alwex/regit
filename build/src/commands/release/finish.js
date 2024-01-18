@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchFeature, branchRelease, branchStable } from '../../const.js';
 import { git } from '../../services/git.js';
-import { assertCurrentBranchIsClean, createTag, deleteBranch, listBranchStartingWith, listBranchesInBranch, mergeBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, createTag, deleteBranch, listBranchStartingWith, listBranchesInBranch, mergeBranch, pushBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
 import chalk from 'chalk';
 import { getHooks } from '../../services/hooks.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -40,6 +40,7 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield git.pull();
     yield mergeBranch(name);
     yield createTag(newVersion, features.map((data) => data.name));
+    yield pushBranch(branchStable);
     console.log(chalk.dim(`Delete release branch`));
     yield deleteBranch(name);
     // cleanup merged features

@@ -7,7 +7,7 @@ import configureTag from './commands/tag/index.js'
 
 export const makeProgram = () => {
     const program = new Command()
-    program.version('v1.0.6')
+    program.version('v1.1.4')
 
     configureInit(program)
     configureFeature(program)

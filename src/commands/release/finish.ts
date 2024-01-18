@@ -8,6 +8,7 @@ import {
     listBranchStartingWith,
     listBranchesInBranch,
     mergeBranch,
+    pushBranch,
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
 import chalk from 'chalk'
@@ -56,6 +57,7 @@ const action = async () => {
         newVersion,
         features.map((data) => data.name)
     )
+    await pushBranch(branchStable)
 
     console.log(chalk.dim(`Delete release branch`))
     await deleteBranch(name)
