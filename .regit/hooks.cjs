@@ -1,4 +1,9 @@
-const execSync = require('child_process').execSync
+import { execSync } from 'child_process'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const rootFolder = `${__dirname}/../`
 
@@ -18,7 +23,9 @@ const generateChangelog = () => {
 
 const setPackageVersion = (version) => {
     console.log('Setting package version to: ', version)
-    execSync(`pushd ${rootFolder} && yarn version ${version} && popd`)
+    execSync(
+        `pushd ${rootFolder} && yarn version --new-version ${version} && popd`
+    )
     execSync(`pushd ${rootFolder} && git add package.json && popd`)
     execSync(
         `pushd ${rootFolder} && git commit -m "chore: update package version to ${version}" && popd`
