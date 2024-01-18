@@ -90,9 +90,12 @@ export const remoteBranchExists = (branchName) => __awaiter(void 0, void 0, void
     const isRemote = result.all.find((branch) => branch === `remotes/origin/${branchName}`);
     return Boolean(isRemote);
 });
-export const initStableBranch = (version) => __awaiter(void 0, void 0, void 0, function* () {
+export const initStableBranch = () => __awaiter(void 0, void 0, void 0, function* () {
     yield git.checkoutLocalBranch(branchStable);
-    yield git.raw(['commit', '--allow-empty', '-m', `[regit] Init ${version}`]);
+});
+export const pushStableBranch = (version) => __awaiter(void 0, void 0, void 0, function* () {
+    yield git.raw(['add', './.regit']);
+    yield git.raw(['commit', '-m', `[regit] Init ${version}`]);
     yield git.push(['-u', 'origin', branchStable]);
     yield createTag(version);
 });

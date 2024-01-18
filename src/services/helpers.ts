@@ -6,11 +6,14 @@ import {
     ReleaseHeaderResult,
     TagHeaderResult,
     getLatestTag,
+    getProjectRootDirectory,
     listBranchStartingWith,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
 import { branchFeature, branchPreview } from '../const.js'
 import { checkbox, select } from '@inquirer/prompts'
+import fs from 'fs'
+import { hooksTemplate } from '../templates/hooks.js'
 
 export const getRemoteFeatureName = async (branch: string) => {
     const hooks = await getHooks()
@@ -170,4 +173,23 @@ export const promptSelectNextVersion = async (message: string) => {
     })
 
     return selectedVersion
+}
+
+export const getRegitDirectory = async () => {
+    const rootDir = await getProjectRootDirectory()
+    const regitFolder = `${rootDir}/.regit`
+
+    return regitFolder
+}
+
+export const initializeRegitFiles = async () => {
+    const regitFolder = await getRegitDirectory()
+    const hookFile = `${regitFolder}/hooks.js`
+
+    const hasRegitDirectory = fs.existsSync(regitFolder)
+    if (!hasRegitDirectory) {
+        fs.mkdirSync(regitFolder)
+    }
+
+    fs.writeFileSync(hookFile, hooksTemplate.trimStart())
 }

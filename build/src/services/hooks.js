@@ -7,8 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { getProjectRootDirectory } from './gitHelpers.js';
 import fs from 'fs';
+import { getRegitDirectory } from './helpers.js';
 const defaultHooks = {
     getFeatureName: (id) => __awaiter(void 0, void 0, void 0, function* () {
         // const api = `https://random-word-api.vercel.app/api?words=4`
@@ -22,10 +22,10 @@ const defaultHooks = {
     postReleaseFinish: () => __awaiter(void 0, void 0, void 0, function* () { }),
 };
 export const getHooks = () => __awaiter(void 0, void 0, void 0, function* () {
-    const rootDir = yield getProjectRootDirectory();
-    const hasCustomHooks = fs.existsSync(`${rootDir}/regit.js`);
+    const regitDir = yield getRegitDirectory();
+    const hasCustomHooks = fs.existsSync(`${regitDir}/hooks.js`);
     if (hasCustomHooks) {
-        const customHooks = yield import(`${rootDir}/regit.js`);
+        const customHooks = yield import(`${regitDir}/hooks.js`);
         return Object.assign(Object.assign({}, defaultHooks), customHooks.default);
     }
     return defaultHooks;

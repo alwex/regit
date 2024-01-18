@@ -5,11 +5,13 @@ import {
     assertCurrentBranchIsClean,
     branchExists,
     initStableBranch,
+    pushStableBranch,
 } from '../services/gitHelpers.js'
+import { initializeRegitFiles } from '../services/helpers.js'
 
 const action = async (version: string) => {
     if (!semver.valid(version)) {
-        throw new Error('Invalid version number, please use semver')
+        throw new Error('Invalid version number, please use semver eg 1.0.0')
     }
 
     await assertCurrentBranchIsClean()
@@ -20,7 +22,9 @@ const action = async (version: string) => {
     }
 
     const sanitizedVersion = semver.clean(version) as string
-    await initStableBranch(`v${sanitizedVersion}`)
+    await initStableBranch()
+    await initializeRegitFiles()
+    await pushStableBranch(`v${sanitizedVersion}`)
 }
 
 export default (program: Command) => {

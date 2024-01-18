@@ -9,10 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import chalk from 'chalk';
 import semver from 'semver';
-import { getLatestTag, listBranchStartingWith, } from './gitHelpers.js';
+import { getLatestTag, getProjectRootDirectory, listBranchStartingWith, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
 import { branchFeature, branchPreview } from '../const.js';
 import { checkbox, select } from '@inquirer/prompts';
+import fs from 'fs';
+import { hooksTemplate } from '../templates/hooks.js';
 export const getRemoteFeatureName = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const hooks = yield getHooks();
     const name = yield hooks.getFeatureName(branch);
@@ -129,4 +131,18 @@ export const promptSelectNextVersion = (message) => __awaiter(void 0, void 0, vo
         ],
     });
     return selectedVersion;
+});
+export const getRegitDirectory = () => __awaiter(void 0, void 0, void 0, function* () {
+    const rootDir = yield getProjectRootDirectory();
+    const regitFolder = `${rootDir}/.regit`;
+    return regitFolder;
+});
+export const initializeRegitFiles = () => __awaiter(void 0, void 0, void 0, function* () {
+    const regitFolder = yield getRegitDirectory();
+    const hookFile = `${regitFolder}/hooks.js`;
+    const hasRegitDirectory = fs.existsSync(regitFolder);
+    if (!hasRegitDirectory) {
+        fs.mkdirSync(regitFolder);
+    }
+    fs.writeFileSync(hookFile, hooksTemplate.trimStart());
 });
