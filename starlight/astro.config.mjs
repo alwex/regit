@@ -5,6 +5,7 @@ import react from '@astrojs/react'
 // https://astro.build/config
 export default defineConfig({
     outDir: '../docs',
+    site: 'https://alwex.github.io',
     base: '/regit',
     integrations: [
         react(),
