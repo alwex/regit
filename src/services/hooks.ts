@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getProjectRootDirectory } from './gitHelpers.js'
 import fs from 'fs'
+import { getRegitDirectory } from './helpers.js'
 
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
@@ -27,10 +28,10 @@ const defaultHooks: Hooks = {
 }
 
 export const getHooks = async () => {
-    const rootDir = await getProjectRootDirectory()
-    const hasCustomHooks = fs.existsSync(`${rootDir}/regit.js`)
+    const regitDir = await getRegitDirectory()
+    const hasCustomHooks = fs.existsSync(`${regitDir}/hooks.js`)
     if (hasCustomHooks) {
-        const customHooks = await import(`${rootDir}/regit.js`)
+        const customHooks = await import(`${regitDir}/hooks.js`)
 
         return {
             ...defaultHooks,

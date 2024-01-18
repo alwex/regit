@@ -8,10 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import chalk from 'chalk';
-import { listBranchStartingWith, } from './gitHelpers.js';
+import semver from 'semver';
+import { getLatestTag, getProjectRootDirectory, listBranchStartingWith, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
 import { branchFeature, branchPreview } from '../const.js';
 import { checkbox, select } from '@inquirer/prompts';
+import fs from 'fs';
+import { hooksTemplate } from '../templates/hooks.js';
 export const getRemoteFeatureName = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const hooks = yield getHooks();
     const name = yield hooks.getFeatureName(branch);
@@ -103,4 +106,43 @@ export const promptSelectSinglePreview = (message) => __awaiter(void 0, void 0, 
         }),
     });
     return selectedFeature;
+});
+export const promptSelectNextVersion = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const latestTag = (_a = (yield getLatestTag())) !== null && _a !== void 0 ? _a : '0.0.0';
+    const nextMajorTag = semver.inc(latestTag, 'major');
+    const nextMinorTag = semver.inc(latestTag, 'minor');
+    const nextPatchTag = semver.inc(latestTag, 'patch');
+    const selectedVersion = yield select({
+        message,
+        choices: [
+            {
+                name: `Minor ${nextMinorTag}`,
+                value: nextMinorTag,
+            },
+            {
+                name: `Patch ${nextPatchTag}`,
+                value: nextPatchTag,
+            },
+            {
+                name: `Major ${nextMajorTag}`,
+                value: nextMajorTag,
+            },
+        ],
+    });
+    return selectedVersion;
+});
+export const getRegitDirectory = () => __awaiter(void 0, void 0, void 0, function* () {
+    const rootDir = yield getProjectRootDirectory();
+    const regitFolder = `${rootDir}/.regit`;
+    return regitFolder;
+});
+export const initializeRegitFiles = () => __awaiter(void 0, void 0, void 0, function* () {
+    const regitFolder = yield getRegitDirectory();
+    const hookFile = `${regitFolder}/hooks.js`;
+    const hasRegitDirectory = fs.existsSync(regitFolder);
+    if (!hasRegitDirectory) {
+        fs.mkdirSync(regitFolder);
+    }
+    fs.writeFileSync(hookFile, hooksTemplate.trimStart());
 });
