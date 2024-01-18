@@ -1,0 +1,106 @@
+/* Dark mode colors. */
+:root {
+    --sl-color-accent-low: #00273d;
+    --sl-color-accent: #0071a7;
+    --sl-color-accent-high: #92d1fe;
+    --sl-color-white: #ffffff;
+    --sl-color-gray-1: #ededf2;
+    --sl-color-gray-2: #c1c1c7;
+    --sl-color-gray-3: #8a8a94;
+    --sl-color-gray-4: #575760;
+    --sl-color-gray-5: #373740;
+    --sl-color-gray-6: #26262e;
+    --sl-color-black: #18181b;
+    --overlay-blurple: #1d2e3b;
+}
+/* Light mode colors. */
+:root[data-theme='light'] {
+    --sl-color-accent-low: #92d1fe;
+    --sl-color-accent: #0073aa;
+    --sl-color-accent-high: #003653;
+    --sl-color-white: #18181b;
+    --sl-color-gray-1: #26262e;
+    --sl-color-gray-2: #373740;
+    --sl-color-gray-3: #575760;
+    --sl-color-gray-4: #8a8a94;
+    --sl-color-gray-5: #c1c1c7;
+    --sl-color-gray-6: #ededf2;
+    --sl-color-gray-7: #f6f6f8;
+    --sl-color-black: #ffffff;
+    --overlay-blurple: #e1f1ff;
+}
+
+[data-has-hero] .page {
+    background-color: var(--sl-color-black);
+    background: linear-gradient(215deg, var(--overlay-blurple), transparent 40%),
+        radial-gradient(var(--overlay-blurple), transparent 40%) no-repeat -60vw -40vh /
+            105vw 200vh,
+        radial-gradient(var(--overlay-blurple), transparent 65%) no-repeat 50%
+            calc(100% + 20rem) / 60rem 30rem;
+}
+
+[data-has-hero] header {
+    background: transparent;
+    border: none;
+    backdrop-filter: blur(16px);
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes floating {
+    0% {
+        transform: translate(0, 0px);
+    }
+    50% {
+        transform: translate(0, -15px);
+    }
+    100% {
+        transform: translate(0, -0px);
+    }
+}
+
+[data-has-hero] .hero > img {
+    filter: drop-shadow(0 0 3rem var(--overlay-blurple));
+    animation: floating infinite 3s ease-in-out;
+}
+
+.card {
+    border-radius: 1rem;
+    background-color: var(--sl-color-black);
+    background: linear-gradient(215deg, var(--overlay-blurple), transparent 40%),
+        radial-gradient(var(--overlay-blurple), transparent 40%) no-repeat -60vw -40vh /
+            105vw 200vh;
+}
+
+.text-colored {
+    filter: drop-shadow(0 0 3rem var(--overlay-blurple));
+    background-image: linear-gradient(
+        45deg,
+        #ffdd58,
+        #e44354,
+        #92d1fe,
+        #4f953d
+    );
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+}
+
+.git-graph-container {
+    margin-top: 2rem;
+}
+
+/*
+#FFDD58
+#E44354
+#92d1fe
+#4F953D
+*/

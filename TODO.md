@@ -1,7 +1,0 @@
--   create a test github repo
--   feature start
--   feature remove
--   release start
--   release finish
--   preview
--   tag list

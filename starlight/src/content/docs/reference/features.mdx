@@ -1,0 +1,50 @@
+---
+title: Features
+description: A reference page in my new Starlight docs site.
+sidebar:
+    order: 2
+---
+
+import Graph from '../../../components/GitGraphFeature';
+
+<Graph client:load />
+
+## Start a feature
+
+```bash
+regit feature start <feature-name>
+```
+
+## Open a feature
+
+```bash
+regit feature start [feature-name]
+```
+
+If no feature name is provided, you will be prompted to start from an existing feature.
+
+## List features
+
+```bash
+regit feature list
+```
+
+## Feature status
+
+```bash
+regit feature status
+```
+
+## Push a feature
+
+```bash
+regit feature push
+```
+
+This is just a shorthand for pushing the current feature branch to the remote repository.
+
+## Remove a feature
+
+```bash
+regit feature remove <feature-name>
+```

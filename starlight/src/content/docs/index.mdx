@@ -1,0 +1,34 @@
+---
+title: Manage your Git repos <span class="text-colored">like a pro</span>
+description: Start managing your git repository like a pro with Regit.
+template: splash
+hero:
+  tagline: Start optimizing your Git repository with Regit. The swift, accessible, and user-friendly solution for managing your Git repos like a pro.
+  image:
+    file: ../../assets/ReGit_icon.svg
+  actions:
+    - text: Get Started
+      link: /guides/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/alwex/regit
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+	<Card title="Easy to Setup" icon="rocket">
+		ReGit makes it easy to setup and start managing your git repo. Just run the `init` command and start branching. No complicated setup wizard.
+	</Card>
+	<Card title="Keep your repo clean" icon="puzzle">
+		Effortlessly manage feature, preview, and release branches, and streamline your repository with Regit. Create, organize, and automate to maintain a clean and clear versioning history, including tags, for your project.
+	</Card>
+	<Card title="Customize Your Git Workflow" icon="star">
+		Tailor your Git workflow with Regit's flexibility. Define custom hooks for pre and post actions on feature, preview, and release branches. Effortlessly integrate your unique development processes!
+	</Card>
+	<Card title="We're open source" icon="github">
+		Regit is open source! Join our community, contribute on GitHub, and be part of the Git branch management evolution.
+	</Card>
+</CardGrid>

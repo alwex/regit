@@ -10,6 +10,20 @@ unregister globally
 yarn unlink --global
 ```
 
+## Publish
+
+Update version to match with package.json in `program.ts` then
+
+```shell
+npm publish
+```
+
+## Usage with npx
+
+```shell
+npx regit-cli
+```
+
 init playground
 
 ```shell
@@ -18,7 +32,7 @@ mkdir remote
 
 # set origin
 cd local
-git remote add origin /Users/alexandre/WorkspacePerso/regit-playground/remote
+git remote add origin [playground-remote-folder]
 ```
 
 # Doc

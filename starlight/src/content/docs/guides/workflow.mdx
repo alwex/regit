@@ -1,0 +1,73 @@
+---
+title: Workflow
+description: ReGit workflow
+sidebar:
+    order: 2
+---
+
+import Graph1 from '../../../components/GitGraphWorkflow1';
+import Graph2 from '../../../components/GitGraphWorkflow2';
+import Graph3 from '../../../components/GitGraphWorkflow3';
+import Graph4 from '../../../components/GitGraphWorkflow4';
+import Graph5 from '../../../components/GitGraphWorkflow5';
+
+## Workflow example
+
+### Create new features
+
+```bash
+regit feature start a
+regit feature start b
+```
+
+<Graph1 client:load />
+
+### Code your cool features
+
+```bash
+regit feature start a
+git commit -m 'Implement feature A'
+regit feature push
+
+regit feature start b
+git commit -m 'Implement feature B'
+git commit -m 'Fix bug in feature B'
+regit feature push
+
+```
+<Graph2 client:load />
+
+### Ready to go to staging?
+```bash
+regit preview start staging
+regit preview add staging a
+regit preview add staging b
+```
+
+<Graph3 client:load />
+
+:::note
+You are now ready to deploy the preview to staging
+:::
+
+### Ready to go to production?
+
+```bash
+regit release start
+regit release add a
+regit release add b
+regit release finish
+```
+
+<Graph4 client:load />
+
+### Alternative for preview users
+    
+```bash
+regit release start
+git merge --no-ff origin/preview-staging
+git push
+regit release finish
+```
+
+<Graph5 client:load />

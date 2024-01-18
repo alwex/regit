@@ -1,0 +1,69 @@
+---
+title: Releases
+description: A reference page in my new Starlight docs site.
+sidebar:
+    order: 4
+---
+
+import Graph from '../../../components/GitGraphRelease';
+
+<Graph client:load />
+
+## Start a release
+
+```bash
+regit release start [version]
+```
+
+:::note
+Only one release branch can exist at a time.
+:::
+
+Version is optional. If no version is provided, the next version will be decided based on the current version by bumping the minor version.
+
+## Open an existing release
+
+```bash
+regit release start
+```
+
+Will open the existing release branch.
+
+## release Status
+
+```bash
+regit release status
+```
+
+Will show status for the current release and show what feature are included.
+
+## Adding features to a release
+
+Once a release has been created, you can add features to it.
+
+### Add single feature
+
+```bash
+regit release add <feature-name>
+```
+
+### Add multiple features
+
+```bash
+
+regit release add
+```
+
+## Finish a release
+
+```bash
+regit release finish
+```
+
+This will merge the release branch into the stable branch and create a tag for the release. Then cleanup the release branch and all feature included.
+
+## Remove a release
+
+```bash
+regit release remove
+```

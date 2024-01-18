@@ -7,8 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { listBranchStartingWith } from '../../services/gitHelpers.js';
 import { branchFeature } from '../../const.js';
+import { listBranchStartingWith } from '../../services/gitHelpers.js';
 import { displayFeatureBranch } from '../../services/helpers.js';
 // Feature: origin/feature-santiago (from v3.7.1) undefined
 // /!\ Tags not merged into this branch: at least 'v4.3.6' to 'v4.3.8'.

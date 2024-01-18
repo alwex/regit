@@ -1,0 +1,65 @@
+---
+title: Preview
+description: A reference page in my new Starlight docs site.
+sidebar:
+    order: 3
+---
+
+import Graph from '../../../components/GitGraphPreview';
+
+<Graph client:load />
+
+Preview branches can be seen as a staging environment for your features. They are useful for testing and reviewing features before they are merged into the stable branch.
+
+## Start a preview
+
+```bash
+regit preview start <preview-name>
+```
+
+## Open a preview
+
+```bash
+regit preview start [preview-name]
+```
+
+If no preview name is provided, you will be prompted to start from an existing preview.
+
+## List previews
+
+```bash
+regit preview list
+```
+
+Will list all previews in the current repository and show what features are included in each preview.
+
+## Preview Status
+
+```bash
+regit preview status <preview-name>
+```
+
+Will show status for the specified preview and show what feature are included.
+
+## Adding features to a preview
+
+Once a preview has been created, you can add features to it.
+
+### Add single feature
+
+```bash
+regit preview add <preview-name> <feature-name>
+```
+
+### Add multiple features
+
+```bash
+
+regit preview add <preview-name>
+```
+
+## Remove a preview
+
+```bash
+regit preview remove <preview-name>
+```
