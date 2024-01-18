@@ -16,6 +16,10 @@ const generateChangelog = () => {
     )
 }
 
+const setPackageVersion = (version) => {
+    execSync(`pushd ${rootFolder} && yarn version ${version} && popd`)
+}
+
 module.exports = {
     getFeatureName: async (id) => {
         // return feature name
@@ -30,6 +34,7 @@ module.exports = {
     preReleaseFinish: async (id) => {
         // do something clever before release finish
         generateChangelog()
+        setPackageVersion(id)
     },
     postReleaseFinish: async (id) => {
         // do something clever after release finish
