@@ -1,1 +1,0 @@
-import{j as a,G as e}from"./GitGraphWrapper.ki74H1Lv.js";import"./index.LFf77hJu.js";function n(){return a.jsx(e,{children:r=>{const t=r.branch({name:"stable"});t.commit("Initial Commit"),t.branch("feature-a").commit("commit1"),t.branch("feature-b").commit("commit1"),t.commit("commit1")}})}export{n as default};
