@@ -1,7 +1,6 @@
 import { Command } from 'commander'
-import { listBranchStartingWith } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
-import chalk from 'chalk'
+import { listBranchStartingWith } from '../../services/gitHelpers.js'
 import { displayFeatureBranch } from '../../services/helpers.js'
 
 // Feature: origin/feature-santiago (from v3.7.1) undefined

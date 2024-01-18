@@ -1,0 +1,41 @@
+---
+title: Hooks
+description: Hooks
+sidebar:
+    order: 6
+---
+
+```ts
+export interface Hooks {
+    getFeatureName: (id: string) => Promise<string>
+    preFeatureStart: (id: string) => Promise<void>
+    postFeatureStart: (id: string) => Promise<void>
+    preReleaseFinish: (version: string) => Promise<void>
+    postReleaseFinish: (version: string) => Promise<void>
+}
+```
+## Example
+
+
+```js title="regit.js"
+module.exports = {
+    getFeatureName: async (id) => {
+        console.log('fetch feature name from somewhere')
+        return Promise.resolve('feature name from gitlab')
+    },
+    preFeatureStart: async (id) => {
+        console.log('doing something clever BEFORE feature start')
+    },
+    postFeatureStart: async (id) => {
+        console.log('doing something clever AFTER feature start')
+    },
+    preReleaseFinish:  async (version) => {
+        console.log('doing something clever BEFORE release finish')
+        // generate changelog and add it to CHANGELOG.md
+        // commit and push
+    },
+    postReleaseFinish:  async (version) => {
+        console.log('doing something clever AFTER release finish')
+    },
+}
+```

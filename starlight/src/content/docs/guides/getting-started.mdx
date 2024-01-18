@@ -1,0 +1,38 @@
+---
+title: Getting Started
+description: Getting Started with ReGit
+sidebar:
+    order: 1
+---
+
+import GitGraphExample from '../../../components/GitGraphExample';
+
+ReGit is a command-line interface (CLI) tool designed to simplify and streamline the management of Git branches in your software development workflow. It provides a set of commands to create and manage feature branches, preview branches for pre-releases or staging environments, release branches, and automate tagging.
+
+## Example of regit workflow
+<div style="width:100%;">
+	<GitGraphExample client:load />
+</div>
+
+## Prerequisistes
+
+-   [Git](https://git-scm.com/) installed on your system
+-   [Node](https://nodejs.org/en) installed on your system (we recomment using [nvm](https://github.com/nvm-sh/nvm))
+
+## Install ReGit
+
+To install Regit globally, use the following command:
+
+```bash
+npm install -g regit@npm:regit-cli
+```
+
+## Init your repository
+
+Initialize your repository with the following command:
+
+```bash
+regit init <version>
+```
+
+You're now ready to use ReGit!

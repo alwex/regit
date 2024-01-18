@@ -6,7 +6,7 @@ import configurePreivew from './commands/preview/index.js';
 import configureTag from './commands/tag/index.js';
 export const makeProgram = () => {
     const program = new Command();
-    program.version('v1.0.0');
+    program.version('v1.0.6');
     configureInit(program);
     configureFeature(program);
     configurePreivew(program);
