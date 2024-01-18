@@ -1,3 +1,21 @@
+const execSync = require('child_process').execSync
+
+const rootFolder = `${__dirname}/../`
+
+const generateChangelog = () => {
+    execSync(
+        `pushd ${rootFolder} && regit release status >> CHANGELOG.tmp && popd`
+    )
+    execSync(`pushd ${rootFolder} && echo "" >> CHANGELOG.tmp && popd`)
+    execSync(`pushd ${rootFolder} && cat CHANGELOG.md >> CHANGELOG.tmp && popd`)
+    execSync(`pushd ${rootFolder} && cat CHANGELOG.tmp > CHANGELOG.md && popd`)
+    execSync(`pushd ${rootFolder} && rm CHANGELOG.tmp && popd`)
+    execSync(`pushd ${rootFolder} && git add CHANGELOG.md && popd`)
+    execSync(
+        `pushd ${rootFolder} && git commit -m "chore: update CHANGELOG.md" && popd`
+    )
+}
+
 module.exports = {
     getFeatureName: async (id) => {
         // return feature name
@@ -11,6 +29,7 @@ module.exports = {
     },
     preReleaseFinish: async (id) => {
         // do something clever before release finish
+        generateChangelog()
     },
     postReleaseFinish: async (id) => {
         // do something clever after release finish
