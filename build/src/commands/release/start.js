@@ -11,6 +11,8 @@ import { branchRelease } from '../../const.js';
 import { assertCurrentBranchIsClean, getLatestTag, getOpenReleaseBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
 import semver from 'semver';
 import { logger } from '../../services/logger.js';
+import { promptSelectNextVersion } from '../../services/helpers.js';
+import { confirm } from '@inquirer/prompts';
 const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     yield assertCurrentBranchIsClean();
@@ -32,6 +34,19 @@ const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
                 throw new Error(`Version ${version} is not greater than the latest tag ${latestTag}`);
             }
             versionToUse = version;
+        }
+        else {
+            versionToUse = yield promptSelectNextVersion('What version do you want to release?');
+            const isMajorIncrease = semver.major(versionToUse) > semver.major(latestTag);
+            if (isMajorIncrease) {
+                const answer = yield confirm({
+                    message: `Are you sure you want to use the major version (${versionToUse})?`,
+                    default: false,
+                });
+                if (!answer) {
+                    throw new Error('Aborted');
+                }
+            }
         }
         const branchName = `${branchRelease}${versionToUse}`;
         yield startOrCheckoutBranch(branchName);

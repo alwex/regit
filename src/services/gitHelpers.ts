@@ -1,5 +1,6 @@
 import { branchFeature, branchRelease, branchStable } from '../const.js'
 import { git } from './git.js'
+import { initializeRegitFiles } from './helpers.js'
 import { uniqBy } from './utils.js'
 
 export const getProjectRootDirectory = async () => {
@@ -124,9 +125,13 @@ export const remoteBranchExists = async (branchName: string) => {
     return Boolean(isRemote)
 }
 
-export const initStableBranch = async (version: string) => {
+export const initStableBranch = async () => {
     await git.checkoutLocalBranch(branchStable)
-    await git.raw(['commit', '--allow-empty', '-m', `[regit] Init ${version}`])
+}
+
+export const pushStableBranch = async (version: string) => {
+    await git.raw(['add', './.regit'])
+    await git.raw(['commit', '-m', `[regit] Init ${version}`])
     await git.push(['-u', 'origin', branchStable])
     await createTag(version)
 }

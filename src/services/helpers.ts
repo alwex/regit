@@ -1,15 +1,19 @@
 import chalk from 'chalk'
-
+import semver from 'semver'
 import {
     ListBranchResult,
     ListBranchesInBranchResult,
     ReleaseHeaderResult,
     TagHeaderResult,
+    getLatestTag,
+    getProjectRootDirectory,
     listBranchStartingWith,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
 import { branchFeature, branchPreview } from '../const.js'
 import { checkbox, select } from '@inquirer/prompts'
+import fs from 'fs'
+import { hooksTemplate } from '../templates/hooks.js'
 
 export const getRemoteFeatureName = async (branch: string) => {
     const hooks = await getHooks()
@@ -142,4 +146,50 @@ export const promptSelectSinglePreview = async (message: string) => {
     })
 
     return selectedFeature
+}
+
+export const promptSelectNextVersion = async (message: string) => {
+    const latestTag = (await getLatestTag()) ?? '0.0.0'
+    const nextMajorTag = semver.inc(latestTag, 'major') as string
+    const nextMinorTag = semver.inc(latestTag, 'minor') as string
+    const nextPatchTag = semver.inc(latestTag, 'patch') as string
+
+    const selectedVersion = await select({
+        message,
+        choices: [
+            {
+                name: `Minor ${nextMinorTag}`,
+                value: nextMinorTag,
+            },
+            {
+                name: `Patch ${nextPatchTag}`,
+                value: nextPatchTag,
+            },
+            {
+                name: `Major ${nextMajorTag}`,
+                value: nextMajorTag,
+            },
+        ],
+    })
+
+    return selectedVersion
+}
+
+export const getRegitDirectory = async () => {
+    const rootDir = await getProjectRootDirectory()
+    const regitFolder = `${rootDir}/.regit`
+
+    return regitFolder
+}
+
+export const initializeRegitFiles = async () => {
+    const regitFolder = await getRegitDirectory()
+    const hookFile = `${regitFolder}/hooks.js`
+
+    const hasRegitDirectory = fs.existsSync(regitFolder)
+    if (!hasRegitDirectory) {
+        fs.mkdirSync(regitFolder)
+    }
+
+    fs.writeFileSync(hookFile, hooksTemplate.trimStart())
 }
