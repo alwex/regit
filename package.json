@@ -1,6 +1,6 @@
 {
     "name": "regit-cli",
-    "version": "1.2.1",
+    "version": "1.2.3",
     "description": "git helper cli",
     "repository": {
         "type": "git",
