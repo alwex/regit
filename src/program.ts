@@ -5,7 +5,7 @@ import configureRelease from './commands/release/index.js'
 import configurePreivew from './commands/preview/index.js'
 import configureTag from './commands/tag/index.js'
 
-const programVersion = process.env.npm_package_version ?? '1.0.0'
+const programVersion = process.env.npm_package_version ?? '1.2.3'
 
 export const makeProgram = () => {
     const program = new Command()
