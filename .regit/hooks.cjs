@@ -23,9 +23,7 @@ const generateChangelog = () => {
 
 const setPackageVersion = (version) => {
     console.log('Setting package version to: ', version)
-    execSync(
-        `pushd ${rootFolder} && yarn version --new-version ${version} && popd`
-    )
+    execSync(`pushd ${rootFolder} && yarn v --new-version ${version} && popd`)
     execSync(`pushd ${rootFolder} && git add package.json && popd`)
     execSync(
         `pushd ${rootFolder} && git commit -m "chore: update package version to ${version}" && popd`
