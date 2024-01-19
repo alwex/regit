@@ -26,7 +26,7 @@ const setPackageVersion = (version) => {
     execSync(`pushd ${rootFolder} && yarn v --new-version ${version} && popd`)
     execSync(`pushd ${rootFolder} && git add package.json && popd`)
     execSync(
-        `pushd ${rootFolder} && echo "export default '${version}'" >> ./src/version.ts && popd`
+        `pushd ${rootFolder} && echo "export default '${version}'" > ./src/version.ts && popd`
     )
     execSync(`pushd ${rootFolder} && git add ./src/version.ts && popd`)
     execSync(
