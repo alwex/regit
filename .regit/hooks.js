@@ -30,10 +30,10 @@ const setPackageVersion = (version) => {
     )
 }
 
-module.exports = {
+export default {
     getFeatureName: async (id) => {
         // return feature name
-        return Promise.resolve('')
+        return Promise.resolve('proute')
     },
     preFeatureStart: async (id) => {
         // do something clever before feature start
