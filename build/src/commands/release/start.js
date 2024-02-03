@@ -13,8 +13,10 @@ import semver from 'semver';
 import { logger } from '../../services/logger.js';
 import { promptSelectNextVersion } from '../../services/helpers.js';
 import { confirm } from '@inquirer/prompts';
+import { getHooks } from '../../services/hooks.js';
 const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    const hooks = yield getHooks();
     yield assertCurrentBranchIsClean();
     const openRelease = yield getOpenReleaseBranch();
     if (openRelease) {
@@ -48,9 +50,11 @@ const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             }
         }
+        yield hooks.preReleaseStart(version);
         const branchName = `${branchRelease}${versionToUse}`;
         yield startOrCheckoutBranch(branchName);
         logger.success(`Release ${versionToUse} started`);
+        yield hooks.postReleaseStart(version);
     }
 });
 export default (program) => {

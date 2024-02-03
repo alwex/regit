@@ -113,7 +113,7 @@ export const getBranchInfo = (branchName) => __awaiter(void 0, void 0, void 0, f
 export const listBranchStartingWith = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
     const data = [];
     const result = yield git.branch();
-    const branches = result.all.filter((branch) => branch.includes(branchName));
+    const branches = result.all.filter((branch) => branch.startsWith(branchName));
     for (let i = 0; i < branches.length; i++) {
         const name = branches[i];
         const branchData = yield getBranchInfo(name);
