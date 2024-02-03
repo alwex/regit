@@ -47,14 +47,14 @@ export default {
     },
     preReleaseStart: async (version) => {
         // do something clever before release start
+        setPackageVersion(version)
     },
-    preReleaseStart: async (version) => {
+    postReleaseStart: async (version) => {
         // do something clever before release start
     },
     preReleaseFinish: async (version) => {
         // do something clever before release finish
         // generateChangelog()
-        setPackageVersion(version)
     },
     postReleaseFinish: async (version) => {
         // do something clever after release finish
