@@ -7,6 +7,8 @@ export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
     preFeatureStart: (id: string) => Promise<void>
     postFeatureStart: (id: string) => Promise<void>
+    preReleaseStart: (version: string) => Promise<void>
+    postReleaseStart: (version: string) => Promise<void>
     preReleaseFinish: (version: string) => Promise<void>
     postReleaseFinish: (version: string) => Promise<void>
 }
@@ -21,10 +23,12 @@ const defaultHooks: Hooks = {
 
         return ''
     },
-    preFeatureStart: async () => {},
-    postFeatureStart: async () => {},
-    preReleaseFinish: async () => {},
-    postReleaseFinish: async () => {},
+    preFeatureStart: async (id: string) => {},
+    postFeatureStart: async (id: string) => {},
+    preReleaseStart: async (version: string) => {},
+    postReleaseStart: async (version: string) => {},
+    preReleaseFinish: async (version: string) => {},
+    postReleaseFinish: async (version: string) => {},
 }
 
 export const getHooks = async () => {

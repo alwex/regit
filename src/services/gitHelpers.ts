@@ -162,7 +162,9 @@ export const listBranchStartingWith = async (branchName: string) => {
 
     const result = await git.branch()
 
-    const branches = result.all.filter((branch) => branch.includes(branchName))
+    const branches = result.all.filter((branch) =>
+        branch.startsWith(branchName)
+    )
 
     for (let i = 0; i < branches.length; i++) {
         const name = branches[i]

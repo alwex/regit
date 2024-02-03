@@ -45,12 +45,18 @@ export default {
     postFeatureStart: async (id) => {
         // do something clever after feature start
     },
-    preReleaseFinish: async (id) => {
+    preReleaseStart: async (version) => {
+        // do something clever before release start
+        setPackageVersion(version)
+    },
+    postReleaseStart: async (version) => {
+        // do something clever before release start
+    },
+    preReleaseFinish: async (version) => {
         // do something clever before release finish
         // generateChangelog()
-        setPackageVersion(id)
     },
-    postReleaseFinish: async (id) => {
+    postReleaseFinish: async (version) => {
         // do something clever after release finish
     },
 }

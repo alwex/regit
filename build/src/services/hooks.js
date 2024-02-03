@@ -16,10 +16,12 @@ const defaultHooks = {
         // return result.data.toString().replaceAll(',', '-')
         return '';
     }),
-    preFeatureStart: () => __awaiter(void 0, void 0, void 0, function* () { }),
-    postFeatureStart: () => __awaiter(void 0, void 0, void 0, function* () { }),
-    preReleaseFinish: () => __awaiter(void 0, void 0, void 0, function* () { }),
-    postReleaseFinish: () => __awaiter(void 0, void 0, void 0, function* () { }),
+    preFeatureStart: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
+    postFeatureStart: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
+    preReleaseStart: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
+    postReleaseStart: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
+    preReleaseFinish: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
+    postReleaseFinish: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
 };
 export const getHooks = () => __awaiter(void 0, void 0, void 0, function* () {
     const regitDir = yield getRegitDirectory();

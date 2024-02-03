@@ -10,8 +10,11 @@ import semver from 'semver'
 import { logger } from '../../services/logger.js'
 import { promptSelectNextVersion } from '../../services/helpers.js'
 import { confirm } from '@inquirer/prompts'
+import { getHooks } from '../../services/hooks.js'
 
 const action = async (version: string) => {
+    const hooks = await getHooks()
+
     await assertCurrentBranchIsClean()
 
     const openRelease = await getOpenReleaseBranch()
@@ -55,9 +58,13 @@ const action = async (version: string) => {
             }
         }
 
+        await hooks.preReleaseStart(version)
+
         const branchName = `${branchRelease}${versionToUse}`
         await startOrCheckoutBranch(branchName)
         logger.success(`Release ${versionToUse} started`)
+
+        await hooks.postReleaseStart(version)
     }
 }
 
