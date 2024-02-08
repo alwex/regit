@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchPreview } from '../../const.js';
 import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
-import { promptSelectMultipleFeatures } from '../../services/helpers.js';
 import { logger } from '../../services/logger.js';
+import { promptSelectMultipleFeatures } from '../../services/featureHelpers.js';
 const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
     const previewBranchName = `${branchPreview}${name}`;

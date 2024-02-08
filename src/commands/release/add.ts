@@ -9,7 +9,7 @@ import {
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
-import { promptSelectMultipleFeatures } from '../../services/helpers.js'
+import { promptSelectMultipleFeatures } from '../../services/featureHelpers.js'
 
 const addSingleFeature = async (id: string) => {
     await assertCurrentBranchIsClean()

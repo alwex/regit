@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchFeature } from '../../const.js';
 import { listBranchStartingWith } from '../../services/gitHelpers.js';
-import { displayFeatureBranch } from '../../services/helpers.js';
+import { displayFeatureBranch } from '../../services/featureHelpers.js';
 // Feature: origin/feature-santiago (from v3.7.1) undefined
 // /!\ Tags not merged into this branch: at least 'v4.3.6' to 'v4.3.8'.
 // commit 739c9a20259e319111977f3aed1b91bf59d84888

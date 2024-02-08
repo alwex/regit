@@ -7,8 +7,8 @@ import {
     pushBranch,
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
-import { promptSelectMultipleFeatures } from '../../services/helpers.js'
 import { logger } from '../../services/logger.js'
+import { promptSelectMultipleFeatures } from '../../services/featureHelpers.js'
 
 const action = async (name: string) => {
     await assertCurrentBranchIsClean()

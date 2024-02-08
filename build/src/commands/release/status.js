@@ -9,7 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchFeature, branchRelease } from '../../const.js';
 import { getBranchDetails, listBranchStartingWith, listBranchesInBranch, } from '../../services/gitHelpers.js';
-import { displayReleaseHeader, displaySubFeatureBranch, } from '../../services/helpers.js';
+import { displayReleaseHeader } from '../../services/releaseHelpers.js';
+import { displaySubFeatureBranch } from '../../services/featureHelpers.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
     const releaseBranches = yield listBranchStartingWith(branchRelease);
     if (releaseBranches.length === 0) {

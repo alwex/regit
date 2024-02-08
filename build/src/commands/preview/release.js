@@ -7,29 +7,32 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
-import { logger } from '../../services/logger.js';
 import { branchPreview } from '../../const.js';
+import { assertCurrentBranchIsClean } from '../../services/gitHelpers.js';
 import { promptSelectSinglePreview } from '../../services/previewHelpers.js';
-const startPreviewWithName = (name) => __awaiter(void 0, void 0, void 0, function* () {
-    const branchName = `${branchPreview}${name}`;
-    yield startOrCheckoutBranch(branchName);
-    logger.success(`Preview ${name} started`);
+import { promptSelectNextVersion } from '../../services/releaseHelpers.js';
+const releasePreviewWithName = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    const previewBranchName = `${branchPreview}${name}`;
+    const versionToUse = yield promptSelectNextVersion('What version do you want to release?');
 });
-const startPreviewWithPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
-    const selectedPreview = yield promptSelectSinglePreview('Select preview to open');
+const releasePreviewWithPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
+    const selectedPreview = yield promptSelectSinglePreview('Select preview to release');
     const previewName = selectedPreview.replace(branchPreview, '');
-    yield startPreviewWithName(previewName);
+    yield releasePreviewWithName(previewName);
 });
 const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
     if (name) {
-        startPreviewWithName(name);
+        yield releasePreviewWithName(name);
     }
     else {
-        startPreviewWithPrompt();
+        yield releasePreviewWithPrompt();
     }
 });
 export default (program) => {
-    program.command('start').argument('[name]', 'Preview Name').action(action);
+    program
+        .command('release')
+        .argument('[name]', 'Name')
+        .description('Create a release branch from a preview branch')
+        .action(action);
 };

@@ -12,7 +12,7 @@ import { branchFeature } from '../../const.js';
 import { getHooks } from '../../services/hooks.js';
 import { logger } from '../../services/logger.js';
 import semver from 'semver';
-import { promptSelectSingleFeature, } from '../../services/helpers.js';
+import { promptSelectSingleFeature } from '../../services/featureHelpers.js';
 const startFeatureWithId = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const hooks = yield getHooks();
     yield assertCurrentBranchIsClean();

@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { branchFeature, branchRelease } from '../../const.js';
 import { assertCurrentBranchIsClean, branchExists, listBranchStartingWith, mergeBranch, pushBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
-import { promptSelectMultipleFeatures } from '../../services/helpers.js';
+import { promptSelectMultipleFeatures } from '../../services/featureHelpers.js';
 const addSingleFeature = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
     const releaseBranches = yield listBranchStartingWith(branchRelease);

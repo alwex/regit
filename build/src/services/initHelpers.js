@@ -7,12 +7,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean } from '../../services/gitHelpers.js';
-import { removeRelease } from '../../services/releaseHelpers.js';
-const action = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield assertCurrentBranchIsClean();
-    yield removeRelease();
+import fs from 'fs';
+import { getRegitDirectory } from './helpers.js';
+import { hooksTemplate } from '../templates/hooks.js';
+export const initializeRegitFiles = () => __awaiter(void 0, void 0, void 0, function* () {
+    const regitFolder = yield getRegitDirectory();
+    const hookFile = `${regitFolder}/hooks.js`;
+    const hasRegitDirectory = fs.existsSync(regitFolder);
+    if (!hasRegitDirectory) {
+        fs.mkdirSync(regitFolder);
+    }
+    fs.writeFileSync(hookFile, hooksTemplate.trimStart());
 });
-export default (program) => {
-    program.command('remove').action(action);
-};

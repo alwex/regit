@@ -7,12 +7,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean } from '../../services/gitHelpers.js';
-import { removeRelease } from '../../services/releaseHelpers.js';
-const action = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield assertCurrentBranchIsClean();
-    yield removeRelease();
+import { select } from '@inquirer/prompts';
+import { branchPreview } from '../const.js';
+import { listBranchStartingWith } from './gitHelpers.js';
+export const promptSelectSinglePreview = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    const allBranches = yield listBranchStartingWith(branchPreview);
+    const selectedFeature = yield select({
+        message,
+        choices: allBranches.map((branch) => {
+            return {
+                name: branch.name,
+                value: branch.name,
+            };
+        }),
+    });
+    return selectedFeature;
 });
-export default (program) => {
-    program.command('remove').action(action);
-};
