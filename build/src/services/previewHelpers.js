@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { select } from '@inquirer/prompts';
 import { branchPreview } from '../const.js';
-import { listBranchStartingWith } from './gitHelpers.js';
+import { branchExists, listBranchStartingWith } from './gitHelpers.js';
 export const promptSelectSinglePreview = (message) => __awaiter(void 0, void 0, void 0, function* () {
     const allBranches = yield listBranchStartingWith(branchPreview);
     const selectedFeature = yield select({
@@ -22,4 +22,11 @@ export const promptSelectSinglePreview = (message) => __awaiter(void 0, void 0, 
         }),
     });
     return selectedFeature;
+});
+export const assertPreviewExists = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const branchName = `${branchPreview}${id}`;
+    const doesBranchExists = yield branchExists(branchName);
+    if (!doesBranchExists) {
+        throw new Error(`Preview ${id} does not exist`);
+    }
 });

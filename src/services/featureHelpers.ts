@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import {
     ListBranchResult,
     ListBranchesInBranchResult,
+    branchExists,
     listBranchStartingWith,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
@@ -13,6 +14,14 @@ export const getRemoteFeatureName = async (branch: string) => {
     const name = await hooks.getFeatureName(branch)
 
     return name
+}
+
+export const assertFeatureExists = async (id: string) => {
+    const branchName = `${branchFeature}${id}`
+    const featureExists = await branchExists(branchName)
+    if (!featureExists) {
+        throw new Error(`Feature ${id} does not exist`)
+    }
 }
 
 export const formatFeatureForDisplay = async (branch: ListBranchResult) => {

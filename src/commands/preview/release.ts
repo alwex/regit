@@ -1,15 +1,37 @@
 import { Command } from 'commander'
 import { branchPreview } from '../../const.js'
-import { assertCurrentBranchIsClean } from '../../services/gitHelpers.js'
-import { promptSelectSinglePreview } from '../../services/previewHelpers.js'
-import { promptSelectNextVersion } from '../../services/releaseHelpers.js'
+import {
+    assertCurrentBranchIsClean,
+    mergeBranch,
+    pushBranch,
+} from '../../services/gitHelpers.js'
+import {
+    assertPreviewExists,
+    promptSelectSinglePreview,
+} from '../../services/previewHelpers.js'
+import {
+    promptSelectNextVersion,
+    startRelease,
+} from '../../services/releaseHelpers.js'
+import { logger } from '../../services/logger.js'
 
 const releasePreviewWithName = async (name: string) => {
+    assertPreviewExists(name)
+
     const previewBranchName = `${branchPreview}${name}`
 
     const versionToUse = await promptSelectNextVersion(
         'What version do you want to release?'
     )
+
+    const { name: releaseBranchName } = await startRelease(versionToUse)
+    await mergeBranch(previewBranchName)
+
+    logger.success(
+        `Preview ${previewBranchName} merged into ${releaseBranchName}`
+    )
+
+    await pushBranch(releaseBranchName)
 }
 
 const releasePreviewWithPrompt = async () => {

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { confirm, select } from '@inquirer/prompts';
 import { branchRelease, branchStable } from '../const.js';
-import { deleteBranch, getCurrentBranch, getLatestTag, getOpenReleaseBranch, startOrCheckoutBranch, } from './gitHelpers.js';
+import { deleteBranch, getCurrentBranch, getLatestTag, getOpenReleaseBranch, listBranchStartingWith, startOrCheckoutBranch, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
 import { logger } from './logger.js';
 import semver from 'semver';
@@ -21,6 +21,17 @@ export const startRelease = (version) => __awaiter(void 0, void 0, void 0, funct
     yield startOrCheckoutBranch(branchName);
     logger.success(`Release ${version} started`);
     yield hooks.postReleaseStart(version);
+    return { name: branchName };
+});
+export const openRelease = () => __awaiter(void 0, void 0, void 0, function* () {
+    const releaseBranches = yield listBranchStartingWith(branchRelease);
+    if (releaseBranches.length === 0) {
+        throw new Error('No release branch found');
+    }
+    const currentReleaseBranch = releaseBranches[0];
+    const { from, name, show } = currentReleaseBranch;
+    yield startOrCheckoutBranch(name);
+    return { from, name, show };
 });
 export const removeRelease = () => __awaiter(void 0, void 0, void 0, function* () {
     const openRelease = yield getOpenReleaseBranch();

@@ -8,12 +8,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchPreview } from '../../const.js';
-import { assertCurrentBranchIsClean } from '../../services/gitHelpers.js';
-import { promptSelectSinglePreview } from '../../services/previewHelpers.js';
-import { promptSelectNextVersion } from '../../services/releaseHelpers.js';
+import { assertCurrentBranchIsClean, mergeBranch, pushBranch, } from '../../services/gitHelpers.js';
+import { assertPreviewExists, promptSelectSinglePreview, } from '../../services/previewHelpers.js';
+import { promptSelectNextVersion, startRelease, } from '../../services/releaseHelpers.js';
+import { logger } from '../../services/logger.js';
 const releasePreviewWithName = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    assertPreviewExists(name);
     const previewBranchName = `${branchPreview}${name}`;
     const versionToUse = yield promptSelectNextVersion('What version do you want to release?');
+    const { name: releaseBranchName } = yield startRelease(versionToUse);
+    yield mergeBranch(previewBranchName);
+    logger.success(`Preview ${previewBranchName} merged into ${releaseBranchName}`);
+    yield pushBranch(releaseBranchName);
 });
 const releasePreviewWithPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
     const selectedPreview = yield promptSelectSinglePreview('Select preview to release');

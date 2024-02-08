@@ -7,6 +7,7 @@ import {
     getCurrentBranch,
     getLatestTag,
     getOpenReleaseBranch,
+    listBranchStartingWith,
     startOrCheckoutBranch,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
@@ -23,6 +24,21 @@ export const startRelease = async (version: string) => {
     logger.success(`Release ${version} started`)
 
     await hooks.postReleaseStart(version)
+
+    return { name: branchName }
+}
+
+export const openRelease = async () => {
+    const releaseBranches = await listBranchStartingWith(branchRelease)
+    if (releaseBranches.length === 0) {
+        throw new Error('No release branch found')
+    }
+    const currentReleaseBranch = releaseBranches[0]
+    const { from, name, show } = currentReleaseBranch
+
+    await startOrCheckoutBranch(name)
+
+    return { from, name, show }
 }
 
 export const removeRelease = async () => {

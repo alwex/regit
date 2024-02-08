@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import chalk from 'chalk';
-import { listBranchStartingWith, } from './gitHelpers.js';
+import { branchExists, listBranchStartingWith, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
 import { branchFeature } from '../const.js';
 import { checkbox, select } from '@inquirer/prompts';
@@ -16,6 +16,13 @@ export const getRemoteFeatureName = (branch) => __awaiter(void 0, void 0, void 0
     const hooks = yield getHooks();
     const name = yield hooks.getFeatureName(branch);
     return name;
+});
+export const assertFeatureExists = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const branchName = `${branchFeature}${id}`;
+    const featureExists = yield branchExists(branchName);
+    if (!featureExists) {
+        throw new Error(`Feature ${id} does not exist`);
+    }
 });
 export const formatFeatureForDisplay = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const { from, name, show } = branch;
