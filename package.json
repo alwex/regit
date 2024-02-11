@@ -1,6 +1,6 @@
 {
     "name": "regit-cli",
-    "version": "1.3.0",
+    "version": "1.3.4",
     "description": "git helper cli",
     "repository": {
         "type": "git",
@@ -30,7 +30,6 @@
         "chalk": "^5.2.0",
         "commander": "^10.0.1",
         "figlet": "^1.6.0",
-        "regit": "npm:regit-cli@^1.3.0",
         "semver": "^7.5.0",
         "signale": "^1.4.0",
         "simple-git": "^3.18.0",
@@ -40,6 +39,7 @@
     "scripts": {
         "predev": "yarn build",
         "dev": "NODE_ENV=dev node build/src/index.js",
+        "prod": "NODE_ENV=prod node build/src/index.js",
         "build": "rimraf ./build && tsc",
         "postbuild": "chmod u+x ./build/src/index.js",
         "test": "vitest",

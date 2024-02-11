@@ -26,8 +26,7 @@ const action = async (version: string) => {
         } else {
             versionToUse = await promptSelectNextVersionWithConfirmation()
         }
-
-        await startRelease(versionToUse)
+        await startRelease(versionToUse.trim())
     }
 }
 
