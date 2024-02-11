@@ -40,6 +40,7 @@
     "scripts": {
         "predev": "yarn build",
         "dev": "NODE_ENV=dev node build/src/index.js",
+        "prod": "NODE_ENV=prod node build/src/index.js",
         "build": "rimraf ./build && tsc",
         "postbuild": "chmod u+x ./build/src/index.js",
         "test": "vitest",
