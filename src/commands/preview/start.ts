@@ -4,12 +4,10 @@ import {
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
-import { promptSelectSinglePreview } from '../../services/helpers.js'
 import { branchPreview } from '../../const.js'
+import { promptSelectSinglePreview } from '../../services/previewHelpers.js'
 
 const startPreviewWithName = async (name: string) => {
-    await assertCurrentBranchIsClean()
-
     const branchName = `${branchPreview}${name}`
     await startOrCheckoutBranch(branchName)
     logger.success(`Preview ${name} started`)
@@ -26,6 +24,7 @@ const startPreviewWithPrompt = async () => {
 }
 
 const action = async (name?: string) => {
+    await assertCurrentBranchIsClean()
     if (name) {
         startPreviewWithName(name)
     } else {

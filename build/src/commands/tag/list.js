@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchFeature } from '../../const.js';
 import { getLatestTags, getTagDetails, listBranchesBetweenTags, } from '../../services/gitHelpers.js';
-import { displayTagFeatureBranch, displayTagHeader, } from '../../services/helpers.js';
+import { displayTagFeatureBranch, displayTagHeader, } from '../../services/tagHelpers.js';
 // git log --no-merges --pretty='oneline' --abbrev-commit 1.1.0..1.2.0
 // Tag: v0.53.0
 // Tagger: Alexandre Guidet <a.guidet@we-are-mea.com>

@@ -6,10 +6,8 @@ import {
     listBranchStartingWith,
     listBranchesInBranch,
 } from '../../services/gitHelpers.js'
-import {
-    displayReleaseHeader,
-    displaySubFeatureBranch,
-} from '../../services/helpers.js'
+import { displayReleaseHeader } from '../../services/releaseHelpers.js'
+import { displaySubFeatureBranch } from '../../services/featureHelpers.js'
 
 const action = async () => {
     const releaseBranches = await listBranchStartingWith(branchRelease)

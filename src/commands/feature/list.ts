@@ -1,7 +1,7 @@
 import { Command } from 'commander'
 import { branchFeature } from '../../const.js'
 import { listBranchStartingWith } from '../../services/gitHelpers.js'
-import { displayFeatureBranch } from '../../services/helpers.js'
+import { displayFeatureBranch } from '../../services/featureHelpers.js'
 
 // Feature: origin/feature-santiago (from v3.7.1) undefined
 // /!\ Tags not merged into this branch: at least 'v4.3.6' to 'v4.3.8'.
