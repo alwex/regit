@@ -28,7 +28,7 @@ const action = async (version: string) => {
         }
         console.log('====')
         console.log({ versionToUse })
-        await startRelease(versionToUse)
+        await startRelease(versionToUse.trim())
     }
 }
 
