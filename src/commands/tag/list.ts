@@ -8,7 +8,7 @@ import {
 import {
     displayTagFeatureBranch,
     displayTagHeader,
-} from '../../services/helpers.js'
+} from '../../services/tagHelpers.js'
 
 // git log --no-merges --pretty='oneline' --abbrev-commit 1.1.0..1.2.0
 

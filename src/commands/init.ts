@@ -7,7 +7,7 @@ import {
     initStableBranch,
     pushStableBranch,
 } from '../services/gitHelpers.js'
-import { initializeRegitFiles } from '../services/helpers.js'
+import { initializeRegitFiles } from '../services/initHelpers.js'
 
 const action = async (version: string) => {
     if (!semver.valid(version)) {

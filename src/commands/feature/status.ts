@@ -1,18 +1,14 @@
 import { Command } from 'commander'
+import { branchFeature } from '../../const.js'
 import {
     getBranchInfo,
     getCurrentBranch,
     getLatestTag,
     listBranchStartingWith,
 } from '../../services/gitHelpers.js'
-import { branchFeature } from '../../const.js'
-import chalk from 'chalk'
-import {
-    displayFeatureBranch,
-    getRemoteFeatureName,
-} from '../../services/helpers.js'
-import { logger } from '../../services/logger.js'
 import semver from 'semver'
+import { displayFeatureBranch } from '../../services/featureHelpers.js'
+import { logger } from '../../services/logger.js'
 
 // Feature: origin/feature-santiago (from v3.7.1) undefined
 // /!\ Tags not merged into this branch: at least 'v4.3.6' to 'v4.3.8'.

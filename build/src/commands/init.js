@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import semver from 'semver';
 import { branchStable } from '../const.js';
 import { assertCurrentBranchIsClean, branchExists, initStableBranch, pushStableBranch, } from '../services/gitHelpers.js';
-import { initializeRegitFiles } from '../services/helpers.js';
+import { initializeRegitFiles } from '../services/initHelpers.js';
 const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
     if (!semver.valid(version)) {
         throw new Error('Invalid version number, please use semver eg 1.0.0');

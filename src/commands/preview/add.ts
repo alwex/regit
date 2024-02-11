@@ -8,11 +8,9 @@ import {
     startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
-import { promptSelectMultipleFeatures } from '../../services/helpers.js'
+import { promptSelectMultipleFeatures } from '../../services/featureHelpers.js'
 
 const addSingleFeature = async (name: string, id: string) => {
-    await assertCurrentBranchIsClean()
-
     const previewBranchName = `${branchPreview}${name}`
 
     const previewExist = await branchExists(previewBranchName)
@@ -35,8 +33,6 @@ const addSingleFeature = async (name: string, id: string) => {
 }
 
 const addMultipleFeatures = async (name: string) => {
-    await assertCurrentBranchIsClean()
-
     const previewBranchName = `${branchPreview}${name}`
 
     const previewExist = await branchExists(previewBranchName)
@@ -64,6 +60,7 @@ const addMultipleFeatures = async (name: string) => {
 }
 
 const action = async (name: string, id?: string) => {
+    await assertCurrentBranchIsClean()
     if (id) {
         addSingleFeature(name, id)
     } else {

@@ -7,16 +7,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { branchRelease } from '../../const.js';
-import { assertCurrentBranchIsClean, getLatestTag, getOpenReleaseBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
-import semver from 'semver';
+import { assertCurrentBranchIsClean, getOpenReleaseBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
-import { promptSelectNextVersion } from '../../services/helpers.js';
-import { confirm } from '@inquirer/prompts';
-import { getHooks } from '../../services/hooks.js';
+import { promptSelectNextVersionWithConfirmation, startRelease, validateVersion, } from '../../services/releaseHelpers.js';
 const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const hooks = yield getHooks();
     yield assertCurrentBranchIsClean();
     const openRelease = yield getOpenReleaseBranch();
     if (openRelease) {
@@ -24,37 +18,15 @@ const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
         logger.warn(`Release already exists ${openRelease.name}`);
     }
     else {
-        const latestTag = (_a = (yield getLatestTag())) !== null && _a !== void 0 ? _a : '0.0.0';
-        const nextTag = semver.inc(latestTag !== null && latestTag !== void 0 ? latestTag : '0.0.0', 'minor');
-        // default to next minor version
-        let versionToUse = nextTag;
+        let versionToUse = version;
         if (version) {
-            if (!semver.valid(version)) {
-                throw new Error(`Invalid version: ${version}`);
-            }
-            if (!semver.gt(version, latestTag)) {
-                throw new Error(`Version ${version} is not greater than the latest tag ${latestTag}`);
-            }
+            yield validateVersion(version);
             versionToUse = version;
         }
         else {
-            versionToUse = yield promptSelectNextVersion('What version do you want to release?');
-            const isMajorIncrease = semver.major(versionToUse) > semver.major(latestTag);
-            if (isMajorIncrease) {
-                const answer = yield confirm({
-                    message: `Are you sure you want to use the major version (${versionToUse})?`,
-                    default: false,
-                });
-                if (!answer) {
-                    throw new Error('Aborted');
-                }
-            }
+            versionToUse = yield promptSelectNextVersionWithConfirmation();
         }
-        yield hooks.preReleaseStart(version);
-        const branchName = `${branchRelease}${versionToUse}`;
-        yield startOrCheckoutBranch(branchName);
-        logger.success(`Release ${versionToUse} started`);
-        yield hooks.postReleaseStart(version);
+        yield startRelease(versionToUse);
     }
 });
 export default (program) => {

@@ -1,6 +1,5 @@
 import { branchFeature, branchRelease, branchStable } from '../const.js'
 import { git } from './git.js'
-import { initializeRegitFiles } from './helpers.js'
 import { uniqBy } from './utils.js'
 
 export const getProjectRootDirectory = async () => {

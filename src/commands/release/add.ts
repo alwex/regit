@@ -1,34 +1,25 @@
 import { Command } from 'commander'
-import { branchFeature, branchRelease } from '../../const.js'
+import { branchFeature } from '../../const.js'
+import {
+    assertFeatureExists,
+    promptSelectMultipleFeatures,
+} from '../../services/featureHelpers.js'
 import {
     assertCurrentBranchIsClean,
     branchExists,
-    listBranchStartingWith,
     mergeBranch,
     pushBranch,
-    startOrCheckoutBranch,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
-import { promptSelectMultipleFeatures } from '../../services/helpers.js'
+import { openRelease } from '../../services/releaseHelpers.js'
 
 const addSingleFeature = async (id: string) => {
     await assertCurrentBranchIsClean()
+    const { name, from } = await openRelease()
 
-    const releaseBranches = await listBranchStartingWith(branchRelease)
-    if (releaseBranches.length === 0) {
-        throw new Error('No release branch found')
-    }
-    const currentReleaseBranch = releaseBranches[0]
-    const { from, name, show } = currentReleaseBranch
-
-    await startOrCheckoutBranch(name)
+    await assertFeatureExists(id)
 
     const branchName = `${branchFeature}${id}`
-    const featureExists = await branchExists(branchName)
-    if (!featureExists) {
-        throw new Error(`Feature ${id} does not exist`)
-    }
-
     await mergeBranch(branchName)
     await pushBranch(name)
 
@@ -38,18 +29,10 @@ const addSingleFeature = async (id: string) => {
 const addMultipleFeatures = async () => {
     await assertCurrentBranchIsClean()
 
-    const releaseBranches = await listBranchStartingWith(branchRelease)
-    if (releaseBranches.length === 0) {
-        throw new Error('No release branch found')
-    }
-
-    const currentReleaseBranch = releaseBranches[0]
-    const { from, name, show } = currentReleaseBranch
-
-    await startOrCheckoutBranch(name)
+    const { name, from } = await openRelease()
 
     const selectedFeatures = await promptSelectMultipleFeatures(
-        `Select features to add to release ${currentReleaseBranch.name}`
+        `Select features to add to release ${name}`
     )
 
     for (const featureBranchName of selectedFeatures) {
@@ -59,10 +42,10 @@ const addMultipleFeatures = async () => {
         }
 
         await mergeBranch(featureBranchName)
-        await pushBranch(name)
 
         logger.success(`Feature ${featureBranchName} merged into ${from}`)
     }
+    await pushBranch(name)
 }
 
 const action = async (id?: string) => {

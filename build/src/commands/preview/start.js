@@ -9,10 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { assertCurrentBranchIsClean, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
-import { promptSelectSinglePreview } from '../../services/helpers.js';
 import { branchPreview } from '../../const.js';
+import { promptSelectSinglePreview } from '../../services/previewHelpers.js';
 const startPreviewWithName = (name) => __awaiter(void 0, void 0, void 0, function* () {
-    yield assertCurrentBranchIsClean();
     const branchName = `${branchPreview}${name}`;
     yield startOrCheckoutBranch(branchName);
     logger.success(`Preview ${name} started`);
@@ -23,6 +22,7 @@ const startPreviewWithPrompt = () => __awaiter(void 0, void 0, void 0, function*
     yield startPreviewWithName(previewName);
 });
 const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    yield assertCurrentBranchIsClean();
     if (name) {
         startPreviewWithName(name);
     }

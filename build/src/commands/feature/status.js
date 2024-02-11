@@ -7,11 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { getBranchInfo, getCurrentBranch, getLatestTag, listBranchStartingWith, } from '../../services/gitHelpers.js';
 import { branchFeature } from '../../const.js';
-import { displayFeatureBranch, } from '../../services/helpers.js';
-import { logger } from '../../services/logger.js';
+import { getBranchInfo, getCurrentBranch, getLatestTag, listBranchStartingWith, } from '../../services/gitHelpers.js';
 import semver from 'semver';
+import { displayFeatureBranch } from '../../services/featureHelpers.js';
+import { logger } from '../../services/logger.js';
 // Feature: origin/feature-santiago (from v3.7.1) undefined
 // /!\ Tags not merged into this branch: at least 'v4.3.6' to 'v4.3.8'.
 // commit 739c9a20259e319111977f3aed1b91bf59d84888
