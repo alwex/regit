@@ -26,8 +26,6 @@ const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
         else {
             versionToUse = yield promptSelectNextVersionWithConfirmation();
         }
-        console.log('====');
-        console.log({ versionToUse });
         yield startRelease(versionToUse.trim());
     }
 });
