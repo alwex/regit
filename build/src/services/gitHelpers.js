@@ -9,10 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchFeature, branchRelease, branchStable } from '../const.js';
 import { git } from './git.js';
-import { uniqBy } from './utils.js';
+import { uniqBy, uniq as removeDuplicate } from './utils.js';
 export const getProjectRootDirectory = () => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield git.revparse(['--show-toplevel']);
     return result;
+});
+export const warmupGitRepo = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield git.fetch();
 });
 export const getCurrentBranch = () => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield git.branch();
@@ -100,20 +103,34 @@ export const pushStableBranch = (version) => __awaiter(void 0, void 0, void 0, f
     yield createTag(version);
 });
 export const getBranchInfo = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
-    const from = yield git.raw(['describe', '--tags', '--abbrev=0', branchName]);
-    const show = yield git.show([branchName]);
+    var _a;
+    const allVersionsMerged = yield git.raw([
+        'tag',
+        '--merged',
+        `origin/${branchName}`,
+    ]);
+    const from = (_a = allVersionsMerged.trim().split('\n').pop()) !== null && _a !== void 0 ? _a : '';
+    const show = yield git.show([`origin/${branchName}`]);
     const showDetails = show.trim().split('\n').slice(0, 3);
+    const isPresentLocally = yield localBranchExists(branchName);
     return {
         name: branchName.replace('remotes/origin/', ''),
         from: from.trim(),
         show: showDetails,
         remoteName: '',
+        isPresentLocally,
     };
 });
 export const listBranchStartingWith = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
     const data = [];
     const result = yield git.branch();
-    const branches = result.all.filter((branch) => branch.startsWith(branchName));
+    const allBranches = result.all
+        .filter((branch) => branch.startsWith(branchName) ||
+        branch.startsWith(`remotes/origin/${branchName}`))
+        .map((branch) => {
+        return branch.replace('remotes/origin/', '');
+    });
+    const branches = removeDuplicate(allBranches);
     for (let i = 0; i < branches.length; i++) {
         const name = branches[i];
         const branchData = yield getBranchInfo(name);
@@ -231,6 +248,9 @@ export const listBranchesBetweenTags = (tag1, tag2) => __awaiter(void 0, void 0,
     return [...branches, ...twgitBranchesCompat];
 });
 export const deleteBranch = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
-    yield git.deleteLocalBranch(branchName, true);
+    const isPresentLocally = yield localBranchExists(branchName);
+    if (isPresentLocally) {
+        yield git.deleteLocalBranch(branchName, true);
+    }
     yield git.push(['origin', '--delete', branchName]);
 });

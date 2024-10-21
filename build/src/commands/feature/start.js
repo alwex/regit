@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean, getBranchInfo, getLatestTag, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, getBranchInfo, getLatestTag, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { branchFeature } from '../../const.js';
 import { getHooks } from '../../services/hooks.js';
 import { logger } from '../../services/logger.js';
@@ -34,6 +34,7 @@ const startFeatureWithPrompt = () => __awaiter(void 0, void 0, void 0, function*
     yield startFeatureWithId(featureId);
 });
 const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     if (id) {
         startFeatureWithId(id);
     }

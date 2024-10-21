@@ -4,6 +4,7 @@ import {
     getBranchInfo,
     getLatestTag,
     startOrCheckoutBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
 import { getHooks } from '../../services/hooks.js'
@@ -43,6 +44,8 @@ const startFeatureWithPrompt = async () => {
 }
 
 const action = async (id?: string) => {
+    await warmupGitRepo()
+
     if (id) {
         startFeatureWithId(id)
     } else {

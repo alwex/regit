@@ -8,9 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchPreview, branchStable } from '../../const.js';
-import { assertCurrentBranchIsClean, branchExists, deleteBranch, getCurrentBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, branchExists, deleteBranch, getCurrentBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
 const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const branchName = `${branchPreview}${name}`;
     yield assertCurrentBranchIsClean();
     const previewBranchExists = yield branchExists(branchName);

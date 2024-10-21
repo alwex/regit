@@ -6,6 +6,7 @@ import {
     mergeBranch,
     pushBranch,
     startOrCheckoutBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
 import { promptSelectMultipleFeatures } from '../../services/featureHelpers.js'
@@ -60,6 +61,8 @@ const addMultipleFeatures = async (name: string) => {
 }
 
 const action = async (name: string, id?: string) => {
+    await warmupGitRepo()
+
     await assertCurrentBranchIsClean()
     if (id) {
         addSingleFeature(name, id)

@@ -9,6 +9,7 @@ import {
     branchExists,
     mergeBranch,
     pushBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
 import { openRelease } from '../../services/releaseHelpers.js'
@@ -43,12 +44,14 @@ const addMultipleFeatures = async () => {
 
         await mergeBranch(featureBranchName)
 
-        logger.success(`Feature ${featureBranchName} merged into ${from}`)
+        logger.success(`Feature ${featureBranchName} merged into ${name}`)
     }
     await pushBranch(name)
 }
 
 const action = async (id?: string) => {
+    await warmupGitRepo()
+
     if (id) {
         addSingleFeature(id)
     } else {

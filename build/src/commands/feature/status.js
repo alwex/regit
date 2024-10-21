@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature } from '../../const.js';
-import { getBranchInfo, getCurrentBranch, getLatestTag, listBranchStartingWith, } from '../../services/gitHelpers.js';
+import { getBranchInfo, getCurrentBranch, getLatestTag, listBranchStartingWith, warmupGitRepo, } from '../../services/gitHelpers.js';
 import semver from 'semver';
 import { displayFeatureBranch } from '../../services/featureHelpers.js';
 import { logger } from '../../services/logger.js';
@@ -18,6 +18,7 @@ import { logger } from '../../services/logger.js';
 // Author: Alexandre Guidet <a.guidet@we-are-mea.com>
 // Date:   Tue Jul 26 10:09:39 2022 +1200
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const currentBranch = yield getCurrentBranch();
     if (!currentBranch.startsWith(branchFeature)) {
         throw new Error('You must be on a feature branch to list features');

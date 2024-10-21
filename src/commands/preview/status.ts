@@ -5,11 +5,14 @@ import {
     getBranchDetails,
     listBranchStartingWith,
     listBranchesInBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { displayReleaseHeader } from '../../services/releaseHelpers.js'
 import { displaySubFeatureBranch } from '../../services/featureHelpers.js'
 
 export const action = async (name: string) => {
+    await warmupGitRepo()
+
     const previewBranchName = `${branchPreview}${name}`
     const previewExist = await branchExists(previewBranchName)
     if (!previewExist) {
