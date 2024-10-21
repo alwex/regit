@@ -1,6 +1,9 @@
 import { Command } from 'commander'
 import { branchFeature } from '../../const.js'
-import { listBranchStartingWith } from '../../services/gitHelpers.js'
+import {
+    listBranchStartingWith,
+    warmupGitRepo,
+} from '../../services/gitHelpers.js'
 import { displayFeatureBranch } from '../../services/featureHelpers.js'
 
 // Feature: origin/feature-santiago (from v3.7.1) undefined
@@ -10,6 +13,8 @@ import { displayFeatureBranch } from '../../services/featureHelpers.js'
 // Date:   Tue Jul 26 10:09:39 2022 +1200
 
 const action = async () => {
+    await warmupGitRepo()
+
     const branches = await listBranchStartingWith(branchFeature)
 
     for (const branch of branches) {

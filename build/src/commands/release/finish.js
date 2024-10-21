@@ -9,10 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchFeature, branchRelease, branchStable } from '../../const.js';
 import { git } from '../../services/git.js';
-import { assertCurrentBranchIsClean, createTag, deleteBranch, listBranchStartingWith, listBranchesInBranch, mergeBranch, pushBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, createTag, deleteBranch, listBranchStartingWith, listBranchesInBranch, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import chalk from 'chalk';
 import { getHooks } from '../../services/hooks.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const hooks = yield getHooks();
     yield assertCurrentBranchIsClean();
     const releaseBranches = yield listBranchStartingWith(branchRelease);

@@ -3,6 +3,7 @@ import {
     assertCurrentBranchIsClean,
     getOpenReleaseBranch,
     startOrCheckoutBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
 import {
@@ -12,6 +13,7 @@ import {
 } from '../../services/releaseHelpers.js'
 
 const action = async (version: string) => {
+    await warmupGitRepo()
     await assertCurrentBranchIsClean()
 
     const openRelease = await getOpenReleaseBranch()

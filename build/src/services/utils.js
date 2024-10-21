@@ -7,3 +7,6 @@ export const uniqBy = (array, key) => {
         return acc;
     }, []);
 };
+export const uniq = (array) => {
+    return [...new Set(array)];
+};

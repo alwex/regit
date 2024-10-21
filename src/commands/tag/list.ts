@@ -4,6 +4,7 @@ import {
     getLatestTags,
     getTagDetails,
     listBranchesBetweenTags,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import {
     displayTagFeatureBranch,
@@ -20,6 +21,8 @@ import {
 //     - origin/feature-125 School admin can be assigned to a classroom and access learning portal - 3SP
 
 const action = async () => {
+    await warmupGitRepo()
+
     const tags = await getLatestTags(5)
     if (tags.length === 0) {
         throw new Error('No tags found')

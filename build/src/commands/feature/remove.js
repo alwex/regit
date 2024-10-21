@@ -8,9 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature, branchStable } from '../../const.js';
-import { assertCurrentBranchIsClean, deleteBranch, getCurrentBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, deleteBranch, getCurrentBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
 const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const branchName = `${branchFeature}${id}`;
     yield assertCurrentBranchIsClean();
     const currentBranch = yield getCurrentBranch();

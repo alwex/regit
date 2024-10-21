@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature, branchPreview } from '../../const.js';
-import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
 import { promptSelectMultipleFeatures } from '../../services/featureHelpers.js';
 const addSingleFeature = (name, id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -46,6 +46,7 @@ const addMultipleFeatures = (name) => __awaiter(void 0, void 0, void 0, function
     }
 });
 const action = (name, id) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     yield assertCurrentBranchIsClean();
     if (id) {
         addSingleFeature(name, id);

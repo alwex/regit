@@ -8,10 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature, branchPreview } from '../../const.js';
-import { branchExists, getBranchDetails, listBranchStartingWith, listBranchesInBranch, } from '../../services/gitHelpers.js';
+import { branchExists, getBranchDetails, listBranchStartingWith, listBranchesInBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { displayReleaseHeader } from '../../services/releaseHelpers.js';
 import { displaySubFeatureBranch } from '../../services/featureHelpers.js';
 export const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const previewBranchName = `${branchPreview}${name}`;
     const previewExist = yield branchExists(previewBranchName);
     if (!previewExist) {
