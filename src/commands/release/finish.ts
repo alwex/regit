@@ -10,11 +10,14 @@ import {
     mergeBranch,
     pushBranch,
     startOrCheckoutBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import chalk from 'chalk'
 import { getHooks } from '../../services/hooks.js'
 
 const action = async () => {
+    await warmupGitRepo()
+
     const hooks = await getHooks()
 
     await assertCurrentBranchIsClean()

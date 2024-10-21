@@ -7,3 +7,7 @@ export const uniqBy = <T>(array: T[], key: string) => {
         return acc
     }, [])
 }
+
+export const uniq = <T>(array: T[]) => {
+    return [...new Set(array)]
+}

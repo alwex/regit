@@ -1,11 +1,17 @@
+import { all } from 'axios'
 import { branchFeature, branchRelease, branchStable } from '../const.js'
 import { git } from './git.js'
-import { uniqBy } from './utils.js'
+import { uniqBy, uniq as removeDuplicate } from './utils.js'
+import { get } from 'http'
 
 export const getProjectRootDirectory = async () => {
     const result = await git.revparse(['--show-toplevel'])
 
     return result
+}
+
+export const warmupGitRepo = async () => {
+    await git.fetch()
 }
 
 export const getCurrentBranch = async () => {
@@ -140,19 +146,29 @@ export interface ListBranchResult {
     remoteName?: string
     from: string
     show: string[]
+    isPresentLocally: boolean
 }
 
 export const getBranchInfo = async (branchName: string) => {
-    const from = await git.raw(['describe', '--tags', '--abbrev=0', branchName])
-    const show = await git.show([branchName])
+    const allVersionsMerged = await git.raw([
+        'tag',
+        '--merged',
+        `origin/${branchName}`,
+    ])
+    const from = allVersionsMerged.trim().split('\n').pop() ?? ''
+
+    const show = await git.show([`origin/${branchName}`])
 
     const showDetails = show.trim().split('\n').slice(0, 3)
+
+    const isPresentLocally = await localBranchExists(branchName)
 
     return {
         name: branchName.replace('remotes/origin/', ''),
         from: from.trim(),
         show: showDetails,
         remoteName: '',
+        isPresentLocally,
     }
 }
 
@@ -161,9 +177,17 @@ export const listBranchStartingWith = async (branchName: string) => {
 
     const result = await git.branch()
 
-    const branches = result.all.filter((branch) =>
-        branch.startsWith(branchName)
-    )
+    const allBranches = result.all
+        .filter(
+            (branch) =>
+                branch.startsWith(branchName) ||
+                branch.startsWith(`remotes/origin/${branchName}`)
+        )
+        .map((branch) => {
+            return branch.replace('remotes/origin/', '')
+        })
+
+    const branches = removeDuplicate(allBranches)
 
     for (let i = 0; i < branches.length; i++) {
         const name = branches[i]
@@ -300,6 +324,7 @@ export const listBranchesBetweenTags = async (tag1: string, tag2: string) => {
         '--abbrev-commit',
         `${tag1}..${tag2}`,
     ])
+
     const branches = [...result.matchAll(/\[regit\] Init '(.*)'/g)].reduce<
         string[]
     >((acc, current) => {
@@ -322,6 +347,10 @@ export const listBranchesBetweenTags = async (tag1: string, tag2: string) => {
 }
 
 export const deleteBranch = async (branchName: string) => {
-    await git.deleteLocalBranch(branchName, true)
+    const isPresentLocally = await localBranchExists(branchName)
+    if (isPresentLocally) {
+        await git.deleteLocalBranch(branchName, true)
+    }
+
     await git.push(['origin', '--delete', branchName])
 }

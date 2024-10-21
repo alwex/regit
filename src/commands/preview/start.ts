@@ -2,6 +2,7 @@ import { Command } from 'commander'
 import {
     assertCurrentBranchIsClean,
     startOrCheckoutBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
 import { branchPreview } from '../../const.js'
@@ -14,6 +15,8 @@ const startPreviewWithName = async (name: string) => {
 }
 
 const startPreviewWithPrompt = async () => {
+    await warmupGitRepo()
+
     const selectedPreview = await promptSelectSinglePreview(
         'Select preview to open'
     )

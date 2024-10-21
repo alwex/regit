@@ -6,10 +6,13 @@ import {
     deleteBranch,
     getCurrentBranch,
     startOrCheckoutBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
 
 const action = async (name: string) => {
+    await warmupGitRepo()
+
     const branchName = `${branchPreview}${name}`
     await assertCurrentBranchIsClean()
 

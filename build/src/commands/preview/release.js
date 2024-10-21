@@ -8,11 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchPreview } from '../../const.js';
-import { assertCurrentBranchIsClean, mergeBranch, pushBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, mergeBranch, pushBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { assertPreviewExists, promptSelectSinglePreview, } from '../../services/previewHelpers.js';
 import { promptSelectNextVersion, startRelease, } from '../../services/releaseHelpers.js';
 import { logger } from '../../services/logger.js';
 const releasePreviewWithName = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     assertPreviewExists(name);
     const previewBranchName = `${branchPreview}${name}`;
     const versionToUse = yield promptSelectNextVersion('What version do you want to release?');

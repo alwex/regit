@@ -8,9 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { action as statusAction } from './status.js';
-import { listBranchStartingWith } from '../../services/gitHelpers.js';
+import { listBranchStartingWith, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { branchPreview } from '../../const.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const previewBranches = yield listBranchStartingWith(branchPreview);
     if (previewBranches.length === 0) {
         throw new Error('No preview branches found');

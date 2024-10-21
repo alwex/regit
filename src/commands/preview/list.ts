@@ -1,9 +1,14 @@
 import { Command } from 'commander'
 import { action as statusAction } from './status.js'
-import { listBranchStartingWith } from '../../services/gitHelpers.js'
+import {
+    listBranchStartingWith,
+    warmupGitRepo,
+} from '../../services/gitHelpers.js'
 import { branchPreview } from '../../const.js'
 
 const action = async () => {
+    await warmupGitRepo()
+
     const previewBranches = await listBranchStartingWith(branchPreview)
 
     if (previewBranches.length === 0) {

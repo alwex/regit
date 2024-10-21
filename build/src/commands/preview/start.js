@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
 import { branchPreview } from '../../const.js';
 import { promptSelectSinglePreview } from '../../services/previewHelpers.js';
@@ -17,6 +17,7 @@ const startPreviewWithName = (name) => __awaiter(void 0, void 0, void 0, functio
     logger.success(`Preview ${name} started`);
 });
 const startPreviewWithPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const selectedPreview = yield promptSelectSinglePreview('Select preview to open');
     const previewName = selectedPreview.replace(branchPreview, '');
     yield startPreviewWithName(previewName);

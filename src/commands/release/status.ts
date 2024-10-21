@@ -5,11 +5,14 @@ import {
     getBranchDetails,
     listBranchStartingWith,
     listBranchesInBranch,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { displayReleaseHeader } from '../../services/releaseHelpers.js'
 import { displaySubFeatureBranch } from '../../services/featureHelpers.js'
 
 const action = async () => {
+    await warmupGitRepo()
+
     const releaseBranches = await listBranchStartingWith(branchRelease)
     if (releaseBranches.length === 0) {
         throw new Error('No release branch found')

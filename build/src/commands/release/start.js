@@ -7,10 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean, getOpenReleaseBranch, startOrCheckoutBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, getOpenReleaseBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
 import { promptSelectNextVersionWithConfirmation, startRelease, validateVersion, } from '../../services/releaseHelpers.js';
 const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     yield assertCurrentBranchIsClean();
     const openRelease = yield getOpenReleaseBranch();
     if (openRelease) {

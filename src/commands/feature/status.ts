@@ -5,6 +5,7 @@ import {
     getCurrentBranch,
     getLatestTag,
     listBranchStartingWith,
+    warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import semver from 'semver'
 import { displayFeatureBranch } from '../../services/featureHelpers.js'
@@ -17,6 +18,8 @@ import { logger } from '../../services/logger.js'
 // Date:   Tue Jul 26 10:09:39 2022 +1200
 
 const action = async () => {
+    await warmupGitRepo()
+
     const currentBranch = await getCurrentBranch()
 
     if (!currentBranch.startsWith(branchFeature)) {

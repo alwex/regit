@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature } from '../../const.js';
-import { listBranchStartingWith } from '../../services/gitHelpers.js';
+import { listBranchStartingWith, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { displayFeatureBranch } from '../../services/featureHelpers.js';
 // Feature: origin/feature-santiago (from v3.7.1) undefined
 // /!\ Tags not merged into this branch: at least 'v4.3.6' to 'v4.3.8'.
@@ -16,6 +16,7 @@ import { displayFeatureBranch } from '../../services/featureHelpers.js';
 // Author: Alexandre Guidet <a.guidet@we-are-mea.com>
 // Date:   Tue Jul 26 10:09:39 2022 +1200
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const branches = yield listBranchStartingWith(branchFeature);
     for (const branch of branches) {
         yield displayFeatureBranch(branch);

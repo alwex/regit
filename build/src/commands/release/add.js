@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchFeature } from '../../const.js';
 import { assertFeatureExists, promptSelectMultipleFeatures, } from '../../services/featureHelpers.js';
-import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
 import { openRelease } from '../../services/releaseHelpers.js';
 const addSingleFeature = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -31,11 +31,12 @@ const addMultipleFeatures = () => __awaiter(void 0, void 0, void 0, function* ()
             throw new Error(`Feature ${featureBranchName} does not exist`);
         }
         yield mergeBranch(featureBranchName);
-        logger.success(`Feature ${featureBranchName} merged into ${from}`);
+        logger.success(`Feature ${featureBranchName} merged into ${name}`);
     }
     yield pushBranch(name);
 });
 const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     if (id) {
         addSingleFeature(id);
     }
