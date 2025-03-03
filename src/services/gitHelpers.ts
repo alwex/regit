@@ -1,8 +1,6 @@
-import { all } from 'axios'
 import { branchFeature, branchRelease, branchStable } from '../const.js'
 import { git } from './git.js'
-import { uniqBy, uniq as removeDuplicate } from './utils.js'
-import { get } from 'http'
+import { uniq as removeDuplicate, uniqBy } from './utils.js'
 
 export const getProjectRootDirectory = async () => {
     const result = await git.revparse(['--show-toplevel'])
@@ -245,6 +243,10 @@ export const listBranchesInBranch = async (
 
     const firstCommit = allCommitsHashes[allCommitsHashes.length - 1]
     const lastCommit = allCommitsHashes[0]
+
+    if (!firstCommit || !lastCommit) {
+        return []
+    }
 
     const allCommitsOnBranch = await git.log([
         targetBranch,
