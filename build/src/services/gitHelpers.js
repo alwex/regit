@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { branchFeature, branchRelease, branchStable } from '../const.js';
 import { git } from './git.js';
-import { uniqBy, uniq as removeDuplicate } from './utils.js';
+import { uniq as removeDuplicate, uniqBy } from './utils.js';
 export const getProjectRootDirectory = () => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield git.revparse(['--show-toplevel']);
     return result;
@@ -173,6 +173,9 @@ export const listBranchesInBranch = (targetBranch) => __awaiter(void 0, void 0, 
     });
     const firstCommit = allCommitsHashes[allCommitsHashes.length - 1];
     const lastCommit = allCommitsHashes[0];
+    if (!firstCommit || !lastCommit) {
+        return [];
+    }
     const allCommitsOnBranch = yield git.log([
         targetBranch,
         `${firstCommit}..${lastCommit}`,
