@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { branchFeature, branchRelease, branchStable } from '../const.js';
 import { git } from './git.js';
 import { uniq as removeDuplicate, uniqBy } from './utils.js';
+import semver from 'semver';
 export const getProjectRootDirectory = () => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield git.revparse(['--show-toplevel']);
     return result;
@@ -103,13 +104,14 @@ export const pushStableBranch = (version) => __awaiter(void 0, void 0, void 0, f
     yield createTag(version);
 });
 export const getBranchInfo = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const allVersionsMerged = yield git.raw([
         'tag',
         '--merged',
         `origin/${branchName}`,
     ]);
-    const from = (_a = allVersionsMerged.trim().split('\n').pop()) !== null && _a !== void 0 ? _a : '';
+    const allVersions = allVersionsMerged.trim().split('\n');
+    const lastestVersionMerged = allVersions.sort(semver.rcompare)[0];
+    const from = lastestVersionMerged;
     const show = yield git.show([`origin/${branchName}`]);
     const showDetails = show.trim().split('\n').slice(0, 3);
     const isPresentLocally = yield localBranchExists(branchName);
