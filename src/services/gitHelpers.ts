@@ -1,6 +1,7 @@
 import { branchFeature, branchRelease, branchStable } from '../const.js'
 import { git } from './git.js'
 import { uniq as removeDuplicate, uniqBy } from './utils.js'
+import semver from 'semver'
 
 export const getProjectRootDirectory = async () => {
     const result = await git.revparse(['--show-toplevel'])
@@ -153,7 +154,10 @@ export const getBranchInfo = async (branchName: string) => {
         '--merged',
         `origin/${branchName}`,
     ])
-    const from = allVersionsMerged.trim().split('\n').pop() ?? ''
+    const allVersions = allVersionsMerged.trim().split('\n')
+
+    const lastestVersionMerged = allVersions.sort(semver.rcompare)[0]
+    const from = lastestVersionMerged
 
     const show = await git.show([`origin/${branchName}`])
 
