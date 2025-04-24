@@ -24,7 +24,7 @@ const addSingleFeature = async (id: string) => {
     await mergeBranch(branchName)
     await pushBranch(name)
 
-    logger.success(`Feature ${id} merged into ${from}`)
+    logger.success(`Feature ${id} merged into ${name}`)
 }
 
 const addMultipleFeatures = async () => {

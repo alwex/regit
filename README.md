@@ -32,6 +32,7 @@ mkdir remote
 
 # set origin
 cd local
+git init
 git remote add origin [playground-remote-folder]
 ```
 
