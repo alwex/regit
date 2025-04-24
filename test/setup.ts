@@ -20,11 +20,11 @@ const PROJECT_ROOT = path.resolve(__dirname, '..')
 beforeAll(async () => {
     // build the project to make sure the latest version
     // is used in the tests
-    console.log('Building the project...')
-    await $('yarn build', {
-        cwd: PROJECT_ROOT,
-        shell: true,
-    })
+    // console.log('Building the project...')
+    // await $('yarn build', {
+    //     cwd: PROJECT_ROOT,
+    //     shell: true,
+    // })
 })
 
 beforeEach(async (context) => {
