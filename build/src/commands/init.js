@@ -24,6 +24,7 @@ const action = (version) => __awaiter(void 0, void 0, void 0, function* () {
     yield initStableBranch();
     yield initializeRegitFiles();
     yield pushStableBranch(`v${sanitizedVersion}`);
+    console.log(`Initialized regit with version ${sanitizedVersion}`);
 });
 export default (program) => {
     program

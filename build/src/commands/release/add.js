@@ -19,7 +19,7 @@ const addSingleFeature = (id) => __awaiter(void 0, void 0, void 0, function* () 
     const branchName = `${branchFeature}${id}`;
     yield mergeBranch(branchName);
     yield pushBranch(name);
-    logger.success(`Feature ${id} merged into ${from}`);
+    logger.success(`Feature ${id} merged into ${name}`);
 });
 const addMultipleFeatures = () => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();

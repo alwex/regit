@@ -25,6 +25,8 @@ const action = async (version: string) => {
     await initStableBranch()
     await initializeRegitFiles()
     await pushStableBranch(`v${sanitizedVersion}`)
+
+    console.log(`Initialized regit with version ${sanitizedVersion}`)
 }
 
 export default (program: Command) => {
