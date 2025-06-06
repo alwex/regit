@@ -20,10 +20,16 @@ import {
 //     - origin/feature-126-matt undefined
 //     - origin/feature-125 School admin can be assigned to a classroom and access learning portal - 3SP
 
-const action = async () => {
+interface TagListOptions {
+    number: string
+}
+
+const action = async (options: TagListOptions) => {
     await warmupGitRepo()
 
-    const tags = await getLatestTags(5)
+    const { number } = options
+
+    const tags = await getLatestTags(Number(number) + 1)
     if (tags.length === 0) {
         throw new Error('No tags found')
     }
@@ -46,5 +52,8 @@ const action = async () => {
 }
 
 export default (program: Command) => {
-    program.command('list').action(action)
+    program
+        .command('list')
+        .option('-n, --number <number>', 'Number of tags to list', '5')
+        .action(action)
 }

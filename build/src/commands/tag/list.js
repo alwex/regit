@@ -10,16 +10,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { branchFeature } from '../../const.js';
 import { getLatestTags, getTagDetails, listBranchesBetweenTags, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { displayTagFeatureBranch, displayTagHeader, } from '../../services/tagHelpers.js';
-// git log --no-merges --pretty='oneline' --abbrev-commit 1.1.0..1.2.0
-// Tag: v0.53.0
-// Tagger: Alexandre Guidet <a.guidet@we-are-mea.com>
-// Date:   Wed May 3 10:16:06 2023 +1200
-// Included features:
-//     - origin/feature-126-matt undefined
-//     - origin/feature-125 School admin can be assigned to a classroom and access learning portal - 3SP
-const action = () => __awaiter(void 0, void 0, void 0, function* () {
+const action = (options) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
-    const tags = yield getLatestTags(5);
+    const { number } = options;
+    const tags = yield getLatestTags(Number(number) + 1);
     if (tags.length === 0) {
         throw new Error('No tags found');
     }
@@ -37,5 +31,8 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 export default (program) => {
-    program.command('list').action(action);
+    program
+        .command('list')
+        .option('-n, --number <number>', 'Number of tags to list', '5')
+        .action(action);
 };
