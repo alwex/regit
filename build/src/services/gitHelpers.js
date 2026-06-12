@@ -57,13 +57,17 @@ export const getLatestTags = (tagCount) => __awaiter(void 0, void 0, void 0, fun
     const tagResult = yield git.tags();
     return tagResult.all.slice(-tagCount);
 });
+const findHeaderValue = (lines, prefix) => {
+    const line = lines.find((current) => current.startsWith(prefix));
+    return line ? line.slice(prefix.length).trim() : '';
+};
 export const getBranchDetails = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield git.show([branch]);
     const lines = result.split('\n');
     return {
-        commit: lines[0].split(' ')[1].trim(),
-        author: lines[1].split(': ')[1].trim(),
-        date: lines[2].split(': ')[1].trim(),
+        commit: findHeaderValue(lines, 'commit '),
+        author: findHeaderValue(lines, 'Author:'),
+        date: findHeaderValue(lines, 'Date:'),
     };
 });
 export const getTagDetails = (tag) => __awaiter(void 0, void 0, void 0, function* () {
@@ -71,8 +75,8 @@ export const getTagDetails = (tag) => __awaiter(void 0, void 0, void 0, function
     const lines = result.split('\n');
     return {
         tag,
-        author: lines[1].split(':')[1].trim(),
-        date: lines[2].split(': ')[1].trim(),
+        author: findHeaderValue(lines, 'Tagger:'),
+        date: findHeaderValue(lines, 'Date:'),
     };
 });
 export const createTag = (version, included = []) => __awaiter(void 0, void 0, void 0, function* () {

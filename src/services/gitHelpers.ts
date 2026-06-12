@@ -70,14 +70,20 @@ export interface ReleaseHeaderResult {
     date: string
 }
 
+const findHeaderValue = (lines: string[], prefix: string) => {
+    const line = lines.find((current) => current.startsWith(prefix))
+
+    return line ? line.slice(prefix.length).trim() : ''
+}
+
 export const getBranchDetails = async (branch: string) => {
     const result = await git.show([branch])
     const lines = result.split('\n')
 
     return {
-        commit: lines[0].split(' ')[1].trim(),
-        author: lines[1].split(': ')[1].trim(),
-        date: lines[2].split(': ')[1].trim(),
+        commit: findHeaderValue(lines, 'commit '),
+        author: findHeaderValue(lines, 'Author:'),
+        date: findHeaderValue(lines, 'Date:'),
     } as ReleaseHeaderResult
 }
 
@@ -93,8 +99,8 @@ export const getTagDetails = async (tag: string) => {
 
     return {
         tag,
-        author: lines[1].split(':')[1].trim(),
-        date: lines[2].split(': ')[1].trim(),
+        author: findHeaderValue(lines, 'Tagger:'),
+        date: findHeaderValue(lines, 'Date:'),
     } as TagHeaderResult
 }
 

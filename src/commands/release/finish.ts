@@ -28,7 +28,8 @@ const action = async () => {
 
     const currentReleaseBranch = releaseBranches[0]
     const { from, name, show } = currentReleaseBranch
-    const newVersion = `v${name.split('-')[1]}`
+    const version = name.replace(branchRelease, '')
+    const newVersion = `v${version}`
 
     const result = await listBranchesInBranch(name)
     const features = result.filter((data) =>
@@ -41,8 +42,6 @@ const action = async () => {
             'Not all features are merged into the release branch. Please merge all features into the release branch before finishing the release.'
         )
     }
-
-    const version = name.split('-')[1]
 
     await hooks.preReleaseFinish(version)
 

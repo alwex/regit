@@ -46,7 +46,7 @@
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
         "v": "yarn version --no-git-tag-version --new-version",
-        "postv": "echo \"export default '1.4.1'\" > ./src/version.ts"
+        "postv": "node scripts/sync-version.mjs"
     },
     "devDependencies": {
         "@types/chalk": "^2.2.0",

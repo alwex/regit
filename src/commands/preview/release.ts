@@ -19,7 +19,7 @@ import { logger } from '../../services/logger.js'
 const releasePreviewWithName = async (name: string) => {
     await warmupGitRepo()
 
-    assertPreviewExists(name)
+    await assertPreviewExists(name)
 
     const previewBranchName = `${branchPreview}${name}`
 

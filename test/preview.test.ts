@@ -96,6 +96,14 @@ describe('preview', async (ctx) => {
         expect(result).toContain('✔  success   Preview p1 started')
     })
 
+    test('preview release on a non-existent preview is rejected', async (ctx) => {
+        const previewRelease = ctx.regit('preview release doesnotexist')
+
+        await expect(previewRelease).rejects.toThrowError(
+            'Preview doesnotexist does not exist'
+        )
+    })
+
     test('preview list', async (ctx) => {
         await ctx.regit('preview start p1')
         await ctx.regit('preview start p2')

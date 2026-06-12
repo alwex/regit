@@ -107,6 +107,15 @@ For detailed patterns and examples, load the `functional` skill.
 
 **Project-level hooks:** Projects should add a PostToolUse hook in `.claude/settings.json` to run typecheck after Write/Edit on .ts/.tsx files. Use `/setup` to generate this automatically, or see the global `settings.json` prettier/eslint hook as a template.
 
+## Versioning & Changelog
+
+**Always update `CHANGELOG.md` when the version changes.** Whenever you bump the version (`package.json` `version`, `src/version.ts`, or cut a release tag `v<x.y.z>`), add a matching `CHANGELOG.md` entry in the same change.
+
+- One section per version, newest first: `## <version> - <YYYY-MM-DD>`.
+- Group entries under `Added` / `Changed` / `Fixed` / `Removed`. Describe user-facing behavior, not implementation detail.
+- Keep `package.json`, `src/version.ts`, the git tag, and the `CHANGELOG.md` heading in sync — they must all reference the same version.
+- A version bump without a changelog entry is incomplete; do not consider the release done until the entry exists.
+
 ## Output Guardrails
 
 - **Write to files, not chat** — When asked to produce a plan, document, or artifact, always persist it to a file. You may also present it inline for approval, but the file is the source of truth.

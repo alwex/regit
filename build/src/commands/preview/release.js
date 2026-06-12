@@ -14,7 +14,7 @@ import { promptSelectNextVersion, startRelease, } from '../../services/releaseHe
 import { logger } from '../../services/logger.js';
 const releasePreviewWithName = (name) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
-    assertPreviewExists(name);
+    yield assertPreviewExists(name);
     const previewBranchName = `${branchPreview}${name}`;
     const versionToUse = yield promptSelectNextVersion('What version do you want to release?');
     const { name: releaseBranchName } = yield startRelease(versionToUse);

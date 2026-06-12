@@ -22,14 +22,14 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     const currentReleaseBranch = releaseBranches[0];
     const { from, name, show } = currentReleaseBranch;
-    const newVersion = `v${name.split('-')[1]}`;
+    const version = name.replace(branchRelease, '');
+    const newVersion = `v${version}`;
     const result = yield listBranchesInBranch(name);
     const features = result.filter((data) => data.name.startsWith(branchFeature));
     const canFinishRelease = features.every((feature) => feature.upToDate);
     if (!canFinishRelease) {
         throw new Error('Not all features are merged into the release branch. Please merge all features into the release branch before finishing the release.');
     }
-    const version = name.split('-')[1];
     yield hooks.preReleaseFinish(version);
     // push the release branch
     console.log(chalk.dim(`Push release to origin`));

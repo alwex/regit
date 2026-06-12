@@ -167,6 +167,26 @@ describe('release', async (ctx) => {
         expect(releaseStatus2).toContain('- origin/feature-f2 [merged]')
     })
 
+    test('release status parses author and date on a merge-tip branch', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('release start 1.0.0')
+        await ctx.regit('release add f1')
+
+        const result = await ctx.regit('release status')
+
+        expect(result).toContain('Author: Test User')
+        expect(result).not.toContain('Date: Test User')
+    })
+
+    test('release finish tags prerelease versions in full', async (ctx) => {
+        await ctx.regit('release start 1.0.0-beta.1')
+        await ctx.regit('release finish')
+
+        const tags = await ctx.cliLocal('git tag -l')
+
+        expect(tags).toContain('v1.0.0-beta.1')
+    })
+
     test('release finish', async (ctx) => {
         await ctx.regit('feature start f1')
         await ctx.regit('feature start f2')
