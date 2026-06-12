@@ -38,10 +38,10 @@ const addMultipleFeatures = () => __awaiter(void 0, void 0, void 0, function* ()
 const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     if (id) {
-        addSingleFeature(id);
+        yield addSingleFeature(id);
     }
     else {
-        addMultipleFeatures();
+        yield addMultipleFeatures();
     }
 });
 export default (program) => {

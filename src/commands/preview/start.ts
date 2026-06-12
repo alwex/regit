@@ -29,9 +29,9 @@ const startPreviewWithPrompt = async () => {
 const action = async (name?: string) => {
     await assertCurrentBranchIsClean()
     if (name) {
-        startPreviewWithName(name)
+        await startPreviewWithName(name)
     } else {
-        startPreviewWithPrompt()
+        await startPreviewWithPrompt()
     }
 }
 

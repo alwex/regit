@@ -49,10 +49,10 @@ const action = (name, id) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     yield assertCurrentBranchIsClean();
     if (id) {
-        addSingleFeature(name, id);
+        yield addSingleFeature(name, id);
     }
     else {
-        addMultipleFeatures(name);
+        yield addMultipleFeatures(name);
     }
 });
 export default (program) => {

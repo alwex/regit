@@ -36,10 +36,10 @@ const startFeatureWithPrompt = () => __awaiter(void 0, void 0, void 0, function*
 const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     if (id) {
-        startFeatureWithId(id);
+        yield startFeatureWithId(id);
     }
     else {
-        startFeatureWithPrompt();
+        yield startFeatureWithPrompt();
     }
 });
 export default (program) => {

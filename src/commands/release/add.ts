@@ -53,9 +53,9 @@ const action = async (id?: string) => {
     await warmupGitRepo()
 
     if (id) {
-        addSingleFeature(id)
+        await addSingleFeature(id)
     } else {
-        addMultipleFeatures()
+        await addMultipleFeatures()
     }
 }
 

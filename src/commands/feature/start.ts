@@ -47,9 +47,9 @@ const action = async (id?: string) => {
     await warmupGitRepo()
 
     if (id) {
-        startFeatureWithId(id)
+        await startFeatureWithId(id)
     } else {
-        startFeatureWithPrompt()
+        await startFeatureWithPrompt()
     }
 }
 

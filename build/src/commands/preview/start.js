@@ -25,10 +25,10 @@ const startPreviewWithPrompt = () => __awaiter(void 0, void 0, void 0, function*
 const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
     if (name) {
-        startPreviewWithName(name);
+        yield startPreviewWithName(name);
     }
     else {
-        startPreviewWithPrompt();
+        yield startPreviewWithPrompt();
     }
 });
 export default (program) => {

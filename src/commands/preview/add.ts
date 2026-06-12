@@ -65,9 +65,9 @@ const action = async (name: string, id?: string) => {
 
     await assertCurrentBranchIsClean()
     if (id) {
-        addSingleFeature(name, id)
+        await addSingleFeature(name, id)
     } else {
-        addMultipleFeatures(name)
+        await addMultipleFeatures(name)
     }
 }
 
