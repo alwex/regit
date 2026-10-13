@@ -1,6 +1,6 @@
 ---
 title: Tags
-description: A reference page in my new Starlight docs site.
+description: List recent version tags and the features that shipped in each one.
 sidebar:
     order: 5
 ---
@@ -9,8 +9,23 @@ import Graph from '../../../components/GitGraphTag';
 
 <Graph client:load />
 
+Every finished release creates an annotated tag (`v<version>`). The tag command lets you
+look back at what shipped in each version.
+
 ## List tags
 
 ```bash
-regit tag list
+regit tag list [-n <number>]
+```
+
+Lists the most recent tags and, for each one, the feature branches that were merged
+between it and the previous tag — along with the tagger and date.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `-n, --number <number>` | `5` | How many recent tags to list. |
+
+```bash
+# show the last 10 tags
+regit tag list -n 10
 ```

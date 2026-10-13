@@ -1,0 +1,50 @@
+---
+title: Concepts
+description: The regit branching model — stable, features, previews, releases, and tags.
+sidebar:
+    order: 2
+---
+
+import GitGraphExample from '../../../components/GitGraphExample';
+
+regit wraps a small, opinionated branching model on top of Git. Understanding the four
+branch types and how they flow into each other is enough to use every command.
+
+<div style="width:100%;">
+	<GitGraphExample client:load />
+</div>
+
+## Branch types
+
+| Branch | Prefix | Purpose |
+| --- | --- | --- |
+| Stable | `stable` | The single long-lived line. Every release merges back here and is tagged. |
+| Feature | `feature-<name>` | One unit of work, branched from the latest tag. |
+| Preview | `preview-<name>` | A staging branch combining features for testing before release. |
+| Release | `release-<version>` | The features destined for the next version, on their way to `stable`. |
+
+## Lifecycle
+
+1. **Init** — `regit init <version>` creates `stable` and the first tag `v<version>`.
+2. **Feature** — `regit feature start <name>` branches a feature from the latest tag.
+3. **Preview (optional)** — `regit preview start <name>` then `regit preview add` stages
+   features together for review.
+4. **Release** — `regit release start [version]` opens a release; `regit release add`
+   merges the chosen features into it.
+5. **Finish** — `regit release finish` merges the release into `stable`, creates the
+   `v<version>` tag, and cleans up the release and its features.
+6. **Inspect** — `regit tag list` shows what shipped in each version.
+
+A preview can shortcut straight into a release with `regit preview release`.
+
+## Key rules
+
+- **Only one release branch at a time.** Finish or remove the current release before
+  starting another.
+- **Features branch from the latest tag.** This is the `from` value shown in
+  `feature list` / `feature status`.
+- **Drift.** If newer versions are tagged after a feature started, that feature is "based
+  on an old release". regit warns and tells you how to catch it up (see
+  [Features](/regit/reference/features/)).
+- **Customizable.** Every key step exposes [hooks](/regit/reference/hooks/) you can
+  implement in `.regit/hooks.js`.

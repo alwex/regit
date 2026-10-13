@@ -1,23 +1,47 @@
 ---
 title: Hooks
-description: Hooks
+description: Customize regit by running your own code before and after feature and release actions.
 sidebar:
     order: 6
 ---
+
+Hooks let you plug your own logic into regit's lifecycle — fetch a human-readable feature
+name from an issue tracker, generate a changelog before a release finishes, notify a chat
+channel, and so on.
+
+## The hooks file
+
+`regit init` generates a `.regit/hooks.js` file at the root of your repository. It uses
+CommonJS (`module.exports`) and is shallow-merged over regit's no-op defaults, so you only
+need to define the hooks you care about — the rest stay as no-ops.
 
 ```ts
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
     preFeatureStart: (id: string) => Promise<void>
     postFeatureStart: (id: string) => Promise<void>
+    preReleaseStart: (version: string) => Promise<void>
+    postReleaseStart: (version: string) => Promise<void>
     preReleaseFinish: (version: string) => Promise<void>
     postReleaseFinish: (version: string) => Promise<void>
 }
 ```
+
+## When each hook fires
+
+| Hook | Fires |
+| --- | --- |
+| `getFeatureName` | When regit renders a feature in `feature list`, `feature status`, and release/preview/tag listings. Return a label (e.g. fetched from GitLab/Jira) shown next to the branch. |
+| `preFeatureStart` | Before a feature branch is created or checked out (`feature start`). |
+| `postFeatureStart` | After a feature branch is created or checked out. |
+| `preReleaseStart` | Before a release branch is created (`release start`). |
+| `postReleaseStart` | After a release branch is created. |
+| `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). |
+| `postReleaseFinish` | After a release has been merged, tagged, and cleaned up. |
+
 ## Example
 
-
-```js title="regit.js"
+```js title=".regit/hooks.js"
 module.exports = {
     getFeatureName: async (id) => {
         console.log('fetch feature name from somewhere')
@@ -29,12 +53,18 @@ module.exports = {
     postFeatureStart: async (id) => {
         console.log('doing something clever AFTER feature start')
     },
-    preReleaseFinish:  async (version) => {
+    preReleaseStart: async (version) => {
+        console.log('doing something clever BEFORE release start')
+    },
+    postReleaseStart: async (version) => {
+        console.log('doing something clever AFTER release start')
+    },
+    preReleaseFinish: async (version) => {
         console.log('doing something clever BEFORE release finish')
         // generate changelog and add it to CHANGELOG.md
         // commit and push
     },
-    postReleaseFinish:  async (version) => {
+    postReleaseFinish: async (version) => {
         console.log('doing something clever AFTER release finish')
     },
 }

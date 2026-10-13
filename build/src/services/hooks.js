@@ -25,9 +25,10 @@ const defaultHooks = {
 };
 export const getHooks = () => __awaiter(void 0, void 0, void 0, function* () {
     const regitDir = yield getRegitDirectory();
-    const hasCustomHooks = fs.existsSync(`${regitDir}/hooks.js`);
+    const possibleHookPath = [`${regitDir}/hooks.js`, `${regitDir}/hooks.cjs`];
+    const hasCustomHooks = possibleHookPath.some((path) => fs.existsSync(path));
     if (hasCustomHooks) {
-        const customHooks = yield import(`${regitDir}/hooks.js`);
+        const customHooks = yield import(possibleHookPath.find((path) => fs.existsSync(path)));
         return Object.assign(Object.assign({}, defaultHooks), customHooks.default);
     }
     return defaultHooks;

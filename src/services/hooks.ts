@@ -33,9 +33,14 @@ const defaultHooks: Hooks = {
 
 export const getHooks = async () => {
     const regitDir = await getRegitDirectory()
-    const hasCustomHooks = fs.existsSync(`${regitDir}/hooks.js`)
+
+    const possibleHookPath = [`${regitDir}/hooks.js`, `${regitDir}/hooks.cjs`]
+
+    const hasCustomHooks = possibleHookPath.some((path) => fs.existsSync(path))
     if (hasCustomHooks) {
-        const customHooks = await import(`${regitDir}/hooks.js`)
+        const customHooks = await import(
+            possibleHookPath.find((path) => fs.existsSync(path))!
+        )
 
         return {
             ...defaultHooks,

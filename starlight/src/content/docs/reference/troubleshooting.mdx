@@ -1,0 +1,72 @@
+---
+title: Troubleshooting
+description: Common regit errors, what causes them, and how to fix them.
+sidebar:
+    order: 7
+---
+
+regit stops with a clear message when the repository is not in a state it can safely act
+on. The most common messages are below, with the cause and the fix.
+
+## `Current branch is dirty, cannot continue`
+
+**Cause:** you have uncommitted changes. Commands that switch or create branches refuse to
+run on a dirty working tree.
+
+**Fix:** commit or stash your changes, then retry.
+
+```bash
+git stash      # or: git commit -am "wip"
+```
+
+## `Not all features are merged into the release branch...`
+
+Full message: *"Not all features are merged into the release branch. Please merge all
+features into the release branch before finishing the release."*
+
+**Cause:** `regit release finish` requires every feature in the release to be fully merged
+and up to date. At least one feature is still `[in progress]`.
+
+**Fix:** run `regit release status` to find the outdated feature, then re-add it with
+`regit release add <feature-name>` and finish again.
+
+## `Version <v> is not greater than the latest tag <t>`
+
+**Cause:** the version passed to `regit release start` is not strictly greater than the
+latest tag.
+
+**Fix:** choose a higher version, or run `regit release start` with no argument to pick a
+valid next version interactively.
+
+## `Invalid version: <v>` / `Invalid version number, please use semver eg 1.0.0`
+
+**Cause:** the version is not valid [semver](https://semver.org).
+
+**Fix:** use a semver string such as `1.2.0` (or `1.2.0-beta.1` for a prerelease).
+
+## `You must be on a feature branch ...` / `You must be on a release branch ...`
+
+**Cause:** `feature push` / `feature status` must run from a `feature-*` branch, and
+`release push` from a `release-*` branch.
+
+**Fix:** check out the right branch first (e.g. `regit feature start <name>`).
+
+## `stable branch already exists`
+
+**Cause:** `regit init` was run in a repository that is already initialized.
+
+**Fix:** no action needed — the repository is already set up. Start a feature instead.
+
+## `Feature <id> does not exist` / `Preview <name> does not exist`
+
+**Cause:** the referenced feature or preview branch can't be found locally or on the
+remote.
+
+**Fix:** list what exists (`regit feature list`, `regit preview list`) and use an exact
+name, or create it first.
+
+## `No release branch found` / `No open release found`
+
+**Cause:** a release command was run with no open release branch.
+
+**Fix:** start one with `regit release start [version]`.

@@ -1,6 +1,6 @@
 ---
 title: Releases
-description: A reference page in my new Starlight docs site.
+description: Create, fill, and finish release branches, then tag and merge them into stable.
 sidebar:
     order: 4
 ---
@@ -9,17 +9,31 @@ import Graph from '../../../components/GitGraphRelease';
 
 <Graph client:load />
 
+A release branch (`release-<version>`) gathers the features destined for the next
+version. When finished, it is merged into `stable`, tagged, and cleaned up.
+
+:::note
+Only one release branch can exist at a time.
+:::
+
 ## Start a release
 
 ```bash
 regit release start [version]
 ```
 
-:::note
-Only one release branch can exist at a time.
-:::
+| Argument | Required | Description |
+| --- | --- | --- |
+| `version` | optional | Target version in semver (e.g. `1.2.0`). Validated to be valid semver **and** greater than the latest tag. |
 
-Version is optional. If no version is provided, the next version will be decided based on the current version by bumping the minor version.
+When a `version` is given it is validated and the `release-<version>` branch is created
+from the latest tag.
+
+When **no** `version` is given, regit opens an interactive prompt to pick the next
+version — **Minor**, **Patch**, or **Major** — computed from the latest tag. Choosing
+**Major** asks for an extra confirmation before continuing.
+
+Prerelease versions are supported (e.g. `regit release start 1.2.0-beta.1`).
 
 ## Open an existing release
 
@@ -27,21 +41,23 @@ Version is optional. If no version is provided, the next version will be decided
 regit release start
 ```
 
-Will open the existing release branch.
+If a release branch already exists, `release start` checks it out and warns you instead
+of creating a new one.
 
-## release Status
+## Release status
 
 ```bash
 regit release status
 ```
 
-Will show status for the current release and show what feature are included.
+Shows the open release and the features merged into it, each flagged `[merged]` or
+`[in progress]`.
 
-## Adding features to a release
+## Add features to a release
 
-Once a release has been created, you can add features to it.
+Once a release has been created, add features to it.
 
-### Add single feature
+### Add a single feature
 
 ```bash
 regit release add <feature-name>
@@ -50,9 +66,20 @@ regit release add <feature-name>
 ### Add multiple features
 
 ```bash
-
 regit release add
 ```
+
+With no feature name, regit prompts an interactive multi-select of the available feature
+branches.
+
+## Push a release
+
+```bash
+regit release push
+```
+
+Shorthand for pushing the current release branch to the remote. You must be on a release
+branch.
 
 ## Finish a release
 
@@ -60,10 +87,21 @@ regit release add
 regit release finish
 ```
 
-This will merge the release branch into the stable branch and create a tag for the release. Then cleanup the release branch and all feature included.
+Merges the release into `stable`, creates the version tag, then deletes the release
+branch and the features it included. **All features must be fully merged and up to date**
+or the command refuses to finish.
 
 ## Remove a release
 
 ```bash
 regit release remove
 ```
+
+Deletes the open release branch (locally and on the remote). If you are currently on it,
+regit switches you back to `stable` first.
+
+## Hooks
+
+`release start` runs the [`preReleaseStart` / `postReleaseStart`](/regit/reference/hooks/)
+hooks, and `release finish` runs `preReleaseFinish` / `postReleaseFinish` — useful for
+generating a changelog or notifying a chat channel.
