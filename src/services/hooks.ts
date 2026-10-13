@@ -1,6 +1,10 @@
 import axios from 'axios'
 import { getProjectRootDirectory } from './gitHelpers.js'
 import fs from 'fs'
+import path from 'path'
+import vm from 'vm'
+import { createRequire } from 'module'
+import { pathToFileURL } from 'url'
 import { getRegitDirectory } from './helpers.js'
 
 export interface Hooks {
@@ -31,21 +35,52 @@ const defaultHooks: Hooks = {
     postReleaseFinish: async (version: string) => {},
 }
 
-export const getHooks = async () => {
+const compileCommonJs = (hookPath: string) => {
+    try {
+        return vm.compileFunction(
+            fs.readFileSync(hookPath, 'utf8'),
+            ['module', 'exports', 'require', '__filename', '__dirname'],
+            { filename: hookPath },
+        )
+    } catch {
+        return undefined
+    }
+}
+
+const loadCustomHooks = async (hookPath: string): Promise<Partial<Hooks>> => {
+    const evaluate = compileCommonJs(hookPath)
+    if (!evaluate) {
+        const esModule = await import(pathToFileURL(hookPath).href)
+        return esModule.default
+    }
+
+    const hookModule: { exports: Partial<Hooks> } = { exports: {} }
+    evaluate(
+        hookModule,
+        hookModule.exports,
+        createRequire(hookPath),
+        hookPath,
+        path.dirname(hookPath),
+    )
+
+    return hookModule.exports
+}
+
+export const getHooks = async (): Promise<Hooks> => {
     const regitDir = await getRegitDirectory()
 
-    const possibleHookPath = [`${regitDir}/hooks.js`, `${regitDir}/hooks.cjs`]
+    const possibleHookPath = [
+        `${regitDir}/hooks.js`,
+        `${regitDir}/hooks.cjs`,
+        `${regitDir}/hooks.mjs`,
+    ]
 
-    const hasCustomHooks = possibleHookPath.some((path) => fs.existsSync(path))
-    if (hasCustomHooks) {
-        const customHooks = await import(
-            possibleHookPath.find((path) => fs.existsSync(path))!
-        )
-
+    const hookPath = possibleHookPath.find((path) => fs.existsSync(path))
+    if (hookPath) {
         return {
             ...defaultHooks,
-            ...customHooks.default,
-        } as Hooks
+            ...(await loadCustomHooks(hookPath)),
+        }
     }
 
     return defaultHooks

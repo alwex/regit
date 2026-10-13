@@ -15,6 +15,10 @@ channel, and so on.
 CommonJS (`module.exports`) and is shallow-merged over regit's no-op defaults, so you only
 need to define the hooks you care about — the rest stay as no-ops.
 
+The file is loaded the same way whatever your project's `package.json` says: CommonJS
+(`module.exports`) works even when the project declares `"type": "module"`, and an ES
+module with `export default { ... }` works too. `.regit/hooks.cjs` is also picked up.
+
 ```ts
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>

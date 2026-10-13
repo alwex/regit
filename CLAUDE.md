@@ -36,6 +36,8 @@ I follow Test-Driven Development (TDD) with a strong emphasis on behavior-driven
 - Tests must document expected business behavior
 - No 1:1 mapping between test files and implementation files
 
+**Project gotcha:** `ctx.regit()` runs the CLI in-process through Vitest's module runner, which shims `module`/`require`/`exports`. Anything depending on Node's real module loader (e.g. loading `.regit/hooks.js`) must be tested by spawning `node build/src/index.js` (see `test/hooks.test.ts`), or the test passes while production fails.
+
 For detailed testing patterns and examples, load the `testing` skill.
 For verifying test effectiveness through mutation analysis, load the `mutation-testing` skill.
 

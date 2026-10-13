@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   position).
 - `preview release <name>` now fails fast when the preview does not exist
   instead of continuing past the check.
+- Hooks now load in projects whose `package.json` declares `"type": "module"`.
+  `.regit/hooks.js` may use either CommonJS (`module.exports`) or ES modules
+  (`export default`), regardless of the host project's module type.
 
 ## [1.5.0] - 2025-06-07
 
