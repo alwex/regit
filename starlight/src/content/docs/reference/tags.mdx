@@ -9,8 +9,20 @@ import Graph from '../../../components/GitGraphTag';
 
 <Graph client:load />
 
-Every finished release creates an annotated tag (`v<version>`). The tag command lets you
-look back at what shipped in each version.
+Every finished release creates an annotated tag (`v<version>`) on `stable`; `regit init`
+creates the first one. The tag command lets you look back at what shipped in each version.
+
+## Tag message
+
+By default the tag message lists the feature branches of the release:
+
+```
+[regit] v1.2.0. (feature-a,feature-b)
+```
+
+Write your own (e.g. release notes with issue titles) with the
+[`getTagMessage` hook](/regit/reference/hooks/#release-tag-message). Read a tag's message with
+`git tag -l --format='%(contents)' v1.2.0`.
 
 ## List tags
 
@@ -19,7 +31,10 @@ regit tag list [-n <number>]
 ```
 
 Lists the most recent tags and, for each one, the feature branches that were merged
-between it and the previous tag — along with the tagger and date.
+between it and the previous tag — along with the tagger and date. Features are found from
+their `[regit] Init 'feature-<name>'` commits, so only features started with
+`regit feature start` appear. The first tag (from `regit init`) has no previous tag and is
+not listed on its own.
 
 | Option | Default | Description |
 | --- | --- | --- |

@@ -14,32 +14,46 @@ ReGit is a command-line interface (CLI) tool designed to simplify and streamline
 	<GitGraphExample client:load />
 </div>
 
-## Prerequisistes
+## Prerequisites
 
 -   [Git](https://git-scm.com/) installed on your system
--   [Node](https://nodejs.org/en) installed on your system (we recomment using [nvm](https://github.com/nvm-sh/nvm))
+-   [Node](https://nodejs.org/en) 18 or later (we recommend using [nvm](https://github.com/nvm-sh/nvm))
+-   A Git repository with a remote named `origin` that you can push to: regit pushes every
+    branch and tag it creates
 
 ## Install ReGit
 
 To install Regit globally, use the following command:
 
 ```bash
-npm install -g regit@npm:regit-cli
+npm install -g regit-cli
 ```
 
 To upgrade an existing install to the latest version:
 
 ```bash
-yarn global add regit-cli@latest
+npm install -g regit-cli@latest
 regit --version
 ```
 
 ## Init your repository
 
-Initialize your repository with the following command:
+From a clean working tree, initialize your repository with its first version:
 
 ```bash
 regit init <version>
 ```
 
-You're now ready to use ReGit!
+This creates the `stable` branch and the first tag `v<version>`, generates
+`.regit/hooks.js` (every [hook](/regit/reference/hooks/) listed as a no-op, ready to
+customize), commits it and pushes `stable` and the tag to `origin`.
+
+You're now ready to use ReGit! Read the [concepts](/regit/guides/concepts/) and the
+[workflow](/regit/guides/workflow/), or start your first feature:
+
+```bash
+regit feature start my-first-feature
+```
+
+Working with a coding agent (Claude Code and others)? Install the
+[regit agent skills](/regit/guides/agent-skills/).

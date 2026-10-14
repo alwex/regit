@@ -46,5 +46,12 @@ A preview can shortcut straight into a release with `regit preview release`.
 - **Drift.** If newer versions are tagged after a feature started, that feature is "based
   on an old release". regit warns and tells you how to catch it up (see
   [Features](/regit/reference/features/)).
+- **Shared through `origin`.** Commands fetch first and push what they create, merge, tag
+  or delete; a branch that only exists on `origin` counts as existing. Branch-switching
+  commands refuse to run on a dirty working tree.
+- **Features are what releases list.** A release can also contain commits made directly on
+  its branch (fixes, version bumps); they ship, but only `feature-*` branches are listed in
+  the tag message, `tag list` and hooks.
 - **Customizable.** Every key step exposes [hooks](/regit/reference/hooks/) you can
-  implement in `.regit/hooks.js`.
+  implement in `.regit/hooks.js`: move tickets when a feature starts, notify a channel when
+  a release ships, write release notes into the tag…

@@ -1,0 +1,48 @@
+---
+title: Coding agents
+description: Agent skills that teach Claude Code and other coding agents to use regit and write regit hooks.
+sidebar:
+    order: 4
+---
+
+regit ships two [agent skills](https://skills.sh) — instructions that coding agents (Claude
+Code and others) load when a task needs them. With them installed, an agent working in a
+regit repository uses regit commands instead of raw git, never gets stuck on an interactive
+prompt, asks before destructive commands, and writes hooks that fire at the right moment.
+
+| Skill | Teaches the agent to |
+| --- | --- |
+| `regit` | recognise a regit repository; start, push and catch up features; stage previews; open, fill and finish releases; read `tag list`; pass arguments (or answer the version menu on stdin) so no command waits for input; confirm before `release finish` and the `remove` commands; tell a hook failure apart from a regit failure |
+| `regit-hooks` | pick the right hook for an automation (ticket transitions, chat notifications, merge requests, changelog, release notes, staging redeploys); use the context objects; respect pre/post hook failure rules; commit hooks on the branch that will run them; type-check `.regit/hooks.js`; try hooks in a throwaway sandbox before relying on them |
+
+## Install
+
+With the [skills CLI](https://skills.sh):
+
+```bash
+npx skills add alwex/regit@regit
+npx skills add alwex/regit@regit-hooks
+```
+
+Or copy `skills/regit` and `skills/regit-hooks` from the
+[repository](https://github.com/alwex/regit/tree/stable/skills) into your project's
+`.claude/skills/` (or `~/.claude/skills/` to have them in every project).
+
+Agents pick the skills up from the request: "start a branch for PAY-12", "ship login and
+search as the next minor", "post to Slack when a release is finished", "why did my
+postReleaseFinish hook not run?" — no need to mention regit.
+
+## Try hooks in a sandbox
+
+The `regit-hooks` skill bundles a script that builds a throwaway repository with its own
+bare `origin`, so a hooks file can be exercised with real commands without touching your
+project or its remote:
+
+```bash
+skills/regit-hooks/scripts/make-sandbox.sh /tmp/regit-sandbox path/to/hooks.js
+cd /tmp/regit-sandbox/repo
+regit feature start demo
+```
+
+The script commits the hooks file on `stable` and tags it `v1.0.1`, so every branch regit
+creates in the sandbox runs it. It works by hand too, not only for agents.

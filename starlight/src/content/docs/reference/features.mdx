@@ -18,7 +18,12 @@ created from the latest release tag, so each feature starts from the current sta
 regit feature start <feature-name>
 ```
 
-Creates `feature-<name>` from the latest tag (or checks it out if it already exists).
+Fetches `origin`, then creates `feature-<name>` from the latest tag, adds a
+`[regit] Init 'feature-<name>'` commit and pushes the branch. If the branch already exists —
+locally, or only on `origin` (e.g. a teammate's feature) — it is checked out instead.
+
+The init commit is how [`tag list`](/regit/reference/tags/) knows which features shipped in
+each version: start features with regit rather than `git checkout -b`.
 
 ## Open a feature
 
@@ -58,7 +63,7 @@ git merge --no-ff <latest-tag> && git push origin feature-<name>
 regit feature push
 ```
 
-This is just a shorthand for pushing the current feature branch to the remote repository.
+Pushes the current feature branch to `origin`. Run it from a `feature-*` branch.
 
 ## Remove a feature
 
@@ -68,3 +73,12 @@ regit feature remove <feature-name>
 
 Deletes the feature branch locally and on the remote. If you are currently on it, regit
 switches you back to `stable` first.
+
+## Hooks
+
+| Command | Hooks |
+| --- | --- |
+| `feature start` | `preFeatureStart` / `postFeatureStart`, with a [context](/regit/reference/hooks/#branch-start-context) telling whether the branch is new (`origin: 'new'`), already existed locally (`'local'`) or only on `origin` (`'remote'`), and whether it is based on an old release |
+| `feature push` | `postFeaturePush`, after the push — e.g. to open a merge request |
+
+See [Hooks](/regit/reference/hooks/).

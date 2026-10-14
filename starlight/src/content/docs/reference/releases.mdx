@@ -41,8 +41,9 @@ Prerelease versions are supported (e.g. `regit release start 1.2.0-beta.1`).
 regit release start
 ```
 
-If a release branch already exists, `release start` checks it out and warns you instead
-of creating a new one.
+If a release branch already exists, `release start` checks it out and warns you
+(`Release already exists release-<version>`) instead of creating a new one — even if you
+pass a different version. The start hooks still run, with `origin: 'local'` or `'remote'`.
 
 ## Release status
 
@@ -72,6 +73,15 @@ regit release add
 With no feature name, regit prompts an interactive multi-select of the available feature
 branches.
 
+Either way, regit checks out the open release, merges each feature (`origin/feature-<name>`)
+with `--no-ff`, then pushes the release branch.
+
+### Commits outside features
+
+You can also commit directly on the release branch (a last-minute fix, a version bump, a
+changelog) and push it with `regit release push`. These commits ship with the release; they
+are simply not listed as features. A release can even contain no feature at all (hotfix).
+
 ## Push a release
 
 ```bash
@@ -87,9 +97,21 @@ branch.
 regit release finish
 ```
 
-Merges the release into `stable`, creates the version tag, then deletes the release
-branch and the features it included. **All features must be fully merged and up to date**
-or the command refuses to finish.
+In order, regit:
+
+1. checks that every feature in the release is fully merged and up to date — otherwise it
+   refuses (`release status` shows the `[in progress]` ones; re-`add` them);
+2. checks out the release branch and runs `preReleaseFinish`, then `getTagMessage`;
+3. pushes the release branch and merges it into `stable`;
+4. creates the annotated tag `v<version>` (message from `getTagMessage`, by default
+   `[regit] v1.2.0. (feature-a,feature-b)`) and pushes `stable` and the tag;
+5. deletes the release branch **and the features it included**, locally and on `origin`;
+6. runs `postReleaseFinish`.
+
+:::caution
+`release finish` changes `stable` on `origin`, pushes a tag and deletes the release and
+feature branches for everyone. Check `regit release status` first.
+:::
 
 ## Remove a release
 
@@ -102,6 +124,11 @@ regit switches you back to `stable` first.
 
 ## Hooks
 
-`release start` runs the [`preReleaseStart` / `postReleaseStart`](/regit/reference/hooks/)
-hooks, and `release finish` runs `preReleaseFinish` / `postReleaseFinish` — useful for
-generating a changelog or notifying a chat channel.
+| Command | Hooks |
+| --- | --- |
+| `release start` | `preReleaseStart` / `postReleaseStart` — also when the release is already open, and for `preview release` (`context.trigger`) |
+| `release add` | `preReleaseAdd` / `postReleaseAdd`, with the features being merged |
+| `release finish` | `preReleaseFinish` (on the release branch: commit a changelog there and it ships), `getTagMessage` (the tag message), `postReleaseFinish` (with the shipped features, the stable commit and the deleted branches) |
+
+See [Hooks](/regit/reference/hooks/) — e.g. to generate release notes or notify a chat
+channel.

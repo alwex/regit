@@ -62,11 +62,21 @@ regit release finish
 <Graph4 client:load />
 
 ### Alternative for preview users
-    
+
+Promote the whole preview into a release in one step — regit asks for the next version,
+creates the release branch and merges the preview into it:
+
+```bash
+regit preview release staging
+regit release finish
+```
+
+Or do it by hand:
+
 ```bash
 regit release start
 git merge --no-ff origin/preview-staging
-git push
+regit release push
 regit release finish
 ```
 
