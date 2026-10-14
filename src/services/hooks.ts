@@ -23,6 +23,25 @@ export type ReleaseStartContext = BranchInspection &
         version: string
     }
 
+export type ReleasedFeature = {
+    id: string
+    branch: string
+    baseTag: string
+}
+
+export type ReleaseFinishContext = {
+    version: string
+    tag: string
+    previousTag: string
+    releaseBranch: string
+    features: ReleasedFeature[]
+}
+
+export type ReleaseFinishedContext = ReleaseFinishContext & {
+    stableCommit: string
+    deletedBranches: string[]
+}
+
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
     preFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
@@ -35,8 +54,14 @@ export interface Hooks {
         version: string,
         context: ReleaseStartContext
     ) => Promise<void>
-    preReleaseFinish: (version: string) => Promise<void>
-    postReleaseFinish: (version: string) => Promise<void>
+    preReleaseFinish: (
+        version: string,
+        context: ReleaseFinishContext
+    ) => Promise<void>
+    postReleaseFinish: (
+        version: string,
+        context: ReleaseFinishedContext
+    ) => Promise<void>
 }
 
 const defaultHooks: Hooks = {

@@ -150,7 +150,7 @@ export const listBranchStartingWith = (branchName) => __awaiter(void 0, void 0, 
     const uniq = uniqBy(data, 'name');
     return uniq;
 });
-const getRequiredLatestTag = () => __awaiter(void 0, void 0, void 0, function* () {
+export const getRequiredLatestTag = () => __awaiter(void 0, void 0, void 0, function* () {
     const latestTag = yield getLatestTag();
     if (!latestTag) {
         throw new Error('No release tag found, run regit init first');

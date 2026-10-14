@@ -5,6 +5,7 @@ import {
     assertCurrentBranchIsClean,
     createTag,
     deleteBranch,
+    getRequiredLatestTag,
     listBranchStartingWith,
     listBranchesInBranch,
     mergeBranch,
@@ -13,7 +14,7 @@ import {
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import chalk from 'chalk'
-import { getHooks } from '../../services/hooks.js'
+import { ReleaseFinishContext, getHooks } from '../../services/hooks.js'
 
 const action = async () => {
     await warmupGitRepo()
@@ -26,15 +27,11 @@ const action = async () => {
         throw new Error('No release branch found')
     }
 
-    const currentReleaseBranch = releaseBranches[0]
-    const { from, name, show } = currentReleaseBranch
+    const { name } = releaseBranches[0]
     const version = name.replace(branchRelease, '')
     const newVersion = `v${version}`
 
-    const result = await listBranchesInBranch(name)
-    const features = result.filter((data) => {
-        return data.name.startsWith(branchFeature)
-    })
+    const features = await listBranchesInBranch(name)
 
     const canFinishRelease = features.every((feature) => {
         return feature.upToDate
@@ -45,13 +42,26 @@ const action = async () => {
         )
     }
 
-    await hooks.preReleaseFinish(version)
+    const context: ReleaseFinishContext = {
+        version,
+        tag: newVersion,
+        previousTag: await getRequiredLatestTag(),
+        releaseBranch: name,
+        features: features.map((feature) => {
+            return {
+                id: feature.name.replace(branchFeature, ''),
+                branch: feature.name,
+                baseTag: feature.from,
+            }
+        }),
+    }
 
-    // push the release branch
+    await git.checkout(name)
+    await hooks.preReleaseFinish(version, context)
+
     console.log(chalk.dim(`Push release to origin`))
     await git.push(['-u', 'origin', name])
 
-    // mege the release branch into stable
     console.log(chalk.dim(`Merge release into stable`))
     await startOrCheckoutBranch(branchStable)
     await git.fetch()
@@ -64,18 +74,26 @@ const action = async () => {
         })
     )
     await pushBranch(branchStable)
+    const stableCommit = await git.revparse([branchStable])
 
     console.log(chalk.dim(`Delete release branch`))
     await deleteBranch(name)
 
-    // cleanup merged features
     console.log(chalk.dim(`Cleanup merged features`))
-    for (let i = 0; i < features.length; i++) {
-        const feature = features[i]
-        await deleteBranch(feature.name)
+    for (const feature of context.features) {
+        await deleteBranch(feature.branch)
     }
 
-    await hooks.postReleaseFinish(version)
+    await hooks.postReleaseFinish(version, {
+        ...context,
+        stableCommit,
+        deletedBranches: [
+            name,
+            ...context.features.map((feature) => {
+                return feature.branch
+            }),
+        ],
+    })
 }
 
 export default (program: Command) => {

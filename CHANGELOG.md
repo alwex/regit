@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `version` and `trigger`: `'release-start'` for `release start`, or
   `'preview-release'` (with the `preview` name) when the release is created by
   `preview release`.
+- `preReleaseFinish` and `postReleaseFinish` receive a second `context`
+  argument with the release `version`, the `tag` being created, the
+  `previousTag`, the `releaseBranch`, and the `features` merged into the release
+  (`id`, `branch`, `baseTag`). Commits made directly on the release branch are
+  not listed. `postReleaseFinish` also gets the `stableCommit` and the
+  `deletedBranches`.
 
 ### Changed
 
@@ -30,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `preReleaseFinish` now runs with the release branch checked out, so a hook
+  that commits (e.g. a generated changelog) commits to the release and the
+  change ships in the tag. Previously it ran on whatever branch was checked out.
 - `feature start` in a repository without any release tag now fails with
   "No release tag found, run regit init first" instead of a raw git error.
 - `release finish` now tags prerelease versions in full (e.g. `v1.0.0-beta.1`

@@ -222,7 +222,7 @@ export type BranchInspection = {
     isOutdated: boolean
 }
 
-const getRequiredLatestTag = async () => {
+export const getRequiredLatestTag = async () => {
     const latestTag = await getLatestTag()
     if (!latestTag) {
         throw new Error('No release tag found, run regit init first')

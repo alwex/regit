@@ -7,12 +7,22 @@ const CLI_PATH = path.resolve(__dirname, '..', 'build', 'src', 'index.js')
 const recordingHooks = `
 const fs = require('fs')
 const path = require('path')
+const { execSync } = require('child_process')
 
-const logFile = path.join(__dirname, '..', '.git', 'hook-calls.jsonl')
+const repoDir = path.join(__dirname, '..')
+const logFile = path.join(repoDir, '.git', 'hook-calls.jsonl')
+
+const currentBranch = () => {
+    return execSync('git branch --show-current', {
+        cwd: repoDir,
+        encoding: 'utf8',
+    }).trim()
+}
 
 const record = (hook) => {
     return async (...args) => {
-        fs.appendFileSync(logFile, JSON.stringify({ hook, args }) + '\\n')
+        const call = { hook, args, branch: currentBranch() }
+        fs.appendFileSync(logFile, JSON.stringify(call) + '\\n')
     }
 }
 
@@ -21,12 +31,15 @@ module.exports = {
     postFeatureStart: record('postFeatureStart'),
     preReleaseStart: record('preReleaseStart'),
     postReleaseStart: record('postReleaseStart'),
+    preReleaseFinish: record('preReleaseFinish'),
+    postReleaseFinish: record('postReleaseFinish'),
 }
 `
 
 type HookCall = {
     hook: string
     args: unknown[]
+    branch: string
 }
 
 const runCli = async (ctx: TestContext, args: string) => {
@@ -104,6 +117,27 @@ const expectBothHooksCalledWith = (
 ) => {
     expect(lastHookCall(ctx, hooks.pre)?.args).toEqual(expectedArgs)
     expect(lastHookCall(ctx, hooks.post)?.args).toEqual(expectedArgs)
+}
+
+const releaseFinishContext = (overrides: Record<string, unknown>) => {
+    return {
+        version: '0.1.0',
+        tag: 'v0.1.0',
+        previousTag: 'v0.0.1',
+        releaseBranch: 'release-0.1.0',
+        features: [],
+        ...overrides,
+    }
+}
+
+const releasedFeature = (id: string) => {
+    return { id, branch: `feature-${id}`, baseTag: 'v0.0.1' }
+}
+
+const commitOnRelease = async (ctx: TestContext, message: string) => {
+    await ctx.cliLocal('git checkout release-0.1.0')
+    await ctx.cliLocal(`git commit --allow-empty -m "${message}"`)
+    await ctx.cliLocal('git push origin release-0.1.0')
 }
 
 const featureStartHooks = { pre: 'preFeatureStart', post: 'postFeatureStart' }
@@ -249,6 +283,99 @@ describe('hook context', () => {
                     preview: 'p1',
                 }),
             ])
+        })
+    })
+
+    describe('release finish', { timeout: 30000 }, () => {
+        test('tells hooks which features went into the release', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'feature start f2')
+            await runCli(ctx, 'release start 0.1.0')
+            await runCli(ctx, 'release add f1')
+            await runCli(ctx, 'release add f2')
+
+            await runCli(ctx, 'release finish')
+
+            const expectedContext = releaseFinishContext({
+                features: [releasedFeature('f1'), releasedFeature('f2')],
+            })
+            expect(lastHookCall(ctx, 'preReleaseFinish')?.args).toEqual([
+                '0.1.0',
+                expectedContext,
+            ])
+            expect(lastHookCall(ctx, 'postReleaseFinish')?.args).toEqual([
+                '0.1.0',
+                {
+                    ...expectedContext,
+                    stableCommit: await ctx.cliLocal(
+                        'git rev-parse "v0.1.0^{commit}"'
+                    ),
+                    deletedBranches: [
+                        'release-0.1.0',
+                        'feature-f1',
+                        'feature-f2',
+                    ],
+                },
+            ])
+        })
+
+        test('ignores release commits that do not come from a feature', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'release start 0.1.0')
+            await runCli(ctx, 'release add f1')
+            await commitOnRelease(ctx, 'hotfix on release')
+
+            await runCli(ctx, 'release finish')
+
+            expect(lastHookCall(ctx, 'preReleaseFinish')?.args).toEqual([
+                '0.1.0',
+                releaseFinishContext({ features: [releasedFeature('f1')] }),
+            ])
+        })
+
+        test('finishes a release made only of commits outside features', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+            await commitOnRelease(ctx, 'hotfix on release')
+
+            await runCli(ctx, 'release finish')
+
+            expect(lastHookCall(ctx, 'preReleaseFinish')?.args).toEqual([
+                '0.1.0',
+                releaseFinishContext({ features: [] }),
+            ])
+            expect(lastHookCall(ctx, 'postReleaseFinish')?.args[1]).toMatchObject({
+                features: [],
+                deletedBranches: ['release-0.1.0'],
+            })
+        })
+
+        test('lists the features of a release created from a preview', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'preview start p1')
+            await runCli(ctx, 'preview add p1 f1')
+            await ctx.cliLocal(
+                `printf '\\n' | node ${CLI_PATH} preview release p1`
+            )
+
+            await runCli(ctx, 'release finish')
+
+            expect(lastHookCall(ctx, 'preReleaseFinish')?.args).toEqual([
+                '0.1.0',
+                releaseFinishContext({ features: [releasedFeature('f1')] }),
+            ])
+        })
+
+        test('runs preReleaseFinish with the release branch checked out', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'release start 0.1.0')
+            await runCli(ctx, 'release add f1')
+            await ctx.cliLocal('git checkout feature-f1')
+
+            await runCli(ctx, 'release finish')
+
+            expect(lastHookCall(ctx, 'preReleaseFinish')?.branch).toBe(
+                'release-0.1.0'
+            )
         })
     })
 })

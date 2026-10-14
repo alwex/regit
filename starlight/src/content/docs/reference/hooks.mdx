@@ -26,8 +26,8 @@ export interface Hooks {
     postFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
     preReleaseStart: (version: string, context: BranchStartContext) => Promise<void>
     postReleaseStart: (version: string, context: BranchStartContext) => Promise<void>
-    preReleaseFinish: (version: string) => Promise<void>
-    postReleaseFinish: (version: string) => Promise<void>
+    preReleaseFinish: (version: string, context: ReleaseFinishContext) => Promise<void>
+    postReleaseFinish: (version: string, context: ReleaseFinishedContext) => Promise<void>
 }
 ```
 
@@ -40,7 +40,7 @@ export interface Hooks {
 | `postFeatureStart` | After a feature branch is created or checked out. |
 | `preReleaseStart` | Before a release branch is created or checked out (`release start`, including when a release is already open, and `preview release`). |
 | `postReleaseStart` | After a release branch is created or checked out. |
-| `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). |
+| `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). Runs with the release branch checked out, so anything the hook commits ships in the release. |
 | `postReleaseFinish` | After a release has been merged, tagged, and cleaned up. |
 
 ## Hook context
@@ -85,6 +85,45 @@ module.exports = {
 }
 ```
 
+### Release finish context
+
+Passed to `preReleaseFinish` and `postReleaseFinish`.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `version` | `'1.2.0'` | Release version. |
+| `tag` | `'v1.2.0'` | Tag created on stable. |
+| `previousTag` | `'v1.1.0'` | Latest release tag before this release. |
+| `releaseBranch` | `'release-1.2.0'` | Release branch being finished. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Feature branches merged into the release (directly with `release add`, or through a preview). Commits made directly on the release branch are not features and are not listed. A release can have no features: `[]`. |
+
+`postReleaseFinish` also receives:
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `stableCommit` | `'4f2c9e1…'` | Commit on stable that the release tag points to. |
+| `deletedBranches` | `['release-1.2.0', 'feature-f1']` | Branches regit deleted (locally and on origin) after the merge. |
+
+Feature display names are not included. Call your own `getFeatureName` if you need them:
+
+```js title=".regit/hooks.js"
+const getFeatureName = async (branch) => {
+    return `title of ${branch} from your issue tracker`
+}
+
+module.exports = {
+    getFeatureName,
+    postReleaseFinish: async (version, context) => {
+        const names = await Promise.all(
+            context.features.map((feature) => {
+                return getFeatureName(feature.branch)
+            })
+        )
+        console.log(`${context.tag} released: ${names.join(', ')}`)
+    },
+}
+```
+
 ## Example
 
 ```js title=".regit/hooks.js"
@@ -105,13 +144,13 @@ module.exports = {
     postReleaseStart: async (version) => {
         console.log('doing something clever AFTER release start')
     },
-    preReleaseFinish: async (version) => {
-        console.log('doing something clever BEFORE release finish')
-        // generate changelog and add it to CHANGELOG.md
-        // commit and push
+    preReleaseFinish: async (version, context) => {
+        console.log(`preparing ${context.tag} with ${context.features.length} features`)
+        // the release branch is checked out: generate CHANGELOG.md and commit it,
+        // regit pushes the release branch right after this hook
     },
-    postReleaseFinish: async (version) => {
-        console.log('doing something clever AFTER release finish')
+    postReleaseFinish: async (version, context) => {
+        console.log(`${context.tag} released at ${context.stableCommit}`)
     },
 }
 ```
