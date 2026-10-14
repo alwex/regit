@@ -19,6 +19,8 @@ const record = (hook) => {
 module.exports = {
     preFeatureStart: record('preFeatureStart'),
     postFeatureStart: record('postFeatureStart'),
+    preReleaseStart: record('preReleaseStart'),
+    postReleaseStart: record('postReleaseStart'),
 }
 `
 
@@ -80,6 +82,34 @@ const featureStartContext = (overrides: Record<string, unknown>) => {
     }
 }
 
+const releaseStartContext = (overrides: Record<string, unknown>) => {
+    return {
+        kind: 'release',
+        id: '0.1.0',
+        version: '0.1.0',
+        trigger: 'release-start',
+        branch: 'release-0.1.0',
+        origin: 'new',
+        baseTag: 'v0.0.1',
+        latestTag: 'v0.0.1',
+        isOutdated: false,
+        ...overrides,
+    }
+}
+
+const expectBothHooksCalledWith = (
+    ctx: TestContext,
+    hooks: { pre: string; post: string },
+    expectedArgs: unknown[]
+) => {
+    expect(lastHookCall(ctx, hooks.pre)?.args).toEqual(expectedArgs)
+    expect(lastHookCall(ctx, hooks.post)?.args).toEqual(expectedArgs)
+}
+
+const featureStartHooks = { pre: 'preFeatureStart', post: 'postFeatureStart' }
+
+const releaseStartHooks = { pre: 'preReleaseStart', post: 'postReleaseStart' }
+
 describe('hook context', () => {
     beforeEach(async (ctx) => {
         await ctx.regit('init 0.0.0')
@@ -90,13 +120,10 @@ describe('hook context', () => {
         test('tells hooks the feature branch is new', async (ctx) => {
             await runCli(ctx, 'feature start f1')
 
-            const expectedArgs = ['f1', featureStartContext({ origin: 'new' })]
-            expect(lastHookCall(ctx, 'preFeatureStart')?.args).toEqual(
-                expectedArgs
-            )
-            expect(lastHookCall(ctx, 'postFeatureStart')?.args).toEqual(
-                expectedArgs
-            )
+            expectBothHooksCalledWith(ctx, featureStartHooks, [
+                'f1',
+                featureStartContext({ origin: 'new' }),
+            ])
         })
 
         test('tells hooks the feature branch already exists locally', async (ctx) => {
@@ -104,16 +131,10 @@ describe('hook context', () => {
 
             await runCli(ctx, 'feature start f1')
 
-            const expectedArgs = [
+            expectBothHooksCalledWith(ctx, featureStartHooks, [
                 'f1',
                 featureStartContext({ origin: 'local' }),
-            ]
-            expect(lastHookCall(ctx, 'preFeatureStart')?.args).toEqual(
-                expectedArgs
-            )
-            expect(lastHookCall(ctx, 'postFeatureStart')?.args).toEqual(
-                expectedArgs
-            )
+            ])
         })
 
         test('tells hooks the feature branch only exists on origin', async (ctx) => {
@@ -123,16 +144,10 @@ describe('hook context', () => {
 
             await runCli(ctx, 'feature start f1')
 
-            const expectedArgs = [
+            expectBothHooksCalledWith(ctx, featureStartHooks, [
                 'f1',
                 featureStartContext({ origin: 'remote' }),
-            ]
-            expect(lastHookCall(ctx, 'preFeatureStart')?.args).toEqual(
-                expectedArgs
-            )
-            expect(lastHookCall(ctx, 'postFeatureStart')?.args).toEqual(
-                expectedArgs
-            )
+            ])
         })
 
         test('tells hooks the feature branch is based on an old release', async (ctx) => {
@@ -141,7 +156,7 @@ describe('hook context', () => {
 
             await runCli(ctx, 'feature start f1')
 
-            const expectedArgs = [
+            expectBothHooksCalledWith(ctx, featureStartHooks, [
                 'f1',
                 featureStartContext({
                     origin: 'local',
@@ -149,13 +164,7 @@ describe('hook context', () => {
                     latestTag: 'v0.0.2',
                     isOutdated: true,
                 }),
-            ]
-            expect(lastHookCall(ctx, 'preFeatureStart')?.args).toEqual(
-                expectedArgs
-            )
-            expect(lastHookCall(ctx, 'postFeatureStart')?.args).toEqual(
-                expectedArgs
-            )
+            ])
         })
 
         test('reads the base release from the local branch when it is ahead of origin', async (ctx) => {
@@ -187,6 +196,57 @@ describe('hook context', () => {
                     origin: 'new',
                     baseTag: 'v0.0.2',
                     latestTag: 'v0.0.2',
+                }),
+            ])
+        })
+    })
+
+    describe('release start', () => {
+        test('tells hooks the release branch is new', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+
+            expectBothHooksCalledWith(ctx, releaseStartHooks, [
+                '0.1.0',
+                releaseStartContext({ origin: 'new' }),
+            ])
+        })
+
+        test('fires start hooks for the open release when it already exists locally', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+
+            await runCli(ctx, 'release start 0.2.0')
+
+            expectBothHooksCalledWith(ctx, releaseStartHooks, [
+                '0.1.0',
+                releaseStartContext({ origin: 'local' }),
+            ])
+        })
+
+        test('fires start hooks for the open release when it only exists on origin', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+            await ctx.cliLocal('git checkout stable')
+            await ctx.cliLocal('git branch -D release-0.1.0')
+
+            await runCli(ctx, 'release start')
+
+            expectBothHooksCalledWith(ctx, releaseStartHooks, [
+                '0.1.0',
+                releaseStartContext({ origin: 'remote' }),
+            ])
+        })
+
+        test('tells hooks the release was created from a preview', async (ctx) => {
+            await runCli(ctx, 'preview start p1')
+
+            await ctx.cliLocal(
+                `printf '\\n' | node ${CLI_PATH} preview release p1`
+            )
+
+            expectBothHooksCalledWith(ctx, releaseStartHooks, [
+                '0.1.0',
+                releaseStartContext({
+                    trigger: 'preview-release',
+                    preview: 'p1',
                 }),
             ])
         })

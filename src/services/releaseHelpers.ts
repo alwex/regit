@@ -1,6 +1,7 @@
 import { confirm, select } from '@inquirer/prompts'
 import { branchRelease, branchStable } from '../const.js'
 import {
+    BranchInspection,
     ListBranchResult,
     ReleaseHeaderResult,
     deleteBranch,
@@ -12,21 +13,45 @@ import {
     startInspectedBranch,
     startOrCheckoutBranch,
 } from './gitHelpers.js'
-import { getHooks } from './hooks.js'
+import { ReleaseStartContext, ReleaseTrigger, getHooks } from './hooks.js'
 import { logger } from './logger.js'
 import semver from 'semver'
 import chalk from 'chalk'
 
-export const startRelease = async (version: string) => {
+const logReleaseStart = ({
+    version,
+    inspection,
+}: {
+    version: string
+    inspection: BranchInspection
+}) => {
+    if (inspection.origin === 'new') {
+        logger.success(`Release ${version} started`)
+        return
+    }
+
+    logger.warn(`Release already exists ${inspection.branch}`)
+}
+
+export const startRelease = async (
+    options: { version: string } & ReleaseTrigger
+) => {
+    const { version } = options
     const hooks = await getHooks()
     const branchName = `${branchRelease}${version}`
     const inspection = await inspectBranch(branchName)
+    const context: ReleaseStartContext = {
+        kind: 'release',
+        id: version,
+        ...options,
+        ...inspection,
+    }
 
-    await hooks.preReleaseStart(version)
+    await hooks.preReleaseStart(version, context)
     await startInspectedBranch(inspection)
-    logger.success(`Release ${version} started`)
+    logReleaseStart({ version, inspection })
 
-    await hooks.postReleaseStart(version)
+    await hooks.postReleaseStart(version, context)
 
     return { name: branchName }
 }

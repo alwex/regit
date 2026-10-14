@@ -24,8 +24,8 @@ export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
     preFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
     postFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
-    preReleaseStart: (version: string) => Promise<void>
-    postReleaseStart: (version: string) => Promise<void>
+    preReleaseStart: (version: string, context: BranchStartContext) => Promise<void>
+    postReleaseStart: (version: string, context: BranchStartContext) => Promise<void>
     preReleaseFinish: (version: string) => Promise<void>
     postReleaseFinish: (version: string) => Promise<void>
 }
@@ -38,8 +38,8 @@ export interface Hooks {
 | `getFeatureName` | When regit renders a feature in `feature list`, `feature status`, and release/preview/tag listings. Return a label (e.g. fetched from GitLab/Jira) shown next to the branch. |
 | `preFeatureStart` | Before a feature branch is created or checked out (`feature start`). |
 | `postFeatureStart` | After a feature branch is created or checked out. |
-| `preReleaseStart` | Before a release branch is created (`release start`). |
-| `postReleaseStart` | After a release branch is created. |
+| `preReleaseStart` | Before a release branch is created or checked out (`release start`, including when a release is already open, and `preview release`). |
+| `postReleaseStart` | After a release branch is created or checked out. |
 | `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). |
 | `postReleaseFinish` | After a release has been merged, tagged, and cleaned up. |
 
@@ -50,23 +50,36 @@ hooks) or just did (post hooks). Hooks written with a single argument keep worki
 
 ### Branch start context
 
-Passed to `preFeatureStart` and `postFeatureStart`.
+Passed to `preFeatureStart`, `postFeatureStart`, `preReleaseStart` and `postReleaseStart`.
 
 | Field | Example | Meaning |
 | --- | --- | --- |
-| `kind` | `'feature'` | Kind of branch being started. |
-| `id` | `'f1'` | Id given to `feature start`, without the `feature-` prefix. |
+| `kind` | `'feature'` | `'feature'` or `'release'`. |
+| `id` | `'f1'` | Feature id or release version, without the `feature-` / `release-` prefix. |
 | `branch` | `'feature-f1'` | Full branch name. |
 | `origin` | `'new'` | `'new'`: the branch is created from the latest release tag. `'local'`: the branch already exists locally and is checked out. `'remote'`: the branch only exists on `origin` (e.g. a teammate's feature) and is checked out for the first time. |
 | `baseTag` | `'v1.1.0'` | Latest release tag merged into the branch that gets checked out. For a new branch, the tag it is created from. |
 | `latestTag` | `'v1.2.0'` | Latest release tag in the repository. |
 | `isOutdated` | `true` | `baseTag` is older than `latestTag`: the branch does not contain the latest release. |
 
+Release hooks also receive:
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `version` | `'1.2.0'` | Release version. When a release is already open, `release start` checks it out and this is the open release's version, not the one passed on the command line. |
+| `trigger` | `'release-start'` | `'release-start'` for `release start`, `'preview-release'` for `preview release`. |
+| `preview` | `'p1'` | Preview name, only when `trigger` is `'preview-release'`. |
+
 ```js title=".regit/hooks.js"
 module.exports = {
     postFeatureStart: async (id, context) => {
         if (context.origin === 'new') {
             console.log(`Move ticket ${id} to "In progress"`)
+        }
+    },
+    postReleaseStart: async (version, context) => {
+        if (context.origin === 'new' && context.trigger === 'preview-release') {
+            console.log(`Release ${version} created from preview ${context.preview}`)
         }
     },
 }

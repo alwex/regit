@@ -11,6 +11,7 @@ describe('release', async (ctx) => {
             'Creating Branch release-1.0.0 from tag v0.0.0'
         )
         expect(result).toContain('✔  success   Release 1.0.0 started')
+        expect(result).not.toContain('Release already exists')
     })
 
     test('release start existing', async (ctx) => {
@@ -24,6 +25,7 @@ describe('release', async (ctx) => {
         expect(result2).toContain(
             '⚠  warning   Release already exists release-1.0.0'
         )
+        expect(result2).not.toContain('Release 1.0.0 started')
     })
 
     test('release start with multiple versions', async (ctx) => {

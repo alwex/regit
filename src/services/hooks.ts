@@ -7,17 +7,34 @@ import { createRequire } from 'module'
 import { pathToFileURL } from 'url'
 import { getRegitDirectory } from './helpers.js'
 
-export type BranchStartContext = BranchInspection & {
+export type FeatureStartContext = BranchInspection & {
     kind: 'feature'
     id: string
 }
 
+export type ReleaseTrigger =
+    | { trigger: 'release-start' }
+    | { trigger: 'preview-release'; preview: string }
+
+export type ReleaseStartContext = BranchInspection &
+    ReleaseTrigger & {
+        kind: 'release'
+        id: string
+        version: string
+    }
+
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
-    preFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
-    postFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
-    preReleaseStart: (version: string) => Promise<void>
-    postReleaseStart: (version: string) => Promise<void>
+    preFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
+    postFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
+    preReleaseStart: (
+        version: string,
+        context: ReleaseStartContext
+    ) => Promise<void>
+    postReleaseStart: (
+        version: string,
+        context: ReleaseStartContext
+    ) => Promise<void>
     preReleaseFinish: (version: string) => Promise<void>
     postReleaseFinish: (version: string) => Promise<void>
 }

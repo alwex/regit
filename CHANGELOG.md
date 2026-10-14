@@ -14,12 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   only existed on origin (`origin: 'new' | 'local' | 'remote'`), the release it
   is based on (`baseTag`), the latest release (`latestTag`), and whether it is
   behind (`isOutdated`). Existing one-argument hooks keep working unchanged.
+- `preReleaseStart` and `postReleaseStart` receive the same `context`, plus
+  `version` and `trigger`: `'release-start'` for `release start`, or
+  `'preview-release'` (with the `preview` name) when the release is created by
+  `preview release`.
+
+### Changed
+
+- `release start` while a release is already open now fires `preReleaseStart`
+  and `postReleaseStart` for the open release, with `origin: 'local'` or
+  `'remote'`. Hooks that should only run for new releases can check
+  `context.origin === 'new'`.
+- `preview release` onto a release branch that already exists now warns
+  "Release already exists release-x" instead of reporting the release as started.
 
 ### Fixed
 
 - `feature start` in a repository without any release tag now fails with
   "No release tag found, run regit init first" instead of a raw git error.
-
 - `release finish` now tags prerelease versions in full (e.g. `v1.0.0-beta.1`
   instead of truncating to `v1.0.0`).
 - `release status` and `preview status` show the correct author and date on

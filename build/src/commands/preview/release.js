@@ -17,7 +17,11 @@ const releasePreviewWithName = (name) => __awaiter(void 0, void 0, void 0, funct
     yield assertPreviewExists(name);
     const previewBranchName = `${branchPreview}${name}`;
     const versionToUse = yield promptSelectNextVersion('What version do you want to release?');
-    const { name: releaseBranchName } = yield startRelease(versionToUse);
+    const { name: releaseBranchName } = yield startRelease({
+        version: versionToUse,
+        trigger: 'preview-release',
+        preview: name,
+    });
     yield mergeBranch(previewBranchName);
     logger.success(`Preview ${previewBranchName} merged into ${releaseBranchName}`);
     yield pushBranch(releaseBranchName);

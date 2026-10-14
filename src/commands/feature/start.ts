@@ -8,7 +8,7 @@ import {
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
-import { BranchStartContext, getHooks } from '../../services/hooks.js'
+import { FeatureStartContext, getHooks } from '../../services/hooks.js'
 import { logger } from '../../services/logger.js'
 import semver from 'semver'
 import { promptSelectSingleFeature } from '../../services/featureHelpers.js'
@@ -20,7 +20,7 @@ const startFeatureWithId = async (id: string) => {
     const branchName = `${branchFeature}${id}`
 
     const inspection = await inspectBranch(branchName)
-    const context: BranchStartContext = { kind: 'feature', id, ...inspection }
+    const context: FeatureStartContext = { kind: 'feature', id, ...inspection }
 
     await hooks.preFeatureStart(id, context)
     await startInspectedBranch(inspection)

@@ -14,14 +14,23 @@ import { getHooks } from './hooks.js';
 import { logger } from './logger.js';
 import semver from 'semver';
 import chalk from 'chalk';
-export const startRelease = (version) => __awaiter(void 0, void 0, void 0, function* () {
+const logReleaseStart = ({ version, inspection, }) => {
+    if (inspection.origin === 'new') {
+        logger.success(`Release ${version} started`);
+        return;
+    }
+    logger.warn(`Release already exists ${inspection.branch}`);
+};
+export const startRelease = (options) => __awaiter(void 0, void 0, void 0, function* () {
+    const { version } = options;
     const hooks = yield getHooks();
     const branchName = `${branchRelease}${version}`;
     const inspection = yield inspectBranch(branchName);
-    yield hooks.preReleaseStart(version);
+    const context = Object.assign(Object.assign({ kind: 'release', id: version }, options), inspection);
+    yield hooks.preReleaseStart(version, context);
     yield startInspectedBranch(inspection);
-    logger.success(`Release ${version} started`);
-    yield hooks.postReleaseStart(version);
+    logReleaseStart({ version, inspection });
+    yield hooks.postReleaseStart(version, context);
     return { name: branchName };
 });
 export const openRelease = () => __awaiter(void 0, void 0, void 0, function* () {
