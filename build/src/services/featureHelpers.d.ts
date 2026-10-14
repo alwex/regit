@@ -1,0 +1,11 @@
+import { ListBranchResult, ListBranchesInBranchResult } from './gitHelpers.js';
+import { FeatureSummary } from './hooks.js';
+export declare const getRemoteFeatureName: (branch: string) => Promise<string>;
+export declare const toFeatureSummary: ({ name, from, }: ListBranchResult) => FeatureSummary;
+export declare const summarizeFeatures: (featureBranches: string[]) => Promise<FeatureSummary[]>;
+export declare const assertFeatureExists: (id: string) => Promise<void>;
+export declare const formatFeatureForDisplay: (branch: ListBranchResult) => Promise<string>;
+export declare const displayFeatureBranch: (branch: ListBranchResult) => Promise<void>;
+export declare const displaySubFeatureBranch: (branch: ListBranchesInBranchResult) => Promise<void>;
+export declare const promptSelectMultipleFeatures: (message: string) => Promise<string[]>;
+export declare const promptSelectSingleFeature: (message: string) => Promise<string>;

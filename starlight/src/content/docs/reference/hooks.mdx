@@ -11,13 +11,42 @@ channel, and so on.
 
 ## The hooks file
 
-`regit init` generates a `.regit/hooks.js` file at the root of your repository. It uses
-CommonJS (`module.exports`) and is shallow-merged over regit's no-op defaults, so you only
-need to define the hooks you care about — the rest stay as no-ops.
+`regit init` generates a `.regit/hooks.js` file at the root of your repository, listing every
+hook with a one-line comment. It uses CommonJS (`module.exports`) and is shallow-merged over
+regit's defaults, so you only need to keep the hooks you care about — the others fall back to
+the defaults (no-ops, and the default release tag message).
 
 The file is loaded the same way whatever your project's `package.json` says: CommonJS
 (`module.exports`) works even when the project declares `"type": "module"`, and an ES
 module with `export default { ... }` works too. `.regit/hooks.cjs` is also picked up.
+
+### Editor completion and type checking
+
+`regit-cli` ships TypeScript types for hooks. Annotate the hooks object with
+`import('regit-cli').Hooks` to get completion on every `context` field, and — with
+`// @ts-check` or `checkJs` — errors when a hook misuses its context or returns the wrong type.
+`regit-cli` must be installed in the project (e.g. as a dev dependency) for the import to
+resolve.
+
+```js title=".regit/hooks.js"
+// @ts-check
+
+/** @type {import('regit-cli').Hooks} */
+const hooks = {
+    getTagMessage: async (version, context) => {
+        return `Release ${context.tag}`
+    },
+}
+
+module.exports = hooks
+```
+
+Annotate a variable and export it, as above. With `/** @type … */ module.exports = { … }`,
+TypeScript only types the hook arguments and does not check what hooks return.
+
+Every context type is exported too: `FeatureStartContext`, `ReleaseStartContext`,
+`ReleaseAddContext`, `ReleaseFinishContext`, `ReleaseFinishedContext`, `PreviewStartContext`,
+`PreviewAddContext`, `FeaturePushContext`, `FeatureSummary`.
 
 ```ts
 export interface Hooks {

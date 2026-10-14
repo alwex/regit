@@ -12,6 +12,32 @@ describe('regit init', () => {
         })
     })
 
+    test('regit init generates a hooks file defining every hook', async (ctx) => {
+        await ctx.regit('init 1.0.0')
+
+        const hookNames = await ctx.cliLocal(
+            `node -e "console.log(Object.keys(require('./.regit/hooks.js')).sort().join(','))"`
+        )
+
+        expect(hookNames.split(',')).toEqual([
+            'getFeatureName',
+            'getTagMessage',
+            'postFeaturePush',
+            'postFeatureStart',
+            'postPreviewAdd',
+            'postPreviewStart',
+            'postReleaseAdd',
+            'postReleaseFinish',
+            'postReleaseStart',
+            'preFeatureStart',
+            'prePreviewAdd',
+            'prePreviewStart',
+            'preReleaseAdd',
+            'preReleaseFinish',
+            'preReleaseStart',
+        ])
+    })
+
     test('regit init tags the first version', async (ctx) => {
         await ctx.regit('init 1.0.0')
 

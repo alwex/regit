@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `postFeaturePush(id, context)` hook, called after `feature push` has pushed
   the current feature branch, with the feature `id` and `branch` (e.g. to open a
   merge request).
+- TypeScript types for hooks: annotate `.regit/hooks.js` with
+  `/** @type {import('regit-cli').Hooks} */` for editor completion and type
+  checking. Every context type is exported as well.
 - New `getTagMessage(version, context)` hook to write the message of the tag
   created by `release finish` (e.g. release notes), using the same context as
   `preReleaseFinish`. It runs right after `preReleaseFinish`, before anything is
@@ -42,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `regit init` generates a `.regit/hooks.js` that lists every hook with its
+  arguments and a one-line description, typed with `import('regit-cli').Hooks`.
+  Existing hooks files are not touched.
 - `release start` while a release is already open now fires `preReleaseStart`
   and `postReleaseStart` for the open release, with `origin: 'local'` or
   `'remote'`. Hooks that should only run for new releases can check

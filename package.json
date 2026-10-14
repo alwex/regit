@@ -11,6 +11,7 @@
     },
     "homepage": "https://github.com/alwex/regit/blob/main/README.md",
     "main": "build/src/index.js",
+    "types": "build/src/types.d.ts",
     "bin": {
         "regit": "build/src/index.js"
     },

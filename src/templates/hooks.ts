@@ -1,20 +1,60 @@
 export const hooksTemplate = `
-module.exports = {
-    getFeatureName: async (id) => {
-        // return feature name
-        return Promise.resolve('')
+// Hooks reference: https://alwex.github.io/regit/reference/hooks/
+// Every hook is optional: delete the ones you do not need.
+
+/** @type {import('regit-cli').Hooks} */
+const hooks = {
+    getFeatureName: async (branch) => {
+        // label shown next to a feature branch in listings (e.g. issue title)
+        return ''
     },
-    preFeatureStart: async (id) => {
-        // do something clever before feature start
+    getTagMessage: async (version, context) => {
+        // message of the tag created by release finish
+        const branches = context.features.map((feature) => {
+            return feature.branch
+        })
+        return \`[regit] \${context.tag}. (\${branches.join(',')})\`
     },
-    postFeatureStart: async (id) => {
-        // do something clever after feature start
+    preFeatureStart: async (id, context) => {
+        // before a feature branch is created or checked out (context.origin)
     },
-    preReleaseFinish: async (id) => {
-        // do something clever before release finish
+    postFeatureStart: async (id, context) => {
+        // after a feature branch is created or checked out
     },
-    postReleaseFinish: async (id) => {
-        // do something clever after release finish
+    postFeaturePush: async (id, context) => {
+        // after feature push
+    },
+    preReleaseStart: async (version, context) => {
+        // before a release branch is created or checked out
+    },
+    postReleaseStart: async (version, context) => {
+        // after a release branch is created or checked out
+    },
+    preReleaseAdd: async (version, context) => {
+        // before context.features are merged into the release
+    },
+    postReleaseAdd: async (version, context) => {
+        // after context.features are merged into the release
+    },
+    preReleaseFinish: async (version, context) => {
+        // before the release is merged into stable (release branch checked out)
+    },
+    postReleaseFinish: async (version, context) => {
+        // after the release is merged, tagged and cleaned up
+    },
+    prePreviewStart: async (preview, context) => {
+        // before a preview branch is created or checked out
+    },
+    postPreviewStart: async (preview, context) => {
+        // after a preview branch is created or checked out
+    },
+    prePreviewAdd: async (preview, context) => {
+        // before context.features are merged into the preview
+    },
+    postPreviewAdd: async (preview, context) => {
+        // after context.features are merged into the preview
     },
 }
+
+module.exports = hooks
 `
