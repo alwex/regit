@@ -109,3 +109,20 @@ module.exports = hooks
 The `@type` comment gives editor completion and type checking when `regit-cli` is installed
 in the project. Full reference, including every context field:
 [Hooks documentation](https://alwex.github.io/regit/reference/hooks/).
+
+## Agent skills
+
+The `skills/` folder contains two [agent skills](https://skills.sh) that teach coding agents
+(Claude Code and others) to work with regit:
+
+- `regit`: drive the CLI in a regit repository (features, previews, releases, tags), avoid
+  interactive prompts, and confirm before destructive commands.
+- `regit-hooks`: write, test and debug `.regit/hooks.js` (hook catalogue, context objects,
+  failure rules, typing, sandbox script).
+
+```shell
+npx skills add alwex/regit@regit
+npx skills add alwex/regit@regit-hooks
+```
+
+Or copy the folders into your project's `.claude/skills/`.

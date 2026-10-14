@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Agent skills in `skills/`: `regit` (using the CLI) and `regit-hooks` (writing
+  and debugging `.regit/hooks.js`), installable with
+  `npx skills add alwex/regit@regit` and `npx skills add alwex/regit@regit-hooks`.
 - `preFeatureStart` and `postFeatureStart` receive a second `context` argument
   describing the feature branch: whether it is new, already existed locally, or
   only existed on origin (`origin: 'new' | 'local' | 'remote'`), the release it
