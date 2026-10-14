@@ -18,9 +18,10 @@ const startFeatureWithId = (id) => __awaiter(void 0, void 0, void 0, function* (
     yield assertCurrentBranchIsClean();
     const branchName = `${branchFeature}${id}`;
     const inspection = yield inspectBranch(branchName);
-    yield hooks.preFeatureStart(id);
+    const context = Object.assign({ kind: 'feature', id }, inspection);
+    yield hooks.preFeatureStart(id, context);
     yield startInspectedBranch(inspection);
-    yield hooks.postFeatureStart(id);
+    yield hooks.postFeatureStart(id, context);
     const latestTag = yield getLatestTag();
     const branchInfo = yield getBranchInfo(branchName);
     logger.success(`Feature ${id} started`);

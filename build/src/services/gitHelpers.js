@@ -113,21 +113,18 @@ export const pushStableBranch = (version) => __awaiter(void 0, void 0, void 0, f
     yield git.push(['-u', 'origin', branchStable]);
     yield createTag(version);
 });
+const getLatestTagMergedInto = (ref) => __awaiter(void 0, void 0, void 0, function* () {
+    const mergedTags = yield git.raw(['tag', '--merged', ref]);
+    return mergedTags.trim().split('\n').sort(semver.rcompare)[0].trim();
+});
 export const getBranchInfo = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
-    const allVersionsMerged = yield git.raw([
-        'tag',
-        '--merged',
-        `origin/${branchName}`,
-    ]);
-    const allVersions = allVersionsMerged.trim().split('\n');
-    const lastestVersionMerged = allVersions.sort(semver.rcompare)[0];
-    const from = lastestVersionMerged;
+    const from = yield getLatestTagMergedInto(`origin/${branchName}`);
     const show = yield git.show([`origin/${branchName}`]);
     const showDetails = show.trim().split('\n').slice(0, 3);
     const isPresentLocally = yield localBranchExists(branchName);
     return {
         name: branchName.replace('remotes/origin/', ''),
-        from: from.trim(),
+        from,
         show: showDetails,
         remoteName: '',
         isPresentLocally,
@@ -153,25 +150,55 @@ export const listBranchStartingWith = (branchName) => __awaiter(void 0, void 0, 
     const uniq = uniqBy(data, 'name');
     return uniq;
 });
-export const inspectBranch = (name) => __awaiter(void 0, void 0, void 0, function* () {
+const getRequiredLatestTag = () => __awaiter(void 0, void 0, void 0, function* () {
+    const latestTag = yield getLatestTag();
+    if (!latestTag) {
+        throw new Error('No release tag found, run regit init first');
+    }
+    return latestTag;
+});
+const getBranchOrigin = (branch) => __awaiter(void 0, void 0, void 0, function* () {
+    if (yield localBranchExists(branch)) {
+        return 'local';
+    }
+    if (yield remoteBranchExists(branch)) {
+        return 'remote';
+    }
+    return 'new';
+});
+const getBaseTag = ({ branch, origin, latestTag, }) => __awaiter(void 0, void 0, void 0, function* () {
+    if (origin === 'new') {
+        return latestTag;
+    }
+    if (origin === 'local') {
+        return getLatestTagMergedInto(branch);
+    }
+    return getLatestTagMergedInto(`origin/${branch}`);
+});
+export const inspectBranch = (branch) => __awaiter(void 0, void 0, void 0, function* () {
+    const latestTag = yield getRequiredLatestTag();
+    const origin = yield getBranchOrigin(branch);
+    const baseTag = yield getBaseTag({ branch, origin, latestTag });
     return {
-        name,
-        exists: yield branchExists(name),
+        branch,
+        origin,
+        baseTag,
+        latestTag,
+        isOutdated: semver.lt(baseTag, latestTag),
     };
 });
-export const startInspectedBranch = ({ name, exists, }) => __awaiter(void 0, void 0, void 0, function* () {
-    if (exists) {
-        console.log(`Branch ${name} already exists`);
-        yield git.checkout(name);
+export const startInspectedBranch = ({ branch, origin, latestTag, }) => __awaiter(void 0, void 0, void 0, function* () {
+    if (origin !== 'new') {
+        console.log(`Branch ${branch} already exists`);
+        yield git.checkout(branch);
         return;
     }
-    const lastTag = yield getLatestTag();
-    console.log(`Creating Branch ${name} from tag ${lastTag}`);
-    yield git.checkoutBranch(name, `tags/${lastTag}`);
-    yield git.commit(`[regit] Init '${name}'`, {
+    console.log(`Creating Branch ${branch} from tag ${latestTag}`);
+    yield git.checkoutBranch(branch, `tags/${latestTag}`);
+    yield git.commit(`[regit] Init '${branch}'`, {
         '--allow-empty': null,
     });
-    yield git.push(['-u', 'origin', name]);
+    yield git.push(['-u', 'origin', branch]);
 });
 export const startOrCheckoutBranch = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
     yield startInspectedBranch(yield inspectBranch(branchName));

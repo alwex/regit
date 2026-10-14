@@ -38,7 +38,7 @@ I follow Test-Driven Development (TDD) with a strong emphasis on behavior-driven
 
 **Project gotcha:** `ctx.regit()` runs the CLI in-process through Vitest's module runner, which shims `module`/`require`/`exports`. Anything depending on Node's real module loader (e.g. loading `.regit/hooks.js`) must be tested by spawning `node build/src/index.js` (see `test/hooks.test.ts`), or the test passes while production fails.
 
-**Project gotcha:** `build/` is tracked in git and rebuilt by every `yarn test` (global setup). After manual mutation runs, rerun `yarn test` on the restored source so no mutant is left in `build/`.
+**Project gotcha:** `build/` is tracked in git and rebuilt by every `yarn test` (global setup). After manual mutation runs, rerun `yarn test` on the restored source so no mutant is left in `build/`. Never run two `yarn test` at once (including during a mutation batch): each one wipes and rebuilds `build/`, so the other run reports false failures.
 
 For detailed testing patterns and examples, load the `testing` skill.
 For verifying test effectiveness through mutation analysis, load the `mutation-testing` skill.

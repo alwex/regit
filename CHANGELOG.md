@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `preFeatureStart` and `postFeatureStart` receive a second `context` argument
+  describing the feature branch: whether it is new, already existed locally, or
+  only existed on origin (`origin: 'new' | 'local' | 'remote'`), the release it
+  is based on (`baseTag`), the latest release (`latestTag`), and whether it is
+  behind (`isOutdated`). Existing one-argument hooks keep working unchanged.
+
 ### Fixed
+
+- `feature start` in a repository without any release tag now fails with
+  "No release tag found, run regit init first" instead of a raw git error.
 
 - `release finish` now tags prerelease versions in full (e.g. `v1.0.0-beta.1`
   instead of truncating to `v1.0.0`).

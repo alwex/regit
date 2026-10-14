@@ -122,3 +122,15 @@ describe('feature', async () => {
         expect(resultStatus).toContain('Date')
     })
 })
+
+describe('feature without regit init', () => {
+    test('feature start fails when no release tag exists', async (ctx) => {
+        await ctx.cliLocal('git commit --allow-empty -m "first commit"')
+
+        const featureStart = ctx.regit('feature start f1')
+
+        await expect(featureStart).rejects.toThrowError(
+            'No release tag found, run regit init first'
+        )
+    })
+})

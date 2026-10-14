@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getProjectRootDirectory } from './gitHelpers.js'
+import { BranchInspection, getProjectRootDirectory } from './gitHelpers.js'
 import fs from 'fs'
 import path from 'path'
 import vm from 'vm'
@@ -7,10 +7,15 @@ import { createRequire } from 'module'
 import { pathToFileURL } from 'url'
 import { getRegitDirectory } from './helpers.js'
 
+export type BranchStartContext = BranchInspection & {
+    kind: 'feature'
+    id: string
+}
+
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
-    preFeatureStart: (id: string) => Promise<void>
-    postFeatureStart: (id: string) => Promise<void>
+    preFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
+    postFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
     preReleaseStart: (version: string) => Promise<void>
     postReleaseStart: (version: string) => Promise<void>
     preReleaseFinish: (version: string) => Promise<void>

@@ -158,16 +158,14 @@ export interface ListBranchResult {
     isPresentLocally: boolean
 }
 
-export const getBranchInfo = async (branchName: string) => {
-    const allVersionsMerged = await git.raw([
-        'tag',
-        '--merged',
-        `origin/${branchName}`,
-    ])
-    const allVersions = allVersionsMerged.trim().split('\n')
+const getLatestTagMergedInto = async (ref: string) => {
+    const mergedTags = await git.raw(['tag', '--merged', ref])
 
-    const lastestVersionMerged = allVersions.sort(semver.rcompare)[0]
-    const from = lastestVersionMerged
+    return mergedTags.trim().split('\n').sort(semver.rcompare)[0].trim()
+}
+
+export const getBranchInfo = async (branchName: string) => {
+    const from = await getLatestTagMergedInto(`origin/${branchName}`)
 
     const show = await git.show([`origin/${branchName}`])
 
@@ -177,7 +175,7 @@ export const getBranchInfo = async (branchName: string) => {
 
     return {
         name: branchName.replace('remotes/origin/', ''),
-        from: from.trim(),
+        from,
         show: showDetails,
         remoteName: '',
         isPresentLocally,
@@ -214,37 +212,90 @@ export const listBranchStartingWith = async (branchName: string) => {
     return uniq
 }
 
+export type BranchOrigin = 'new' | 'local' | 'remote'
+
 export type BranchInspection = {
-    name: string
-    exists: boolean
+    branch: string
+    origin: BranchOrigin
+    baseTag: string
+    latestTag: string
+    isOutdated: boolean
+}
+
+const getRequiredLatestTag = async () => {
+    const latestTag = await getLatestTag()
+    if (!latestTag) {
+        throw new Error('No release tag found, run regit init first')
+    }
+
+    return latestTag
+}
+
+const getBranchOrigin = async (branch: string): Promise<BranchOrigin> => {
+    if (await localBranchExists(branch)) {
+        return 'local'
+    }
+
+    if (await remoteBranchExists(branch)) {
+        return 'remote'
+    }
+
+    return 'new'
+}
+
+const getBaseTag = async ({
+    branch,
+    origin,
+    latestTag,
+}: {
+    branch: string
+    origin: BranchOrigin
+    latestTag: string
+}) => {
+    if (origin === 'new') {
+        return latestTag
+    }
+
+    if (origin === 'local') {
+        return getLatestTagMergedInto(branch)
+    }
+
+    return getLatestTagMergedInto(`origin/${branch}`)
 }
 
 export const inspectBranch = async (
-    name: string
+    branch: string
 ): Promise<BranchInspection> => {
+    const latestTag = await getRequiredLatestTag()
+    const origin = await getBranchOrigin(branch)
+    const baseTag = await getBaseTag({ branch, origin, latestTag })
+
     return {
-        name,
-        exists: await branchExists(name),
+        branch,
+        origin,
+        baseTag,
+        latestTag,
+        isOutdated: semver.lt(baseTag, latestTag),
     }
 }
 
 export const startInspectedBranch = async ({
-    name,
-    exists,
+    branch,
+    origin,
+    latestTag,
 }: BranchInspection) => {
-    if (exists) {
-        console.log(`Branch ${name} already exists`)
-        await git.checkout(name)
+    if (origin !== 'new') {
+        console.log(`Branch ${branch} already exists`)
+        await git.checkout(branch)
         return
     }
 
-    const lastTag = await getLatestTag()
-    console.log(`Creating Branch ${name} from tag ${lastTag}`)
-    await git.checkoutBranch(name, `tags/${lastTag}`)
-    await git.commit(`[regit] Init '${name}'`, {
+    console.log(`Creating Branch ${branch} from tag ${latestTag}`)
+    await git.checkoutBranch(branch, `tags/${latestTag}`)
+    await git.commit(`[regit] Init '${branch}'`, {
         '--allow-empty': null,
     })
-    await git.push(['-u', 'origin', name])
+    await git.push(['-u', 'origin', branch])
 }
 
 export const startOrCheckoutBranch = async (branchName: string) => {

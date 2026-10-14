@@ -22,8 +22,8 @@ module with `export default { ... }` works too. `.regit/hooks.cjs` is also picke
 ```ts
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
-    preFeatureStart: (id: string) => Promise<void>
-    postFeatureStart: (id: string) => Promise<void>
+    preFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
+    postFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
     preReleaseStart: (version: string) => Promise<void>
     postReleaseStart: (version: string) => Promise<void>
     preReleaseFinish: (version: string) => Promise<void>
@@ -43,6 +43,35 @@ export interface Hooks {
 | `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). |
 | `postReleaseFinish` | After a release has been merged, tagged, and cleaned up. |
 
+## Hook context
+
+Some hooks receive a second `context` argument describing what regit is about to do (pre
+hooks) or just did (post hooks). Hooks written with a single argument keep working.
+
+### Branch start context
+
+Passed to `preFeatureStart` and `postFeatureStart`.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `kind` | `'feature'` | Kind of branch being started. |
+| `id` | `'f1'` | Id given to `feature start`, without the `feature-` prefix. |
+| `branch` | `'feature-f1'` | Full branch name. |
+| `origin` | `'new'` | `'new'`: the branch is created from the latest release tag. `'local'`: the branch already exists locally and is checked out. `'remote'`: the branch only exists on `origin` (e.g. a teammate's feature) and is checked out for the first time. |
+| `baseTag` | `'v1.1.0'` | Latest release tag merged into the branch that gets checked out. For a new branch, the tag it is created from. |
+| `latestTag` | `'v1.2.0'` | Latest release tag in the repository. |
+| `isOutdated` | `true` | `baseTag` is older than `latestTag`: the branch does not contain the latest release. |
+
+```js title=".regit/hooks.js"
+module.exports = {
+    postFeatureStart: async (id, context) => {
+        if (context.origin === 'new') {
+            console.log(`Move ticket ${id} to "In progress"`)
+        }
+    },
+}
+```
+
 ## Example
 
 ```js title=".regit/hooks.js"
@@ -51,11 +80,11 @@ module.exports = {
         console.log('fetch feature name from somewhere')
         return Promise.resolve('feature name from gitlab')
     },
-    preFeatureStart: async (id) => {
+    preFeatureStart: async (id, context) => {
         console.log('doing something clever BEFORE feature start')
     },
-    postFeatureStart: async (id) => {
-        console.log('doing something clever AFTER feature start')
+    postFeatureStart: async (id, context) => {
+        console.log(`feature ${context.branch} started (${context.origin})`)
     },
     preReleaseStart: async (version) => {
         console.log('doing something clever BEFORE release start')
