@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import chalk from 'chalk';
-import { branchExists, listBranchStartingWith, } from './gitHelpers.js';
+import { branchExists, getBranchInfo, listBranchStartingWith, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
 import { branchFeature } from '../const.js';
 import { checkbox, select } from '@inquirer/prompts';
@@ -24,6 +24,10 @@ export const toFeatureSummary = ({ name, from, }) => {
         baseTag: from,
     };
 };
+export const summarizeFeatures = (featureBranches) => __awaiter(void 0, void 0, void 0, function* () {
+    const featureInfos = yield Promise.all(featureBranches.map(getBranchInfo));
+    return featureInfos.map(toFeatureSummary);
+});
 export const assertFeatureExists = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const branchName = `${branchFeature}${id}`;
     const featureExists = yield branchExists(branchName);

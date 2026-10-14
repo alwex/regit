@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   same branch context as feature and release start (`kind: 'preview'`).
 - New `prePreviewAdd` / `postPreviewAdd` hooks for `preview add`, receiving the
   `preview` name, the `previewBranch` and the `features` being merged.
+- New `preReleaseAdd` / `postReleaseAdd` hooks for `release add`, receiving the
+  release `version`, the `releaseBranch` and the `features` being merged.
 
 ### Changed
 
@@ -44,8 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   other than an `Error` now shows that value instead of `undefined`.
 - `preview start <name>` fetches from origin first, so a preview pushed by a
   teammate is checked out instead of being recreated.
-- `preview add` without a feature id prints "Feature f1 merged into preview-p1"
-  (the feature id), like `preview add <name> <feature_id>` already did.
+- `preview add` and `release add` without a feature id print "Feature f1 merged
+  into …" (the feature id), like the single-feature form already did.
 
 ### Fixed
 

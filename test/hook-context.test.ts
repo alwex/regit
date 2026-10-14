@@ -48,6 +48,8 @@ module.exports = {
     postPreviewStart: record('postPreviewStart'),
     prePreviewAdd: record('prePreviewAdd'),
     postPreviewAdd: record('postPreviewAdd'),
+    preReleaseAdd: record('preReleaseAdd'),
+    postReleaseAdd: record('postReleaseAdd'),
 }
 `
 
@@ -193,6 +195,17 @@ const previewAddContext = (overrides: Record<string, unknown>) => {
 const previewStartHooks = { pre: 'prePreviewStart', post: 'postPreviewStart' }
 
 const previewAddHooks = { pre: 'prePreviewAdd', post: 'postPreviewAdd' }
+
+const releaseAddContext = (overrides: Record<string, unknown>) => {
+    return {
+        version: '0.1.0',
+        releaseBranch: 'release-0.1.0',
+        features: [],
+        ...overrides,
+    }
+}
+
+const releaseAddHooks = { pre: 'preReleaseAdd', post: 'postReleaseAdd' }
 
 describe('hook context', () => {
     beforeEach(async (ctx) => {
@@ -494,7 +507,53 @@ describe('hook context', () => {
         })
     })
 
+    describe('release add', { timeout: 30000 }, () => {
+        test('tells hooks which feature is added to the release', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'release start 0.1.0')
+
+            await runCli(ctx, 'release add f1')
+
+            expectBothHooksCalledWith(ctx, releaseAddHooks, [
+                '0.1.0',
+                releaseAddContext({ features: [featureSummary('f1')] }),
+            ])
+        })
+
+        test('tells hooks which features are picked in the prompt', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'feature start f2')
+            await runCli(ctx, 'release start 0.1.0')
+
+            await ctx.cliLocal(`printf 'a\\n' | node ${CLI_PATH} release add`)
+
+            expectBothHooksCalledWith(ctx, releaseAddHooks, [
+                '0.1.0',
+                releaseAddContext({
+                    features: [featureSummary('f1'), featureSummary('f2')],
+                }),
+            ])
+        })
+    })
+
     describe('hook failures', { timeout: 30000 }, () => {
+        test('reports that features were merged when postReleaseAdd fails', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'release start 0.1.0')
+
+            const releaseAdd = runCliWithFailingHook(ctx, {
+                hook: 'postReleaseAdd',
+                args: 'release add f1',
+            })
+
+            await expect(releaseAdd).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Merged feature-f1 into release-0.1.0, but hook postReleaseAdd failed: postReleaseAdd exploded'
+                ),
+            })
+        })
+
         test('reports that the preview started when postPreviewStart fails', async (ctx) => {
             const previewStart = runCliWithFailingHook(ctx, {
                 hook: 'postPreviewStart',

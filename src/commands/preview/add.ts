@@ -3,7 +3,6 @@ import { branchFeature, branchPreview } from '../../const.js'
 import {
     assertCurrentBranchIsClean,
     branchExists,
-    getBranchInfo,
     mergeBranch,
     pushBranch,
     startOrCheckoutBranch,
@@ -12,7 +11,7 @@ import {
 import { logger } from '../../services/logger.js'
 import {
     promptSelectMultipleFeatures,
-    toFeatureSummary,
+    summarizeFeatures,
 } from '../../services/featureHelpers.js'
 import {
     PreviewAddContext,
@@ -43,11 +42,10 @@ const mergeFeaturesIntoPreview = async ({
     featureBranches: string[]
 }) => {
     const hooks = await getHooks()
-    const featureInfos = await Promise.all(featureBranches.map(getBranchInfo))
     const context: PreviewAddContext = {
         preview,
         previewBranch,
-        features: featureInfos.map(toFeatureSummary),
+        features: await summarizeFeatures(featureBranches),
     }
 
     await hooks.prePreviewAdd(preview, context)

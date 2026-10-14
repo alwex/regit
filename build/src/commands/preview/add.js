@@ -8,9 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature, branchPreview } from '../../const.js';
-import { assertCurrentBranchIsClean, branchExists, getBranchInfo, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
-import { promptSelectMultipleFeatures, toFeatureSummary, } from '../../services/featureHelpers.js';
+import { promptSelectMultipleFeatures, summarizeFeatures, } from '../../services/featureHelpers.js';
 import { getHooks, runPostHook, } from '../../services/hooks.js';
 const openPreview = (name) => __awaiter(void 0, void 0, void 0, function* () {
     const previewBranchName = `${branchPreview}${name}`;
@@ -23,11 +23,10 @@ const openPreview = (name) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const mergeFeaturesIntoPreview = ({ preview, previewBranch, featureBranches, }) => __awaiter(void 0, void 0, void 0, function* () {
     const hooks = yield getHooks();
-    const featureInfos = yield Promise.all(featureBranches.map(getBranchInfo));
     const context = {
         preview,
         previewBranch,
-        features: featureInfos.map(toFeatureSummary),
+        features: yield summarizeFeatures(featureBranches),
     };
     yield hooks.prePreviewAdd(preview, context);
     for (const feature of context.features) {

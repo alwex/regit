@@ -3,6 +3,7 @@ import {
     ListBranchResult,
     ListBranchesInBranchResult,
     branchExists,
+    getBranchInfo,
     listBranchStartingWith,
 } from './gitHelpers.js'
 import { FeatureSummary, getHooks } from './hooks.js'
@@ -25,6 +26,12 @@ export const toFeatureSummary = ({
         branch: name,
         baseTag: from,
     }
+}
+
+export const summarizeFeatures = async (featureBranches: string[]) => {
+    const featureInfos = await Promise.all(featureBranches.map(getBranchInfo))
+
+    return featureInfos.map(toFeatureSummary)
 }
 
 export const assertFeatureExists = async (id: string) => {

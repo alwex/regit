@@ -75,6 +75,35 @@ describe('release', async (ctx) => {
         expect(result).toContain('Cleanup merged features')
     })
 
+    test('release add pushes the release branch to origin', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('release start 1.0.0')
+
+        await ctx.regit('release add f1')
+
+        expect(await ctx.cliRemote('git rev-parse release-1.0.0')).toBe(
+            await ctx.cliLocal('git rev-parse release-1.0.0')
+        )
+    })
+
+    test('release add without an open release is rejected', async (ctx) => {
+        await ctx.regit('feature start f1')
+
+        const releaseAdd = ctx.regit('release add f1')
+
+        await expect(releaseAdd).rejects.toThrowError('No release branch found')
+    })
+
+    test('release add of a non-existent feature is rejected', async (ctx) => {
+        await ctx.regit('release start 1.0.0')
+
+        const releaseAdd = ctx.regit('release add doesnotexist')
+
+        await expect(releaseAdd).rejects.toThrowError(
+            'Feature doesnotexist does not exist'
+        )
+    })
+
     test('release status', async (ctx) => {
         await ctx.regit('feature start f1')
         await ctx.regit('feature start f2')

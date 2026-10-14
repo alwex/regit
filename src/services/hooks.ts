@@ -42,6 +42,12 @@ export type ReleaseFinishedContext = ReleaseFinishContext & {
     deletedBranches: string[]
 }
 
+export type ReleaseAddContext = {
+    version: string
+    releaseBranch: string
+    features: FeatureSummary[]
+}
+
 export type PreviewStartContext = BranchInspection & {
     kind: 'preview'
     id: string
@@ -72,6 +78,11 @@ export interface Hooks {
     postReleaseFinish: (
         version: string,
         context: ReleaseFinishedContext
+    ) => Promise<void>
+    preReleaseAdd: (version: string, context: ReleaseAddContext) => Promise<void>
+    postReleaseAdd: (
+        version: string,
+        context: ReleaseAddContext
     ) => Promise<void>
     prePreviewStart: (
         preview: string,
@@ -130,6 +141,8 @@ const defaultHooks: Hooks = {
     postReleaseStart: async (version: string) => {},
     preReleaseFinish: async (version: string) => {},
     postReleaseFinish: async (version: string) => {},
+    preReleaseAdd: async (version: string) => {},
+    postReleaseAdd: async (version: string) => {},
     prePreviewStart: async (preview: string) => {},
     postPreviewStart: async (preview: string) => {},
     prePreviewAdd: async (preview: string) => {},
