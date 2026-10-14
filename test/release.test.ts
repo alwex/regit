@@ -75,6 +75,21 @@ describe('release', async (ctx) => {
         expect(result).toContain('Cleanup merged features')
     })
 
+    test('release finish lists the merged features in the tag message', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('feature start f2')
+        await ctx.regit('release start 1.0.0')
+        await ctx.regit('release add f1')
+        await ctx.regit('release add f2')
+
+        await ctx.regit('release finish')
+
+        const tagMessage = await ctx.cliLocal(
+            "git tag -l --format='%(contents)' v1.0.0"
+        )
+        expect(tagMessage.trim()).toBe('[regit] v1.0.0. (feature-f1,feature-f2)')
+    })
+
     test('release add pushes the release branch to origin', async (ctx) => {
         await ctx.regit('feature start f1')
         await ctx.regit('release start 1.0.0')

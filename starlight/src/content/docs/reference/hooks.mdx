@@ -22,6 +22,7 @@ module with `export default { ... }` works too. `.regit/hooks.cjs` is also picke
 ```ts
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
+    getTagMessage: (version: string, context: ReleaseFinishContext) => Promise<string>
     preFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
     postFeatureStart: (id: string, context: BranchStartContext) => Promise<void>
     preReleaseStart: (version: string, context: BranchStartContext) => Promise<void>
@@ -42,6 +43,7 @@ export interface Hooks {
 | Hook | Fires |
 | --- | --- |
 | `getFeatureName` | When regit renders a feature in `feature list`, `feature status`, and release/preview/tag listings. Return a label (e.g. fetched from GitLab/Jira) shown next to the branch. |
+| `getTagMessage` | During `release finish`, right after `preReleaseFinish` and before anything is pushed or merged. Returns the message of the release tag. |
 | `preFeatureStart` | Before a feature branch is created or checked out (`feature start`). |
 | `postFeatureStart` | After a feature branch is created or checked out. |
 | `preReleaseStart` | Before a release branch is created or checked out (`release start`, including when a release is already open, and `preview release`). |
@@ -61,6 +63,8 @@ export interface Hooks {
   `preReleaseFinish`, `prePreviewStart`, `prePreviewAdd`) can stop a command: if one
   throws, regit aborts before creating, merging, tagging or deleting anything, prints the
   hook's error and exits with code 2.
+- **`getTagMessage`** behaves like a pre hook: if it throws, or returns anything other than a
+  non-empty string, `release finish` stops before pushing or merging anything.
 - **Post hooks** (`postFeatureStart`, `postReleaseStart`, `postReleaseAdd`,
   `postReleaseFinish`, `postPreviewStart`, `postPreviewAdd`) run after the git work is
   done. If one throws, the work is **not** rolled back. regit says so and names the hook,
@@ -167,6 +171,38 @@ module.exports = {
             })
         )
         console.log(`${context.tag} released: ${names.join(', ')}`)
+    },
+}
+```
+
+## Release tag message
+
+`release finish` creates an annotated tag on stable. By default its message lists the merged
+feature branches:
+
+```
+[regit] v1.2.0. (feature-f1,feature-f2)
+```
+
+Return your own message from `getTagMessage`. It receives the release version and the
+[release finish context](#release-finish-context), and must return a non-empty string.
+Because it runs after `preReleaseFinish`, it can read anything that hook committed (e.g. a
+generated changelog).
+
+```js title=".regit/hooks.js"
+const getFeatureName = async (branch) => {
+    return `title of ${branch} from your issue tracker`
+}
+
+module.exports = {
+    getFeatureName,
+    getTagMessage: async (version, context) => {
+        const lines = await Promise.all(
+            context.features.map(async (feature) => {
+                return `- ${await getFeatureName(feature.branch)} (${feature.branch})`
+            })
+        )
+        return [`Release ${context.tag}`, '', ...lines].join('\n')
     },
 }
 ```

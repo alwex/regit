@@ -61,6 +61,10 @@ export type PreviewAddContext = {
 
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
+    getTagMessage: (
+        version: string,
+        context: ReleaseFinishContext
+    ) => Promise<string>
     preFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
     postFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
     preReleaseStart: (
@@ -125,6 +129,23 @@ export const runPostHook = async ({
     }
 }
 
+export const resolveTagMessage = async ({
+    hooks,
+    version,
+    context,
+}: {
+    hooks: Hooks
+    version: string
+    context: ReleaseFinishContext
+}) => {
+    const message: unknown = await hooks.getTagMessage(version, context)
+    if (typeof message !== 'string' || message.trim() === '') {
+        throw new Error('Hook getTagMessage must return a non-empty string')
+    }
+
+    return message
+}
+
 const defaultHooks: Hooks = {
     getFeatureName: async (id: string) => {
         // const api = `https://random-word-api.vercel.app/api?words=4`
@@ -134,6 +155,13 @@ const defaultHooks: Hooks = {
         // return result.data.toString().replaceAll(',', '-')
 
         return ''
+    },
+    getTagMessage: async (version: string, context: ReleaseFinishContext) => {
+        const branches = context.features.map((feature) => {
+            return feature.branch
+        })
+
+        return `[regit] ${context.tag}. (${branches.join(',')})`
     },
     preFeatureStart: async (id: string) => {},
     postFeatureStart: async (id: string) => {},

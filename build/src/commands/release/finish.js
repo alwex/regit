@@ -12,7 +12,7 @@ import { git } from '../../services/git.js';
 import { assertCurrentBranchIsClean, createTag, deleteBranch, getRequiredLatestTag, listBranchStartingWith, listBranchesInBranch, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import chalk from 'chalk';
 import { toFeatureSummary } from '../../services/featureHelpers.js';
-import { getHooks, runPostHook, } from '../../services/hooks.js';
+import { getHooks, resolveTagMessage, runPostHook, } from '../../services/hooks.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     const hooks = yield getHooks();
@@ -40,6 +40,7 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     };
     yield git.checkout(name);
     yield hooks.preReleaseFinish(version, context);
+    const tagMessage = yield resolveTagMessage({ hooks, version, context });
     console.log(chalk.dim(`Push release to origin`));
     yield git.push(['-u', 'origin', name]);
     console.log(chalk.dim(`Merge release into stable`));
@@ -47,9 +48,7 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield git.fetch();
     yield git.pull();
     yield mergeBranch(name);
-    yield createTag(newVersion, features.map((data) => {
-        return data.name;
-    }));
+    yield createTag({ tag: newVersion, message: tagMessage });
     yield pushBranch(branchStable);
     const stableCommit = yield git.revparse([branchStable]);
     console.log(chalk.dim(`Delete release branch`));

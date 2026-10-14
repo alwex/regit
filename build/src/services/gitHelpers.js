@@ -81,9 +81,9 @@ export const getTagDetails = (tag) => __awaiter(void 0, void 0, void 0, function
         date: findHeaderValue(lines, 'Date:'),
     };
 });
-export const createTag = (version, included = []) => __awaiter(void 0, void 0, void 0, function* () {
-    yield git.addAnnotatedTag(version, `[regit] ${version}. (${included.join(',')})`);
-    yield git.push(['origin', version]);
+export const createTag = ({ tag, message, }) => __awaiter(void 0, void 0, void 0, function* () {
+    yield git.addAnnotatedTag(tag, message);
+    yield git.push(['origin', tag]);
 });
 export const branchExists = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
     const isLocal = yield localBranchExists(branchName);
@@ -111,7 +111,7 @@ export const pushStableBranch = (version) => __awaiter(void 0, void 0, void 0, f
     yield git.raw(['add', './.regit']);
     yield git.raw(['commit', '-m', `[regit] Init ${version}`]);
     yield git.push(['-u', 'origin', branchStable]);
-    yield createTag(version);
+    yield createTag({ tag: version, message: `[regit] ${version}. ()` });
 });
 const getLatestTagMergedInto = (ref) => __awaiter(void 0, void 0, void 0, function* () {
     const mergedTags = yield git.raw(['tag', '--merged', ref]);

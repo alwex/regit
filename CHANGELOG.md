@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `preview` name, the `previewBranch` and the `features` being merged.
 - New `preReleaseAdd` / `postReleaseAdd` hooks for `release add`, receiving the
   release `version`, the `releaseBranch` and the `features` being merged.
+- New `getTagMessage(version, context)` hook to write the message of the tag
+  created by `release finish` (e.g. release notes), using the same context as
+  `preReleaseFinish`. It runs right after `preReleaseFinish`, before anything is
+  pushed or merged; if it throws or does not return a non-empty string, the
+  release is left untouched. Without the hook, the message is unchanged:
+  `[regit] v1.2.0. (feature-a,feature-b)`.
 
 ### Changed
 

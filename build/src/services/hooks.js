@@ -27,12 +27,25 @@ export const runPostHook = ({ hook, completed, run, }) => __awaiter(void 0, void
         throw new Error(`${completed}, but hook ${hook} failed: ${describeFailure(error)}`);
     }
 });
+export const resolveTagMessage = ({ hooks, version, context, }) => __awaiter(void 0, void 0, void 0, function* () {
+    const message = yield hooks.getTagMessage(version, context);
+    if (typeof message !== 'string' || message.trim() === '') {
+        throw new Error('Hook getTagMessage must return a non-empty string');
+    }
+    return message;
+});
 const defaultHooks = {
     getFeatureName: (id) => __awaiter(void 0, void 0, void 0, function* () {
         // const api = `https://random-word-api.vercel.app/api?words=4`
         // const result = await axios.get(api)
         // return result.data.toString().replaceAll(',', '-')
         return '';
+    }),
+    getTagMessage: (version, context) => __awaiter(void 0, void 0, void 0, function* () {
+        const branches = context.features.map((feature) => {
+            return feature.branch;
+        });
+        return `[regit] ${context.tag}. (${branches.join(',')})`;
     }),
     preFeatureStart: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
     postFeatureStart: (id) => __awaiter(void 0, void 0, void 0, function* () { }),

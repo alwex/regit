@@ -37,7 +37,26 @@ const record = (hook) => {
     }
 }
 
+const tagMessageFromEnv = () => {
+    if (process.env.TAG_MESSAGE === 'undefined') {
+        return undefined
+    }
+    return process.env.TAG_MESSAGE
+}
+
+const getTagMessage = async (...args) => {
+    await record('getTagMessage')(...args)
+    if ('TAG_MESSAGE' in process.env) {
+        return tagMessageFromEnv()
+    }
+    const ids = args[1].features.map((feature) => {
+        return feature.id
+    })
+    return 'notes for ' + args[1].tag + ': ' + ids.join(', ')
+}
+
 module.exports = {
+    getTagMessage,
     preFeatureStart: record('preFeatureStart'),
     postFeatureStart: record('postFeatureStart'),
     preReleaseStart: record('preReleaseStart'),
@@ -164,6 +183,14 @@ const commitOnRelease = async (ctx: TestContext, message: string) => {
     await ctx.cliLocal('git checkout release-0.1.0')
     await ctx.cliLocal(`git commit --allow-empty -m "${message}"`)
     await ctx.cliLocal('git push origin release-0.1.0')
+}
+
+const readTagMessage = async (ctx: TestContext, tag: string) => {
+    const message = await ctx.cliLocal(
+        `git tag -l --format='%(contents)' ${tag}`
+    )
+
+    return message.trim()
 }
 
 const featureStartHooks = { pre: 'preFeatureStart', post: 'postFeatureStart' }
@@ -440,6 +467,59 @@ describe('hook context', () => {
                 'release-0.1.0'
             )
         })
+    })
+
+    describe('tag message', { timeout: 30000 }, () => {
+        test('uses getTagMessage for the release tag', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'release start 0.1.0')
+            await runCli(ctx, 'release add f1')
+
+            await runCli(ctx, 'release finish')
+
+            expect(lastHookCall(ctx, 'getTagMessage')?.args).toEqual([
+                '0.1.0',
+                releaseFinishContext({ features: [featureSummary('f1')] }),
+            ])
+            expect(await readTagMessage(ctx, 'v0.1.0')).toBe(
+                'notes for v0.1.0: f1'
+            )
+        })
+
+        test.for([
+            { label: 'an empty message', value: "''" },
+            { label: 'a blank message', value: "'   '" },
+            { label: 'no message', value: 'undefined' },
+        ])(
+            'stops before merging when getTagMessage returns $label',
+            async ({ value }, ctx) => {
+                await runCli(ctx, 'release start 0.1.0')
+                const localStableBefore = await ctx.cliLocal(
+                    'git rev-parse stable'
+                )
+                const remoteStableBefore = await ctx.cliRemote(
+                    'git rev-parse stable'
+                )
+
+                const releaseFinish = ctx.cliLocal(
+                    `TAG_MESSAGE=${value} node ${CLI_PATH} release finish`
+                )
+
+                await expect(releaseFinish).rejects.toMatchObject({
+                    exitCode: 2,
+                    message: expect.stringContaining(
+                        'Hook getTagMessage must return a non-empty string'
+                    ),
+                })
+                expect(await ctx.cliLocal('git tag -l v0.1.0')).toBe('')
+                expect(await ctx.cliLocal('git rev-parse stable')).toBe(
+                    localStableBefore
+                )
+                expect(await ctx.cliRemote('git rev-parse stable')).toBe(
+                    remoteStableBefore
+                )
+            }
+        )
     })
 
     describe('preview start', () => {

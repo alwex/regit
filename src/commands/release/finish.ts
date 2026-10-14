@@ -19,6 +19,7 @@ import {
     ReleaseFinishContext,
     ReleaseFinishedContext,
     getHooks,
+    resolveTagMessage,
     runPostHook,
 } from '../../services/hooks.js'
 
@@ -58,6 +59,7 @@ const action = async () => {
 
     await git.checkout(name)
     await hooks.preReleaseFinish(version, context)
+    const tagMessage = await resolveTagMessage({ hooks, version, context })
 
     console.log(chalk.dim(`Push release to origin`))
     await git.push(['-u', 'origin', name])
@@ -67,12 +69,7 @@ const action = async () => {
     await git.fetch()
     await git.pull()
     await mergeBranch(name)
-    await createTag(
-        newVersion,
-        features.map((data) => {
-            return data.name
-        })
-    )
+    await createTag({ tag: newVersion, message: tagMessage })
     await pushBranch(branchStable)
     const stableCommit = await git.revparse([branchStable])
 

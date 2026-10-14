@@ -106,12 +106,15 @@ export const getTagDetails = async (tag: string) => {
     } as TagHeaderResult
 }
 
-export const createTag = async (version: string, included: string[] = []) => {
-    await git.addAnnotatedTag(
-        version,
-        `[regit] ${version}. (${included.join(',')})`
-    )
-    await git.push(['origin', version])
+export const createTag = async ({
+    tag,
+    message,
+}: {
+    tag: string
+    message: string
+}) => {
+    await git.addAnnotatedTag(tag, message)
+    await git.push(['origin', tag])
 }
 
 export const branchExists = async (branchName: string) => {
@@ -147,7 +150,7 @@ export const pushStableBranch = async (version: string) => {
     await git.raw(['add', './.regit'])
     await git.raw(['commit', '-m', `[regit] Init ${version}`])
     await git.push(['-u', 'origin', branchStable])
-    await createTag(version)
+    await createTag({ tag: version, message: `[regit] ${version}. ()` })
 }
 
 export interface ListBranchResult {
