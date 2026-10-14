@@ -13,6 +13,20 @@ import vm from 'vm';
 import { createRequire } from 'module';
 import { pathToFileURL } from 'url';
 import { getRegitDirectory } from './helpers.js';
+const describeFailure = (error) => {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return String(error);
+};
+export const runPostHook = ({ hook, completed, run, }) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield run();
+    }
+    catch (error) {
+        throw new Error(`${completed}, but hook ${hook} failed: ${describeFailure(error)}`);
+    }
+});
 const defaultHooks = {
     getFeatureName: (id) => __awaiter(void 0, void 0, void 0, function* () {
         // const api = `https://random-word-api.vercel.app/api?words=4`

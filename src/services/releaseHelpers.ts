@@ -13,7 +13,12 @@ import {
     startInspectedBranch,
     startOrCheckoutBranch,
 } from './gitHelpers.js'
-import { ReleaseStartContext, ReleaseTrigger, getHooks } from './hooks.js'
+import {
+    ReleaseStartContext,
+    ReleaseTrigger,
+    getHooks,
+    runPostHook,
+} from './hooks.js'
 import { logger } from './logger.js'
 import semver from 'semver'
 import chalk from 'chalk'
@@ -51,7 +56,13 @@ export const startRelease = async (
     await startInspectedBranch(inspection)
     logReleaseStart({ version, inspection })
 
-    await hooks.postReleaseStart(version, context)
+    await runPostHook({
+        hook: 'postReleaseStart',
+        completed: `Release ${version} started`,
+        run: () => {
+            return hooks.postReleaseStart(version, context)
+        },
+    })
 
     return { name: branchName }
 }

@@ -11,7 +11,7 @@ import { branchFeature, branchRelease, branchStable } from '../../const.js';
 import { git } from '../../services/git.js';
 import { assertCurrentBranchIsClean, createTag, deleteBranch, getRequiredLatestTag, listBranchStartingWith, listBranchesInBranch, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import chalk from 'chalk';
-import { getHooks } from '../../services/hooks.js';
+import { getHooks, runPostHook, } from '../../services/hooks.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     const hooks = yield getHooks();
@@ -63,12 +63,19 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     for (const feature of context.features) {
         yield deleteBranch(feature.branch);
     }
-    yield hooks.postReleaseFinish(version, Object.assign(Object.assign({}, context), { stableCommit, deletedBranches: [
+    const finishedContext = Object.assign(Object.assign({}, context), { stableCommit, deletedBranches: [
             name,
             ...context.features.map((feature) => {
                 return feature.branch;
             }),
-        ] }));
+        ] });
+    yield runPostHook({
+        hook: 'postReleaseFinish',
+        completed: `Release ${version} finished`,
+        run: () => {
+            return hooks.postReleaseFinish(version, finishedContext);
+        },
+    });
 });
 export default (program) => {
     program.command('finish').action(action);

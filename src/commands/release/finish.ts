@@ -14,7 +14,12 @@ import {
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import chalk from 'chalk'
-import { ReleaseFinishContext, getHooks } from '../../services/hooks.js'
+import {
+    ReleaseFinishContext,
+    ReleaseFinishedContext,
+    getHooks,
+    runPostHook,
+} from '../../services/hooks.js'
 
 const action = async () => {
     await warmupGitRepo()
@@ -84,7 +89,7 @@ const action = async () => {
         await deleteBranch(feature.branch)
     }
 
-    await hooks.postReleaseFinish(version, {
+    const finishedContext: ReleaseFinishedContext = {
         ...context,
         stableCommit,
         deletedBranches: [
@@ -93,6 +98,14 @@ const action = async () => {
                 return feature.branch
             }),
         ],
+    }
+
+    await runPostHook({
+        hook: 'postReleaseFinish',
+        completed: `Release ${version} finished`,
+        run: () => {
+            return hooks.postReleaseFinish(version, finishedContext)
+        },
     })
 }
 

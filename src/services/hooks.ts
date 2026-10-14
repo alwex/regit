@@ -64,6 +64,32 @@ export interface Hooks {
     ) => Promise<void>
 }
 
+const describeFailure = (error: unknown) => {
+    if (error instanceof Error) {
+        return error.message
+    }
+
+    return String(error)
+}
+
+export const runPostHook = async ({
+    hook,
+    completed,
+    run,
+}: {
+    hook: keyof Hooks
+    completed: string
+    run: () => Promise<void>
+}) => {
+    try {
+        await run()
+    } catch (error) {
+        throw new Error(
+            `${completed}, but hook ${hook} failed: ${describeFailure(error)}`
+        )
+    }
+}
+
 const defaultHooks: Hooks = {
     getFeatureName: async (id: string) => {
         // const api = `https://random-word-api.vercel.app/api?words=4`

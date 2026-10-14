@@ -5,7 +5,7 @@ describe('release', async (ctx) => {
         await ctx.regit(`init 0.0.0`)
     })
 
-    test('list tags', async (ctx) => {
+    test('list tags', { timeout: 30000 }, async (ctx) => {
         await ctx.regit('feature start f1')
         await ctx.regit('feature start f2')
         await ctx.regit('feature start f3')

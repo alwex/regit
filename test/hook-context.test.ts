@@ -19,10 +19,21 @@ const currentBranch = () => {
     }).trim()
 }
 
+const failIfRequested = (hook) => {
+    if (process.env.FAIL_HOOK !== hook) {
+        return
+    }
+    if (process.env.FAIL_HOOK_VALUE) {
+        throw process.env.FAIL_HOOK_VALUE
+    }
+    throw new Error(hook + ' exploded')
+}
+
 const record = (hook) => {
     return async (...args) => {
         const call = { hook, args, branch: currentBranch() }
         fs.appendFileSync(logFile, JSON.stringify(call) + '\\n')
+        failIfRequested(hook)
     }
 }
 
@@ -44,6 +55,15 @@ type HookCall = {
 
 const runCli = async (ctx: TestContext, args: string) => {
     return ctx.cliLocal(`node ${CLI_PATH} ${args}`)
+}
+
+const runCliWithFailingHook = async (
+    ctx: TestContext,
+    { hook, args, value }: { hook: string; args: string; value?: string }
+) => {
+    const failValue = value ? `FAIL_HOOK_VALUE=${value} ` : ''
+
+    return ctx.cliLocal(`FAIL_HOOK=${hook} ${failValue}node ${CLI_PATH} ${args}`)
 }
 
 const installRecordingHooks = async (ctx: TestContext) => {
@@ -375,6 +395,88 @@ describe('hook context', () => {
 
             expect(lastHookCall(ctx, 'preReleaseFinish')?.branch).toBe(
                 'release-0.1.0'
+            )
+        })
+    })
+
+    describe('hook failures', { timeout: 30000 }, () => {
+        test('reports that the feature started when postFeatureStart fails', async (ctx) => {
+            const featureStart = runCliWithFailingHook(ctx, {
+                hook: 'postFeatureStart',
+                args: 'feature start f1',
+            })
+
+            await expect(featureStart).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Feature f1 started, but hook postFeatureStart failed: postFeatureStart exploded'
+                ),
+            })
+            expect(await ctx.cliLocal('git branch --show-current')).toBe(
+                'feature-f1'
+            )
+        })
+
+        test('reports that the release started when postReleaseStart fails', async (ctx) => {
+            const releaseStart = runCliWithFailingHook(ctx, {
+                hook: 'postReleaseStart',
+                args: 'release start 0.1.0',
+            })
+
+            await expect(releaseStart).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Release 0.1.0 started, but hook postReleaseStart failed: postReleaseStart exploded'
+                ),
+            })
+            expect(await ctx.cliLocal('git branch --show-current')).toBe(
+                'release-0.1.0'
+            )
+        })
+
+        test('reports that the release finished when postReleaseFinish fails', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+
+            const releaseFinish = runCliWithFailingHook(ctx, {
+                hook: 'postReleaseFinish',
+                args: 'release finish',
+            })
+
+            await expect(releaseFinish).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Release 0.1.0 finished, but hook postReleaseFinish failed: postReleaseFinish exploded'
+                ),
+            })
+            expect(await ctx.cliLocal('git tag -l v0.1.0')).toBe('v0.1.0')
+        })
+
+        test('reports a post hook that throws something other than an Error', async (ctx) => {
+            const featureStart = runCliWithFailingHook(ctx, {
+                hook: 'postFeatureStart',
+                args: 'feature start f1',
+                value: 'jira-unreachable',
+            })
+
+            await expect(featureStart).rejects.toMatchObject({
+                message: expect.stringContaining(
+                    'Feature f1 started, but hook postFeatureStart failed: jira-unreachable'
+                ),
+            })
+        })
+
+        test('aborts before touching git when a pre hook fails', async (ctx) => {
+            const featureStart = runCliWithFailingHook(ctx, {
+                hook: 'preFeatureStart',
+                args: 'feature start f1',
+            })
+
+            await expect(featureStart).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining('preFeatureStart exploded'),
+            })
+            expect(await ctx.cliLocal('git branch -a')).not.toContain(
+                'feature-f1'
             )
         })
     })

@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `context.origin === 'new'`.
 - `preview release` onto a release branch that already exists now warns
   "Release already exists release-x" instead of reporting the release as started.
+- When `postFeatureStart`, `postReleaseStart` or `postReleaseFinish` fails, regit
+  says the git work is done and names the failing hook, e.g. "Release 1.2.0
+  finished, but hook postReleaseFinish failed: <reason>", instead of printing
+  only the hook's error. The exit code stays 2. A hook that throws something
+  other than an `Error` now shows that value instead of `undefined`.
 
 ### Fixed
 

@@ -43,6 +43,19 @@ export interface Hooks {
 | `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). Runs with the release branch checked out, so anything the hook commits ships in the release. |
 | `postReleaseFinish` | After a release has been merged, tagged, and cleaned up. |
 
+## When a hook fails
+
+- **Pre hooks** (`preFeatureStart`, `preReleaseStart`, `preReleaseFinish`) can stop a
+  command: if one throws, regit aborts before creating, merging, tagging or deleting
+  anything, prints the hook's error and exits with code 2.
+- **Post hooks** (`postFeatureStart`, `postReleaseStart`, `postReleaseFinish`) run after
+  the git work is done. If one throws, the work is **not** rolled back. regit says so and
+  names the hook, then exits with code 2 so scripts and CI still notice:
+
+```
+✖  error     Release 1.2.0 finished, but hook postReleaseFinish failed: Slack API unreachable
+```
+
 ## Hook context
 
 Some hooks receive a second `context` argument describing what regit is about to do (pre
