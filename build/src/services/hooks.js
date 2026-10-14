@@ -49,6 +49,7 @@ const defaultHooks = {
     }),
     preFeatureStart: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
     postFeatureStart: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
+    postFeaturePush: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
     preReleaseStart: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
     postReleaseStart: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
     preReleaseFinish: (version) => __awaiter(void 0, void 0, void 0, function* () { }),

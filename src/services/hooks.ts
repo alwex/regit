@@ -42,6 +42,11 @@ export type ReleaseFinishedContext = ReleaseFinishContext & {
     deletedBranches: string[]
 }
 
+export type FeaturePushContext = {
+    id: string
+    branch: string
+}
+
 export type ReleaseAddContext = {
     version: string
     releaseBranch: string
@@ -67,6 +72,7 @@ export interface Hooks {
     ) => Promise<string>
     preFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
     postFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
+    postFeaturePush: (id: string, context: FeaturePushContext) => Promise<void>
     preReleaseStart: (
         version: string,
         context: ReleaseStartContext
@@ -165,6 +171,7 @@ const defaultHooks: Hooks = {
     },
     preFeatureStart: async (id: string) => {},
     postFeatureStart: async (id: string) => {},
+    postFeaturePush: async (id: string) => {},
     preReleaseStart: async (version: string) => {},
     postReleaseStart: async (version: string) => {},
     preReleaseFinish: async (version: string) => {},

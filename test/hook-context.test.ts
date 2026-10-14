@@ -69,6 +69,7 @@ module.exports = {
     postPreviewAdd: record('postPreviewAdd'),
     preReleaseAdd: record('preReleaseAdd'),
     postReleaseAdd: record('postReleaseAdd'),
+    postFeaturePush: record('postFeaturePush'),
 }
 `
 
@@ -469,6 +470,20 @@ describe('hook context', () => {
         })
     })
 
+    describe('feature push', () => {
+        test('tells hooks which feature was pushed', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await ctx.cliLocal('git commit --allow-empty -m "work on f1"')
+
+            await runCli(ctx, 'feature push')
+
+            expect(lastHookCall(ctx, 'postFeaturePush')?.args).toEqual([
+                'f1',
+                { id: 'f1', branch: 'feature-f1' },
+            ])
+        })
+    })
+
     describe('tag message', { timeout: 30000 }, () => {
         test('uses getTagMessage for the release tag', async (ctx) => {
             await runCli(ctx, 'feature start f1')
@@ -617,6 +632,26 @@ describe('hook context', () => {
     })
 
     describe('hook failures', { timeout: 30000 }, () => {
+        test('reports that the feature was pushed when postFeaturePush fails', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await ctx.cliLocal('git commit --allow-empty -m "work on f1"')
+
+            const featurePush = runCliWithFailingHook(ctx, {
+                hook: 'postFeaturePush',
+                args: 'feature push',
+            })
+
+            await expect(featurePush).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Feature f1 pushed, but hook postFeaturePush failed: postFeaturePush exploded'
+                ),
+            })
+            expect(await ctx.cliRemote('git rev-parse feature-f1')).toBe(
+                await ctx.cliLocal('git rev-parse feature-f1')
+            )
+        })
+
         test('reports that features were merged when postReleaseAdd fails', async (ctx) => {
             await runCli(ctx, 'feature start f1')
             await runCli(ctx, 'release start 0.1.0')

@@ -121,6 +121,25 @@ describe('feature', async () => {
         expect(resultStatus).toContain('Author')
         expect(resultStatus).toContain('Date')
     })
+
+    test('feature push pushes the current feature branch to origin', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.cliLocal('git commit --allow-empty -m "work on f1"')
+
+        await ctx.regit('feature push')
+
+        expect(await ctx.cliRemote('git rev-parse feature-f1')).toBe(
+            await ctx.cliLocal('git rev-parse feature-f1')
+        )
+    })
+
+    test('feature push outside a feature branch is rejected', async (ctx) => {
+        const featurePush = ctx.regit('feature push')
+
+        await expect(featurePush).rejects.toThrowError(
+            'You must be on a feature branch to push a features'
+        )
+    })
 })
 
 describe('feature without regit init', () => {
