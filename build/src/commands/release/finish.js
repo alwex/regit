@@ -25,8 +25,12 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     const version = name.replace(branchRelease, '');
     const newVersion = `v${version}`;
     const result = yield listBranchesInBranch(name);
-    const features = result.filter((data) => data.name.startsWith(branchFeature));
-    const canFinishRelease = features.every((feature) => feature.upToDate);
+    const features = result.filter((data) => {
+        return data.name.startsWith(branchFeature);
+    });
+    const canFinishRelease = features.every((feature) => {
+        return feature.upToDate;
+    });
     if (!canFinishRelease) {
         throw new Error('Not all features are merged into the release branch. Please merge all features into the release branch before finishing the release.');
     }
@@ -40,7 +44,9 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield git.fetch();
     yield git.pull();
     yield mergeBranch(name);
-    yield createTag(newVersion, features.map((data) => data.name));
+    yield createTag(newVersion, features.map((data) => {
+        return data.name;
+    }));
     yield pushBranch(branchStable);
     console.log(chalk.dim(`Delete release branch`));
     yield deleteBranch(name);

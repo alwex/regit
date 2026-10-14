@@ -32,11 +32,13 @@ const action = async () => {
     const newVersion = `v${version}`
 
     const result = await listBranchesInBranch(name)
-    const features = result.filter((data) =>
-        data.name.startsWith(branchFeature)
-    )
+    const features = result.filter((data) => {
+        return data.name.startsWith(branchFeature)
+    })
 
-    const canFinishRelease = features.every((feature) => feature.upToDate)
+    const canFinishRelease = features.every((feature) => {
+        return feature.upToDate
+    })
     if (!canFinishRelease) {
         throw new Error(
             'Not all features are merged into the release branch. Please merge all features into the release branch before finishing the release.'
@@ -57,7 +59,9 @@ const action = async () => {
     await mergeBranch(name)
     await createTag(
         newVersion,
-        features.map((data) => data.name)
+        features.map((data) => {
+            return data.name
+        })
     )
     await pushBranch(branchStable)
 

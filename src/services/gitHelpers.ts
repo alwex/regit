@@ -71,7 +71,9 @@ export interface ReleaseHeaderResult {
 }
 
 const findHeaderValue = (lines: string[], prefix: string) => {
-    const line = lines.find((current) => current.startsWith(prefix))
+    const line = lines.find((current) => {
+        return current.startsWith(prefix)
+    })
 
     return line ? line.slice(prefix.length).trim() : ''
 }
@@ -121,16 +123,18 @@ export const branchExists = async (branchName: string) => {
 
 export const localBranchExists = async (branchName: string) => {
     const result = await git.branch()
-    const isLocal = result.all.find((branch) => branch === branchName)
+    const isLocal = result.all.find((branch) => {
+        return branch === branchName
+    })
 
     return Boolean(isLocal)
 }
 
 export const remoteBranchExists = async (branchName: string) => {
     const result = await git.branch()
-    const isRemote = result.all.find(
-        (branch) => branch === `remotes/origin/${branchName}`
-    )
+    const isRemote = result.all.find((branch) => {
+        return branch === `remotes/origin/${branchName}`
+    })
 
     return Boolean(isRemote)
 }
@@ -186,11 +190,12 @@ export const listBranchStartingWith = async (branchName: string) => {
     const result = await git.branch()
 
     const allBranches = result.all
-        .filter(
-            (branch) =>
+        .filter((branch) => {
+            return (
                 branch.startsWith(branchName) ||
                 branch.startsWith(`remotes/origin/${branchName}`)
-        )
+            )
+        })
         .map((branch) => {
             return branch.replace('remotes/origin/', '')
         })
@@ -209,21 +214,41 @@ export const listBranchStartingWith = async (branchName: string) => {
     return uniq
 }
 
-export const startOrCheckoutBranch = async (branchName: string) => {
-    const lastTag = await getLatestTag()
-    const doesBranchExists = await branchExists(branchName)
+export type BranchInspection = {
+    name: string
+    exists: boolean
+}
 
-    if (doesBranchExists) {
-        console.log(`Branch ${branchName} already exists`)
-        await git.checkout(branchName)
-    } else {
-        console.log(`Creating Branch ${branchName} from tag ${lastTag}`)
-        await git.checkoutBranch(branchName, `tags/${lastTag}`)
-        await git.commit(`[regit] Init '${branchName}'`, {
-            '--allow-empty': null,
-        })
-        await git.push(['-u', 'origin', branchName])
+export const inspectBranch = async (
+    name: string
+): Promise<BranchInspection> => {
+    return {
+        name,
+        exists: await branchExists(name),
     }
+}
+
+export const startInspectedBranch = async ({
+    name,
+    exists,
+}: BranchInspection) => {
+    if (exists) {
+        console.log(`Branch ${name} already exists`)
+        await git.checkout(name)
+        return
+    }
+
+    const lastTag = await getLatestTag()
+    console.log(`Creating Branch ${name} from tag ${lastTag}`)
+    await git.checkoutBranch(name, `tags/${lastTag}`)
+    await git.commit(`[regit] Init '${name}'`, {
+        '--allow-empty': null,
+    })
+    await git.push(['-u', 'origin', name])
+}
+
+export const startOrCheckoutBranch = async (branchName: string) => {
+    await startInspectedBranch(await inspectBranch(branchName))
 }
 
 export const mergeBranch = async (branchName: string) => {

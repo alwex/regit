@@ -66,6 +66,15 @@ const loadCustomHooks = async (hookPath: string): Promise<Partial<Hooks>> => {
     return hookModule.exports
 }
 
+const loadedHooks = new Map<string, Promise<Hooks>>()
+
+const loadHooks = async (hookPath: string): Promise<Hooks> => {
+    return {
+        ...defaultHooks,
+        ...(await loadCustomHooks(hookPath)),
+    }
+}
+
 export const getHooks = async (): Promise<Hooks> => {
     const regitDir = await getRegitDirectory()
 
@@ -75,13 +84,15 @@ export const getHooks = async (): Promise<Hooks> => {
         `${regitDir}/hooks.mjs`,
     ]
 
-    const hookPath = possibleHookPath.find((path) => fs.existsSync(path))
-    if (hookPath) {
-        return {
-            ...defaultHooks,
-            ...(await loadCustomHooks(hookPath)),
-        }
+    const hookPath = possibleHookPath.find((path) => {
+        return fs.existsSync(path)
+    })
+    if (!hookPath) {
+        return defaultHooks
     }
 
-    return defaultHooks
+    const hooks = loadedHooks.get(hookPath) ?? loadHooks(hookPath)
+    loadedHooks.set(hookPath, hooks)
+
+    return hooks
 }

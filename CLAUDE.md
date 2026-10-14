@@ -38,6 +38,8 @@ I follow Test-Driven Development (TDD) with a strong emphasis on behavior-driven
 
 **Project gotcha:** `ctx.regit()` runs the CLI in-process through Vitest's module runner, which shims `module`/`require`/`exports`. Anything depending on Node's real module loader (e.g. loading `.regit/hooks.js`) must be tested by spawning `node build/src/index.js` (see `test/hooks.test.ts`), or the test passes while production fails.
 
+**Project gotcha:** `build/` is tracked in git and rebuilt by every `yarn test` (global setup). After manual mutation runs, rerun `yarn test` on the restored source so no mutant is left in `build/`.
+
 For detailed testing patterns and examples, load the `testing` skill.
 For verifying test effectiveness through mutation analysis, load the `mutation-testing` skill.
 
@@ -66,6 +68,7 @@ For API and interface design patterns, load the `api-design` skill.
 - No data mutation - immutable data structures only
 - Pure functions wherever possible
 - No nested if/else - use early returns or composition
+- No implicit returns in arrow functions - always use a block body with an explicit `return`, including one-line callbacks (`(x) => { return x.id }`, never `(x) => x.id` or `() => ({ ... })`)
 - No comments - code should be self-documenting
 - Prefer options objects over positional parameters
 - Use array methods (`map`, `filter`, `reduce`) over loops

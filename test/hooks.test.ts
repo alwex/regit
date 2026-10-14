@@ -29,6 +29,12 @@ export default {
 }
 `
 
+const hooksWithTopLevelSideEffect = `
+console.log('hooks file evaluated')
+
+module.exports = {}
+`
+
 const writeProjectFiles = (
     rootDir: string,
     { packageJson, hooks }: ProjectFiles
@@ -104,5 +110,19 @@ describe('hooks', async () => {
         const result = await ctx.cliLocal(`node ${CLI_PATH} feature status`)
 
         expect(result).toContain(expectedName)
+    })
+
+    test('evaluates the hooks file once per command', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('feature start f2')
+        writeProjectFiles(ctx.tempDirLocal, {
+            hooks: { file: 'hooks.js', source: hooksWithTopLevelSideEffect },
+        })
+
+        const result = await ctx.cliLocal(`node ${CLI_PATH} feature list`)
+
+        expect(result).toContain('origin/feature-f1')
+        expect(result).toContain('origin/feature-f2')
+        expect(result.match(/hooks file evaluated/g)).toHaveLength(1)
     })
 })

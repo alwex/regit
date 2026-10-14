@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hooks now load in projects whose `package.json` declares `"type": "module"`.
   `.regit/hooks.js` may use either CommonJS (`module.exports`) or ES modules
   (`export default`), regardless of the host project's module type.
+- `.regit/hooks.js` is evaluated once per command. Previously, top-level code in
+  a CommonJS hooks file re-ran for every feature shown by `feature list`,
+  `release status`, `tag list`, etc.
 
 ## [1.5.0] - 2025-06-07
 

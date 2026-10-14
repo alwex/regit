@@ -9,16 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { confirm, select } from '@inquirer/prompts';
 import { branchRelease, branchStable } from '../const.js';
-import { deleteBranch, getCurrentBranch, getLatestTag, getOpenReleaseBranch, listBranchStartingWith, startOrCheckoutBranch, } from './gitHelpers.js';
+import { deleteBranch, getCurrentBranch, getLatestTag, getOpenReleaseBranch, inspectBranch, listBranchStartingWith, startInspectedBranch, startOrCheckoutBranch, } from './gitHelpers.js';
 import { getHooks } from './hooks.js';
 import { logger } from './logger.js';
 import semver from 'semver';
 import chalk from 'chalk';
 export const startRelease = (version) => __awaiter(void 0, void 0, void 0, function* () {
     const hooks = yield getHooks();
-    yield hooks.preReleaseStart(version);
     const branchName = `${branchRelease}${version}`;
-    yield startOrCheckoutBranch(branchName);
+    const inspection = yield inspectBranch(branchName);
+    yield hooks.preReleaseStart(version);
+    yield startInspectedBranch(inspection);
     logger.success(`Release ${version} started`);
     yield hooks.postReleaseStart(version);
     return { name: branchName };

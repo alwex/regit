@@ -7,7 +7,9 @@ import {
     getCurrentBranch,
     getLatestTag,
     getOpenReleaseBranch,
+    inspectBranch,
     listBranchStartingWith,
+    startInspectedBranch,
     startOrCheckoutBranch,
 } from './gitHelpers.js'
 import { getHooks } from './hooks.js'
@@ -17,10 +19,11 @@ import chalk from 'chalk'
 
 export const startRelease = async (version: string) => {
     const hooks = await getHooks()
-    await hooks.preReleaseStart(version)
-
     const branchName = `${branchRelease}${version}`
-    await startOrCheckoutBranch(branchName)
+    const inspection = await inspectBranch(branchName)
+
+    await hooks.preReleaseStart(version)
+    await startInspectedBranch(inspection)
     logger.success(`Release ${version} started`)
 
     await hooks.postReleaseStart(version)

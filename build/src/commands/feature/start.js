@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean, getBranchInfo, getLatestTag, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, getBranchInfo, getLatestTag, inspectBranch, startInspectedBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { branchFeature } from '../../const.js';
 import { getHooks } from '../../services/hooks.js';
 import { logger } from '../../services/logger.js';
@@ -17,8 +17,9 @@ const startFeatureWithId = (id) => __awaiter(void 0, void 0, void 0, function* (
     const hooks = yield getHooks();
     yield assertCurrentBranchIsClean();
     const branchName = `${branchFeature}${id}`;
+    const inspection = yield inspectBranch(branchName);
     yield hooks.preFeatureStart(id);
-    yield startOrCheckoutBranch(branchName);
+    yield startInspectedBranch(inspection);
     yield hooks.postFeatureStart(id);
     const latestTag = yield getLatestTag();
     const branchInfo = yield getBranchInfo(branchName);

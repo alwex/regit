@@ -24,6 +24,23 @@ describe('feature', async () => {
         expect(resultF1_2).toContain('✔  success   Feature f1 started')
     })
 
+    test('feature start existing only on origin', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.cliLocal('git checkout stable')
+        await ctx.cliLocal('git branch -D feature-f1')
+
+        const result = await ctx.regit('feature start f1')
+
+        expect(result).toContain('Branch feature-f1 already exists')
+        expect(result).toContain('✔  success   Feature f1 started')
+        expect(await ctx.cliLocal('git branch --show-current')).toBe(
+            'feature-f1'
+        )
+        expect(
+            await ctx.cliLocal('git rev-parse --abbrev-ref feature-f1@{upstream}')
+        ).toBe('origin/feature-f1')
+    })
+
     test('feature start new from latest version', async (ctx) => {
         await ctx.regit('release start 0.1.0')
         await ctx.regit('release finish')

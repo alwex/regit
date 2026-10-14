@@ -3,7 +3,8 @@ import {
     assertCurrentBranchIsClean,
     getBranchInfo,
     getLatestTag,
-    startOrCheckoutBranch,
+    inspectBranch,
+    startInspectedBranch,
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
@@ -18,8 +19,10 @@ const startFeatureWithId = async (id: string) => {
     await assertCurrentBranchIsClean()
     const branchName = `${branchFeature}${id}`
 
+    const inspection = await inspectBranch(branchName)
+
     await hooks.preFeatureStart(id)
-    await startOrCheckoutBranch(branchName)
+    await startInspectedBranch(inspection)
     await hooks.postFeatureStart(id)
 
     const latestTag = await getLatestTag()

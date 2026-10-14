@@ -45,16 +45,25 @@ const loadCustomHooks = (hookPath) => __awaiter(void 0, void 0, void 0, function
     evaluate(hookModule, hookModule.exports, createRequire(hookPath), hookPath, path.dirname(hookPath));
     return hookModule.exports;
 });
+const loadedHooks = new Map();
+const loadHooks = (hookPath) => __awaiter(void 0, void 0, void 0, function* () {
+    return Object.assign(Object.assign({}, defaultHooks), (yield loadCustomHooks(hookPath)));
+});
 export const getHooks = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const regitDir = yield getRegitDirectory();
     const possibleHookPath = [
         `${regitDir}/hooks.js`,
         `${regitDir}/hooks.cjs`,
         `${regitDir}/hooks.mjs`,
     ];
-    const hookPath = possibleHookPath.find((path) => fs.existsSync(path));
-    if (hookPath) {
-        return Object.assign(Object.assign({}, defaultHooks), (yield loadCustomHooks(hookPath)));
+    const hookPath = possibleHookPath.find((path) => {
+        return fs.existsSync(path);
+    });
+    if (!hookPath) {
+        return defaultHooks;
     }
-    return defaultHooks;
+    const hooks = (_a = loadedHooks.get(hookPath)) !== null && _a !== void 0 ? _a : loadHooks(hookPath);
+    loadedHooks.set(hookPath, hooks);
+    return hooks;
 });
