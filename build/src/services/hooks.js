@@ -40,6 +40,10 @@ const defaultHooks = {
     postReleaseStart: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
     preReleaseFinish: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
     postReleaseFinish: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
+    prePreviewStart: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
+    postPreviewStart: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
+    prePreviewAdd: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
+    postPreviewAdd: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
 };
 const compileCommonJs = (hookPath) => {
     try {

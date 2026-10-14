@@ -28,6 +28,10 @@ export interface Hooks {
     postReleaseStart: (version: string, context: BranchStartContext) => Promise<void>
     preReleaseFinish: (version: string, context: ReleaseFinishContext) => Promise<void>
     postReleaseFinish: (version: string, context: ReleaseFinishedContext) => Promise<void>
+    prePreviewStart: (preview: string, context: BranchStartContext) => Promise<void>
+    postPreviewStart: (preview: string, context: BranchStartContext) => Promise<void>
+    prePreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>
+    postPreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>
 }
 ```
 
@@ -42,15 +46,21 @@ export interface Hooks {
 | `postReleaseStart` | After a release branch is created or checked out. |
 | `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). Runs with the release branch checked out, so anything the hook commits ships in the release. |
 | `postReleaseFinish` | After a release has been merged, tagged, and cleaned up. |
+| `prePreviewStart` | Before a preview branch is created or checked out (`preview start`). |
+| `postPreviewStart` | After a preview branch is created or checked out. |
+| `prePreviewAdd` | Before features are merged into a preview (`preview add`). |
+| `postPreviewAdd` | After the features are merged and the preview is pushed. |
 
 ## When a hook fails
 
-- **Pre hooks** (`preFeatureStart`, `preReleaseStart`, `preReleaseFinish`) can stop a
-  command: if one throws, regit aborts before creating, merging, tagging or deleting
-  anything, prints the hook's error and exits with code 2.
-- **Post hooks** (`postFeatureStart`, `postReleaseStart`, `postReleaseFinish`) run after
-  the git work is done. If one throws, the work is **not** rolled back. regit says so and
-  names the hook, then exits with code 2 so scripts and CI still notice:
+- **Pre hooks** (`preFeatureStart`, `preReleaseStart`, `preReleaseFinish`,
+  `prePreviewStart`, `prePreviewAdd`) can stop a command: if one throws, regit aborts
+  before creating, merging, tagging or deleting anything, prints the hook's error and
+  exits with code 2.
+- **Post hooks** (`postFeatureStart`, `postReleaseStart`, `postReleaseFinish`,
+  `postPreviewStart`, `postPreviewAdd`) run after the git work is done. If one throws,
+  the work is **not** rolled back. regit says so and names the hook, then exits with
+  code 2 so scripts and CI still notice:
 
 ```
 ✖  error     Release 1.2.0 finished, but hook postReleaseFinish failed: Slack API unreachable
@@ -63,12 +73,12 @@ hooks) or just did (post hooks). Hooks written with a single argument keep worki
 
 ### Branch start context
 
-Passed to `preFeatureStart`, `postFeatureStart`, `preReleaseStart` and `postReleaseStart`.
+Passed to `preFeatureStart`, `postFeatureStart`, `preReleaseStart`, `postReleaseStart`, `prePreviewStart` and `postPreviewStart`.
 
 | Field | Example | Meaning |
 | --- | --- | --- |
-| `kind` | `'feature'` | `'feature'` or `'release'`. |
-| `id` | `'f1'` | Feature id or release version, without the `feature-` / `release-` prefix. |
+| `kind` | `'feature'` | `'feature'`, `'release'` or `'preview'`. |
+| `id` | `'f1'` | Feature id, release version or preview name, without the `feature-` / `release-` / `preview-` prefix. |
 | `branch` | `'feature-f1'` | Full branch name. |
 | `origin` | `'new'` | `'new'`: the branch is created from the latest release tag. `'local'`: the branch already exists locally and is checked out. `'remote'`: the branch only exists on `origin` (e.g. a teammate's feature) and is checked out for the first time. |
 | `baseTag` | `'v1.1.0'` | Latest release tag merged into the branch that gets checked out. For a new branch, the tag it is created from. |
@@ -97,6 +107,16 @@ module.exports = {
     },
 }
 ```
+
+### Preview add context
+
+Passed to `prePreviewAdd` and `postPreviewAdd`. The first argument is the preview name.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `preview` | `'p1'` | Preview name, without the `preview-` prefix. |
+| `previewBranch` | `'preview-p1'` | Preview branch the features are merged into. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features merged by this `preview add` (the one given on the command line, or the ones picked in the prompt). |
 
 ### Release finish context
 

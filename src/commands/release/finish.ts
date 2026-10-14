@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { branchFeature, branchRelease, branchStable } from '../../const.js'
+import { branchRelease, branchStable } from '../../const.js'
 import { git } from '../../services/git.js'
 import {
     assertCurrentBranchIsClean,
@@ -14,6 +14,7 @@ import {
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import chalk from 'chalk'
+import { toFeatureSummary } from '../../services/featureHelpers.js'
 import {
     ReleaseFinishContext,
     ReleaseFinishedContext,
@@ -52,13 +53,7 @@ const action = async () => {
         tag: newVersion,
         previousTag: await getRequiredLatestTag(),
         releaseBranch: name,
-        features: features.map((feature) => {
-            return {
-                id: feature.name.replace(branchFeature, ''),
-                branch: feature.name,
-                baseTag: feature.from,
-            }
-        }),
+        features: features.map(toFeatureSummary),
     }
 
     await git.checkout(name)

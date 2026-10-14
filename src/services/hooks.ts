@@ -23,7 +23,7 @@ export type ReleaseStartContext = BranchInspection &
         version: string
     }
 
-export type ReleasedFeature = {
+export type FeatureSummary = {
     id: string
     branch: string
     baseTag: string
@@ -34,12 +34,23 @@ export type ReleaseFinishContext = {
     tag: string
     previousTag: string
     releaseBranch: string
-    features: ReleasedFeature[]
+    features: FeatureSummary[]
 }
 
 export type ReleaseFinishedContext = ReleaseFinishContext & {
     stableCommit: string
     deletedBranches: string[]
+}
+
+export type PreviewStartContext = BranchInspection & {
+    kind: 'preview'
+    id: string
+}
+
+export type PreviewAddContext = {
+    preview: string
+    previewBranch: string
+    features: FeatureSummary[]
 }
 
 export interface Hooks {
@@ -61,6 +72,19 @@ export interface Hooks {
     postReleaseFinish: (
         version: string,
         context: ReleaseFinishedContext
+    ) => Promise<void>
+    prePreviewStart: (
+        preview: string,
+        context: PreviewStartContext
+    ) => Promise<void>
+    postPreviewStart: (
+        preview: string,
+        context: PreviewStartContext
+    ) => Promise<void>
+    prePreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>
+    postPreviewAdd: (
+        preview: string,
+        context: PreviewAddContext
     ) => Promise<void>
 }
 
@@ -106,6 +130,10 @@ const defaultHooks: Hooks = {
     postReleaseStart: async (version: string) => {},
     preReleaseFinish: async (version: string) => {},
     postReleaseFinish: async (version: string) => {},
+    prePreviewStart: async (preview: string) => {},
+    postPreviewStart: async (preview: string) => {},
+    prePreviewAdd: async (preview: string) => {},
+    postPreviewAdd: async (preview: string) => {},
 }
 
 const compileCommonJs = (hookPath: string) => {

@@ -7,10 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { branchFeature, branchRelease, branchStable } from '../../const.js';
+import { branchRelease, branchStable } from '../../const.js';
 import { git } from '../../services/git.js';
 import { assertCurrentBranchIsClean, createTag, deleteBranch, getRequiredLatestTag, listBranchStartingWith, listBranchesInBranch, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import chalk from 'chalk';
+import { toFeatureSummary } from '../../services/featureHelpers.js';
 import { getHooks, runPostHook, } from '../../services/hooks.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
@@ -35,13 +36,7 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
         tag: newVersion,
         previousTag: yield getRequiredLatestTag(),
         releaseBranch: name,
-        features: features.map((feature) => {
-            return {
-                id: feature.name.replace(branchFeature, ''),
-                branch: feature.name,
-                baseTag: feature.from,
-            };
-        }),
+        features: features.map(toFeatureSummary),
     };
     yield git.checkout(name);
     yield hooks.preReleaseFinish(version, context);

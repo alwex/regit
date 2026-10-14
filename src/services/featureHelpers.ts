@@ -5,7 +5,7 @@ import {
     branchExists,
     listBranchStartingWith,
 } from './gitHelpers.js'
-import { getHooks } from './hooks.js'
+import { FeatureSummary, getHooks } from './hooks.js'
 import { branchFeature } from '../const.js'
 import { checkbox, select } from '@inquirer/prompts'
 
@@ -14,6 +14,17 @@ export const getRemoteFeatureName = async (branch: string) => {
     const name = await hooks.getFeatureName(branch)
 
     return name
+}
+
+export const toFeatureSummary = ({
+    name,
+    from,
+}: ListBranchResult): FeatureSummary => {
+    return {
+        id: name.replace(branchFeature, ''),
+        branch: name,
+        baseTag: from,
+    }
 }
 
 export const assertFeatureExists = async (id: string) => {

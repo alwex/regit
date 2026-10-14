@@ -8,42 +8,62 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature, branchPreview } from '../../const.js';
-import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, branchExists, getBranchInfo, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
-import { promptSelectMultipleFeatures } from '../../services/featureHelpers.js';
-const addSingleFeature = (name, id) => __awaiter(void 0, void 0, void 0, function* () {
+import { promptSelectMultipleFeatures, toFeatureSummary, } from '../../services/featureHelpers.js';
+import { getHooks, runPostHook, } from '../../services/hooks.js';
+const openPreview = (name) => __awaiter(void 0, void 0, void 0, function* () {
     const previewBranchName = `${branchPreview}${name}`;
     const previewExist = yield branchExists(previewBranchName);
     if (!previewExist) {
         throw new Error(`Preview ${name} does not exist`);
     }
     yield startOrCheckoutBranch(previewBranchName);
+    return previewBranchName;
+});
+const mergeFeaturesIntoPreview = ({ preview, previewBranch, featureBranches, }) => __awaiter(void 0, void 0, void 0, function* () {
+    const hooks = yield getHooks();
+    const featureInfos = yield Promise.all(featureBranches.map(getBranchInfo));
+    const context = {
+        preview,
+        previewBranch,
+        features: featureInfos.map(toFeatureSummary),
+    };
+    yield hooks.prePreviewAdd(preview, context);
+    for (const feature of context.features) {
+        yield mergeBranch(feature.branch);
+        yield pushBranch(previewBranch);
+        logger.success(`Feature ${feature.id} merged into ${previewBranch}`);
+    }
+    yield runPostHook({
+        hook: 'postPreviewAdd',
+        completed: `Merged ${featureBranches.join(', ')} into ${previewBranch}`,
+        run: () => {
+            return hooks.postPreviewAdd(preview, context);
+        },
+    });
+});
+const addSingleFeature = (name, id) => __awaiter(void 0, void 0, void 0, function* () {
+    const previewBranchName = yield openPreview(name);
     const featureBranchName = `${branchFeature}${id}`;
     const featureExists = yield branchExists(featureBranchName);
     if (!featureExists) {
         throw new Error(`Feature ${id} does not exist`);
     }
-    yield mergeBranch(featureBranchName);
-    yield pushBranch(previewBranchName);
-    logger.success(`Feature ${id} merged into ${previewBranchName}`);
+    yield mergeFeaturesIntoPreview({
+        preview: name,
+        previewBranch: previewBranchName,
+        featureBranches: [featureBranchName],
+    });
 });
 const addMultipleFeatures = (name) => __awaiter(void 0, void 0, void 0, function* () {
-    const previewBranchName = `${branchPreview}${name}`;
-    const previewExist = yield branchExists(previewBranchName);
-    if (!previewExist) {
-        throw new Error(`Preview ${name} does not exist`);
-    }
-    yield startOrCheckoutBranch(previewBranchName);
+    const previewBranchName = yield openPreview(name);
     const selectedFeatures = yield promptSelectMultipleFeatures(`Select features to add to preview ${previewBranchName}`);
-    for (const featureBranchName of selectedFeatures) {
-        const featureExists = yield branchExists(featureBranchName);
-        if (!featureExists) {
-            throw new Error(`Feature ${featureBranchName} does not exist`);
-        }
-        yield mergeBranch(featureBranchName);
-        yield pushBranch(previewBranchName);
-        logger.success(`Feature ${featureBranchName} merged into ${previewBranchName}`);
-    }
+    yield mergeFeaturesIntoPreview({
+        preview: name,
+        previewBranch: previewBranchName,
+        featureBranches: selectedFeatures,
+    });
 });
 const action = (name, id) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();

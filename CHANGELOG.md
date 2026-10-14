@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`id`, `branch`, `baseTag`). Commits made directly on the release branch are
   not listed. `postReleaseFinish` also gets the `stableCommit` and the
   `deletedBranches`.
+- New `prePreviewStart` / `postPreviewStart` hooks for `preview start`, with the
+  same branch context as feature and release start (`kind: 'preview'`).
+- New `prePreviewAdd` / `postPreviewAdd` hooks for `preview add`, receiving the
+  `preview` name, the `previewBranch` and the `features` being merged.
 
 ### Changed
 
@@ -38,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   finished, but hook postReleaseFinish failed: <reason>", instead of printing
   only the hook's error. The exit code stays 2. A hook that throws something
   other than an `Error` now shows that value instead of `undefined`.
+- `preview start <name>` fetches from origin first, so a preview pushed by a
+  teammate is checked out instead of being recreated.
+- `preview add` without a feature id prints "Feature f1 merged into preview-p1"
+  (the feature id), like `preview add <name> <feature_id>` already did.
 
 ### Fixed
 

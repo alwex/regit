@@ -104,6 +104,26 @@ describe('preview', async (ctx) => {
         )
     })
 
+    test('preview add to a non-existent preview is rejected', async (ctx) => {
+        await ctx.regit('feature start f1')
+
+        const previewAdd = ctx.regit('preview add doesnotexist f1')
+
+        await expect(previewAdd).rejects.toThrowError(
+            'Preview doesnotexist does not exist'
+        )
+    })
+
+    test('preview add of a non-existent feature is rejected', async (ctx) => {
+        await ctx.regit('preview start p1')
+
+        const previewAdd = ctx.regit('preview add p1 doesnotexist')
+
+        await expect(previewAdd).rejects.toThrowError(
+            'Feature doesnotexist does not exist'
+        )
+    })
+
     test('preview list', async (ctx) => {
         await ctx.regit('preview start p1')
         await ctx.regit('preview start p2')

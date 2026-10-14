@@ -44,6 +44,10 @@ module.exports = {
     postReleaseStart: record('postReleaseStart'),
     preReleaseFinish: record('preReleaseFinish'),
     postReleaseFinish: record('postReleaseFinish'),
+    prePreviewStart: record('prePreviewStart'),
+    postPreviewStart: record('postPreviewStart'),
+    prePreviewAdd: record('prePreviewAdd'),
+    postPreviewAdd: record('postPreviewAdd'),
 }
 `
 
@@ -150,7 +154,7 @@ const releaseFinishContext = (overrides: Record<string, unknown>) => {
     }
 }
 
-const releasedFeature = (id: string) => {
+const featureSummary = (id: string) => {
     return { id, branch: `feature-${id}`, baseTag: 'v0.0.1' }
 }
 
@@ -163,6 +167,32 @@ const commitOnRelease = async (ctx: TestContext, message: string) => {
 const featureStartHooks = { pre: 'preFeatureStart', post: 'postFeatureStart' }
 
 const releaseStartHooks = { pre: 'preReleaseStart', post: 'postReleaseStart' }
+
+const previewStartContext = (overrides: Record<string, unknown>) => {
+    return {
+        kind: 'preview',
+        id: 'p1',
+        branch: 'preview-p1',
+        origin: 'new',
+        baseTag: 'v0.0.1',
+        latestTag: 'v0.0.1',
+        isOutdated: false,
+        ...overrides,
+    }
+}
+
+const previewAddContext = (overrides: Record<string, unknown>) => {
+    return {
+        preview: 'p1',
+        previewBranch: 'preview-p1',
+        features: [],
+        ...overrides,
+    }
+}
+
+const previewStartHooks = { pre: 'prePreviewStart', post: 'postPreviewStart' }
+
+const previewAddHooks = { pre: 'prePreviewAdd', post: 'postPreviewAdd' }
 
 describe('hook context', () => {
     beforeEach(async (ctx) => {
@@ -317,7 +347,7 @@ describe('hook context', () => {
             await runCli(ctx, 'release finish')
 
             const expectedContext = releaseFinishContext({
-                features: [releasedFeature('f1'), releasedFeature('f2')],
+                features: [featureSummary('f1'), featureSummary('f2')],
             })
             expect(lastHookCall(ctx, 'preReleaseFinish')?.args).toEqual([
                 '0.1.0',
@@ -349,7 +379,7 @@ describe('hook context', () => {
 
             expect(lastHookCall(ctx, 'preReleaseFinish')?.args).toEqual([
                 '0.1.0',
-                releaseFinishContext({ features: [releasedFeature('f1')] }),
+                releaseFinishContext({ features: [featureSummary('f1')] }),
             ])
         })
 
@@ -381,7 +411,7 @@ describe('hook context', () => {
 
             expect(lastHookCall(ctx, 'preReleaseFinish')?.args).toEqual([
                 '0.1.0',
-                releaseFinishContext({ features: [releasedFeature('f1')] }),
+                releaseFinishContext({ features: [featureSummary('f1')] }),
             ])
         })
 
@@ -399,7 +429,106 @@ describe('hook context', () => {
         })
     })
 
+    describe('preview start', () => {
+        test('tells hooks the preview branch is new', async (ctx) => {
+            await runCli(ctx, 'preview start p1')
+
+            expectBothHooksCalledWith(ctx, previewStartHooks, [
+                'p1',
+                previewStartContext({ origin: 'new' }),
+            ])
+        })
+
+        test('tells hooks the preview branch already exists locally', async (ctx) => {
+            await runCli(ctx, 'preview start p1')
+
+            await runCli(ctx, 'preview start p1')
+
+            expectBothHooksCalledWith(ctx, previewStartHooks, [
+                'p1',
+                previewStartContext({ origin: 'local' }),
+            ])
+        })
+
+        test('fetches origin before telling hooks a preview only exists there', async (ctx) => {
+            await runCli(ctx, 'preview start p1')
+            await ctx.cliLocal('git checkout stable')
+            await ctx.cliLocal('git branch -D preview-p1')
+            await ctx.cliLocal('git branch -dr origin/preview-p1')
+
+            await runCli(ctx, 'preview start p1')
+
+            expectBothHooksCalledWith(ctx, previewStartHooks, [
+                'p1',
+                previewStartContext({ origin: 'remote' }),
+            ])
+        })
+    })
+
+    describe('preview add', { timeout: 30000 }, () => {
+        test('tells hooks which feature is added to the preview', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'preview start p1')
+
+            await runCli(ctx, 'preview add p1 f1')
+
+            expectBothHooksCalledWith(ctx, previewAddHooks, [
+                'p1',
+                previewAddContext({ features: [featureSummary('f1')] }),
+            ])
+        })
+
+        test('tells hooks which features are picked in the prompt', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'feature start f2')
+            await runCli(ctx, 'preview start p1')
+
+            await ctx.cliLocal(`printf 'a\\n' | node ${CLI_PATH} preview add p1`)
+
+            expectBothHooksCalledWith(ctx, previewAddHooks, [
+                'p1',
+                previewAddContext({
+                    features: [featureSummary('f1'), featureSummary('f2')],
+                }),
+            ])
+        })
+    })
+
     describe('hook failures', { timeout: 30000 }, () => {
+        test('reports that the preview started when postPreviewStart fails', async (ctx) => {
+            const previewStart = runCliWithFailingHook(ctx, {
+                hook: 'postPreviewStart',
+                args: 'preview start p1',
+            })
+
+            await expect(previewStart).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Preview p1 started, but hook postPreviewStart failed: postPreviewStart exploded'
+                ),
+            })
+            expect(await ctx.cliLocal('git branch --show-current')).toBe(
+                'preview-p1'
+            )
+        })
+
+        test('reports that features were merged when postPreviewAdd fails', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'preview start p1')
+
+            const previewAdd = runCliWithFailingHook(ctx, {
+                hook: 'postPreviewAdd',
+                args: 'preview add p1 f1',
+            })
+
+            await expect(previewAdd).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Merged feature-f1 into preview-p1, but hook postPreviewAdd failed: postPreviewAdd exploded'
+                ),
+            })
+        })
+
         test('reports that the feature started when postFeatureStart fails', async (ctx) => {
             const featureStart = runCliWithFailingHook(ctx, {
                 hook: 'postFeatureStart',

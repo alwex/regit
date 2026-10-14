@@ -17,6 +17,13 @@ export const getRemoteFeatureName = (branch) => __awaiter(void 0, void 0, void 0
     const name = yield hooks.getFeatureName(branch);
     return name;
 });
+export const toFeatureSummary = ({ name, from, }) => {
+    return {
+        id: name.replace(branchFeature, ''),
+        branch: name,
+        baseTag: from,
+    };
+};
 export const assertFeatureExists = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const branchName = `${branchFeature}${id}`;
     const featureExists = yield branchExists(branchName);
