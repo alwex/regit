@@ -13,6 +13,7 @@ export type {
     ReleaseAddContext,
     ReleaseFinishContext,
     ReleaseFinishedContext,
+    ReleaseRemoveContext,
     ReleaseStartContext,
     ReleaseTrigger,
 } from './services/hooks.js'

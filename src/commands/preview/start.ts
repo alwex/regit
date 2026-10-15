@@ -22,7 +22,6 @@ const startPreviewWithName = async (name: string) => {
 
     await hooks.prePreviewStart(name, context)
     await startInspectedBranch(inspection)
-    logger.success(`Preview ${name} started`)
 
     await runPostHook({
         hook: 'postPreviewStart',
@@ -31,6 +30,8 @@ const startPreviewWithName = async (name: string) => {
             return hooks.postPreviewStart(name, context)
         },
     })
+
+    logger.success(`Preview ${name} started`)
 }
 
 const startPreviewWithPrompt = async () => {

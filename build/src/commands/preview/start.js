@@ -19,7 +19,6 @@ const startPreviewWithName = (name) => __awaiter(void 0, void 0, void 0, functio
     const context = Object.assign({ kind: 'preview', id: name }, inspection);
     yield hooks.prePreviewStart(name, context);
     yield startInspectedBranch(inspection);
-    logger.success(`Preview ${name} started`);
     yield runPostHook({
         hook: 'postPreviewStart',
         completed: `Preview ${name} started`,
@@ -27,6 +26,7 @@ const startPreviewWithName = (name) => __awaiter(void 0, void 0, void 0, functio
             return hooks.postPreviewStart(name, context);
         },
     });
+    logger.success(`Preview ${name} started`);
 });
 const startPreviewWithPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
     const selectedPreview = yield promptSelectSinglePreview('Select preview to open');

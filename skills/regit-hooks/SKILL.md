@@ -56,6 +56,7 @@ without `feature-`), the release version (`1.3.0`, without `v`) or the preview n
 | `preFeatureRemove` / `postFeatureRemove` | `feature remove` (not when `release finish` deletes merged features) | id | `{ id, branch }` |
 | `preReleaseStart` / `postReleaseStart` | `release start`, `preview release` | version | branch start + `version`, `trigger`, `preview?` |
 | `preReleaseAdd` / `postReleaseAdd` | `release add` | version | `{ version, releaseBranch, features }` |
+| `preReleaseRemove` / `postReleaseRemove` | `release remove` (not when `release finish` deletes the release) | version | `{ version, releaseBranch, features }` (features the release contains) |
 | `preReleaseFinish` / `postReleaseFinish` | `release finish` | version | `{ version, tag, previousTag, releaseBranch, features }`; post adds `stableCommit`, `deletedBranches` |
 | `getTagMessage` | `release finish`, after `preReleaseFinish` | version | same as `preReleaseFinish`; **returns** the tag message |
 | `prePreviewStart` / `postPreviewStart` | `preview start` | preview name | branch start (`kind: 'preview'`) |
@@ -69,7 +70,7 @@ checked out for the first time on this machine).
 
 Pick the hook from the moment you need, not from the command name: "when a ticket's branch is
 first created" → `postFeatureStart` + `origin === 'new'`; "when work is shared" →
-`postFeaturePush`; "when a ticket is abandoned" → `postFeatureRemove`; "when QA gets a build" → `postPreviewAdd`; "tear down a staging env" → `postPreviewRemove`; "when it ships" →
+`postFeaturePush`; "when a ticket is abandoned" → `postFeatureRemove`; "when QA gets a build" → `postPreviewAdd`; "tear down a staging env" → `postPreviewRemove`; "a release is abandoned" → `postReleaseRemove`; "when it ships" →
 `postReleaseFinish`.
 
 ## How regit treats hook results

@@ -59,9 +59,9 @@ Annotate a variable and export it, as above. With `/** @type … */ module.expor
 TypeScript only types the hook arguments and does not check what hooks return.
 
 Every context type is exported too: `FeatureStartContext`, `ReleaseStartContext`,
-`ReleaseAddContext`, `ReleaseFinishContext`, `ReleaseFinishedContext`, `PreviewStartContext`,
-`PreviewAddContext`, `PreviewRemoveContext`, `FeaturePushContext`, `FeatureRemoveContext`,
-`FeatureSummary`. Every hook is optional (`Hooks` is a `Partial`):
+`ReleaseAddContext`, `ReleaseRemoveContext`, `ReleaseFinishContext`, `ReleaseFinishedContext`,
+`PreviewStartContext`, `PreviewAddContext`, `PreviewRemoveContext`, `FeaturePushContext`,
+`FeatureRemoveContext`, `FeatureSummary`. Every hook is optional (`Hooks` is a `Partial`):
 
 ```ts
 type Hooks = Partial<{
@@ -76,6 +76,8 @@ type Hooks = Partial<{
     postReleaseStart: (version: string, context: ReleaseStartContext) => Promise<void>
     preReleaseAdd: (version: string, context: ReleaseAddContext) => Promise<void>
     postReleaseAdd: (version: string, context: ReleaseAddContext) => Promise<void>
+    preReleaseRemove: (version: string, context: ReleaseRemoveContext) => Promise<void>
+    postReleaseRemove: (version: string, context: ReleaseRemoveContext) => Promise<void>
     preReleaseFinish: (version: string, context: ReleaseFinishContext) => Promise<void>
     postReleaseFinish: (version: string, context: ReleaseFinishedContext) => Promise<void>
     prePreviewStart: (preview: string, context: PreviewStartContext) => Promise<void>
@@ -108,6 +110,8 @@ name (`feature-f1`).
 | `postReleaseFinish` | After a release has been merged, tagged, and cleaned up. |
 | `preReleaseAdd` | Before features are merged into the open release (`release add`). |
 | `postReleaseAdd` | After the features are merged and the release is pushed. |
+| `preReleaseRemove` | Before the open release branch is deleted (`release remove`). Runs on the branch you are on: when you remove the release you are on, regit switches to stable only after this hook. Not called when `release finish` deletes the release branch. |
+| `postReleaseRemove` | After the release branch is deleted locally and on origin. The features it contained are kept. |
 | `prePreviewStart` | Before a preview branch is created or checked out (`preview start`). |
 | `postPreviewStart` | After a preview branch is created or checked out. |
 | `prePreviewAdd` | Before features are merged into a preview (`preview add`). |
@@ -118,14 +122,14 @@ name (`feature-f1`).
 ## When a hook fails
 
 - **Pre hooks** (`preFeatureStart`, `preFeatureRemove`, `preReleaseStart`, `preReleaseAdd`,
-  `preReleaseFinish`, `prePreviewStart`, `prePreviewAdd`, `prePreviewRemove`) can stop a
-  command: if one throws, regit aborts before creating, merging, tagging or deleting
+  `preReleaseRemove`, `preReleaseFinish`, `prePreviewStart`, `prePreviewAdd`,
+  `prePreviewRemove`) can stop a command: if one throws, regit aborts before creating, merging, tagging or deleting
   anything, prints the hook's error and exits with code 2.
 - **`getTagMessage`** behaves like a pre hook: if it throws, or returns anything other than a
   non-empty string, `release finish` stops before pushing or merging anything.
 - **Post hooks** (`postFeatureStart`, `postFeaturePush`, `postFeatureRemove`,
-  `postReleaseStart`, `postReleaseAdd`, `postReleaseFinish`, `postPreviewStart`,
-  `postPreviewAdd`, `postPreviewRemove`) run after the git work is done. If one throws, the
+  `postReleaseStart`, `postReleaseAdd`, `postReleaseRemove`, `postReleaseFinish`,
+  `postPreviewStart`, `postPreviewAdd`, `postPreviewRemove`) run after the git work is done. If one throws, the
   work is **not** rolled back. regit says so and names the hook, then exits with code 2 so
   scripts and CI still notice:
 
@@ -187,6 +191,20 @@ Passed to `preReleaseAdd` and `postReleaseAdd`. The first argument is the releas
 | `version` | `'1.2.0'` | Version of the open release. |
 | `releaseBranch` | `'release-1.2.0'` | Release branch the features are merged into. |
 | `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features merged by this `release add` (the one given on the command line, or the ones picked in the prompt). |
+
+### Release remove context
+
+Passed to `preReleaseRemove` and `postReleaseRemove` (same object for both). The first
+argument is the version of the open release.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `version` | `'1.2.0'` | Version of the release being removed. |
+| `releaseBranch` | `'release-1.2.0'` | Release branch being deleted. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features the release contains, read before it is deleted. `[]` for an empty release. The feature branches themselves are not deleted. |
+
+A release that only exists on origin is read from `origin/release-1.2.0`, with the same
+caveat as for previews: a partially merged feature can be missing on a fresh clone.
 
 ### Preview add context
 

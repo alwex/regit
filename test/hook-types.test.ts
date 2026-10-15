@@ -37,6 +37,11 @@ const describeRemoval = (context) => {
     return context.id + ' ' + context.branch
 }
 
+/** @type {(context: import('regit-cli').ReleaseRemoveContext) => string} */
+const describeAbortedRelease = (context) => {
+    return context.version + ' ' + context.releaseBranch + ' ' + context.features.length
+}
+
 /** @type {(context: import('regit-cli').PreviewRemoveContext) => string[]} */
 const previewFeatureBranches = (context) => {
     return context.features.map((feature) => {
@@ -66,6 +71,9 @@ const hooks = {
     },
     postPreviewRemove: async (preview, context) => {
         console.log(previewFeatureBranches(context))
+    },
+    postReleaseRemove: async (version, context) => {
+        console.log(describeAbortedRelease(context))
     },
 }
 

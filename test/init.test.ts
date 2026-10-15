@@ -30,6 +30,7 @@ describe('regit init', () => {
             'postPreviewStart',
             'postReleaseAdd',
             'postReleaseFinish',
+            'postReleaseRemove',
             'postReleaseStart',
             'preFeatureRemove',
             'preFeatureStart',
@@ -38,6 +39,7 @@ describe('regit init', () => {
             'prePreviewStart',
             'preReleaseAdd',
             'preReleaseFinish',
+            'preReleaseRemove',
             'preReleaseStart',
         ])
     })

@@ -7,11 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { branchPreview, branchStable } from '../../const.js';
-import { assertCurrentBranchIsClean, branchExists, deleteBranch, getCurrentBranch, listBranchesInBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
-import { logger } from '../../services/logger.js';
+import { branchPreview } from '../../const.js';
+import { assertCurrentBranchIsClean, branchExists, listBranchesInBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { toFeatureSummary } from '../../services/featureHelpers.js';
-import { getHooks, runPostHook, } from '../../services/hooks.js';
+import { getHooks } from '../../services/hooks.js';
+import { removeBranchWithHooks } from '../../services/removeHelpers.js';
 const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     const hooks = yield getHooks();
@@ -27,20 +27,19 @@ const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
         previewBranch: branchName,
         features: features.map(toFeatureSummary),
     };
-    yield hooks.prePreviewRemove(name, context);
-    const currentBranch = yield getCurrentBranch();
-    if (currentBranch === branchName) {
-        yield startOrCheckoutBranch(branchStable);
-    }
-    yield deleteBranch(branchName);
-    yield runPostHook({
-        hook: 'postPreviewRemove',
+    yield removeBranchWithHooks({
+        branch: branchName,
         completed: `Preview ${name} removed`,
-        run: () => {
-            return hooks.postPreviewRemove(name, context);
+        pre: () => {
+            return hooks.prePreviewRemove(name, context);
+        },
+        post: {
+            hook: 'postPreviewRemove',
+            run: () => {
+                return hooks.postPreviewRemove(name, context);
+            },
         },
     });
-    logger.success(`Preview ${name} removed`);
 });
 export default (program) => {
     program.command('remove').argument('<name>', 'Preview name').action(action);

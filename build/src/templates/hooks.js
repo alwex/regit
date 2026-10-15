@@ -42,6 +42,12 @@ const hooks = {
     postReleaseAdd: async (version, context) => {
         // after context.features are merged into the release
     },
+    preReleaseRemove: async (version, context) => {
+        // before the open release branch is deleted (context.features it contains)
+    },
+    postReleaseRemove: async (version, context) => {
+        // after the release branch is deleted
+    },
     preReleaseFinish: async (version, context) => {
         // before the release is merged into stable (release branch checked out)
     },

@@ -74,6 +74,8 @@ module.exports = {
     postFeatureRemove: record('postFeatureRemove'),
     prePreviewRemove: record('prePreviewRemove'),
     postPreviewRemove: record('postPreviewRemove'),
+    preReleaseRemove: record('preReleaseRemove'),
+    postReleaseRemove: record('postReleaseRemove'),
 }
 `
 
@@ -129,6 +131,10 @@ const readHookCalls = (ctx: TestContext, hook: string): HookCall[] => {
         .filter((call) => {
             return call.hook === hook
         })
+}
+
+const successLine = (message: string) => {
+    return `✔  success   ${message}`
 }
 
 const lastHookCall = (ctx: TestContext, hook: string) => {
@@ -231,7 +237,7 @@ const previewStartHooks = { pre: 'prePreviewStart', post: 'postPreviewStart' }
 
 const previewAddHooks = { pre: 'prePreviewAdd', post: 'postPreviewAdd' }
 
-const releaseAddContext = (overrides: Record<string, unknown>) => {
+const releaseFeaturesContext = (overrides: Record<string, unknown>) => {
     return {
         version: '0.1.0',
         releaseBranch: 'release-0.1.0',
@@ -250,6 +256,11 @@ const featureRemoveHooks = {
 const previewRemoveHooks = {
     pre: 'prePreviewRemove',
     post: 'postPreviewRemove',
+}
+
+const releaseRemoveHooks = {
+    pre: 'preReleaseRemove',
+    post: 'postReleaseRemove',
 }
 
 describe('hook context', () => {
@@ -735,6 +746,86 @@ describe('hook context', () => {
         })
     })
 
+    describe('release remove', { timeout: 30000 }, () => {
+        test('tells hooks which features the removed release contains', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'feature start f2')
+            await runCli(ctx, 'release start 0.1.0')
+            await runCli(ctx, 'release add f1')
+            await runCli(ctx, 'release add f2')
+
+            await runCli(ctx, 'release remove')
+
+            expectBothHooksCalledWith(ctx, releaseRemoveHooks, [
+                '0.1.0',
+                releaseFeaturesContext({
+                    features: [featureSummary('f1'), featureSummary('f2')],
+                }),
+            ])
+        })
+
+        test('tells hooks an empty release has no features', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+
+            await runCli(ctx, 'release remove')
+
+            expectBothHooksCalledWith(ctx, releaseRemoveHooks, [
+                '0.1.0',
+                releaseFeaturesContext({ features: [] }),
+            ])
+        })
+
+        test('lists the features of a release that only exists on origin', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'release start 0.1.0')
+            await runCli(ctx, 'release add f1')
+            await ctx.cliLocal('git checkout stable')
+            await ctx.cliLocal('git branch -D release-0.1.0')
+
+            await runCli(ctx, 'release remove')
+
+            expectBothHooksCalledWith(ctx, releaseRemoveHooks, [
+                '0.1.0',
+                releaseFeaturesContext({ features: [featureSummary('f1')] }),
+            ])
+            expect(await ctx.cliRemote('git branch --list release-0.1.0')).toBe(
+                ''
+            )
+        })
+
+        test('runs preReleaseRemove before leaving the release being removed', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+
+            await runCli(ctx, 'release remove')
+
+            expect(lastHookCall(ctx, 'preReleaseRemove')?.branch).toBe(
+                'release-0.1.0'
+            )
+            expect(lastHookCall(ctx, 'postReleaseRemove')?.branch).toBe(
+                'stable'
+            )
+        })
+
+        test('does not fire remove hooks without an open release', async (ctx) => {
+            const releaseRemove = runCli(ctx, 'release remove')
+
+            await expect(releaseRemove).rejects.toMatchObject({
+                message: expect.stringContaining('No open release found'),
+            })
+            expect(readHookCalls(ctx, 'preReleaseRemove')).toEqual([])
+            expect(readHookCalls(ctx, 'postReleaseRemove')).toEqual([])
+        })
+
+        test('does not fire remove hooks when release finish deletes the release', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+
+            await runCli(ctx, 'release finish')
+
+            expect(readHookCalls(ctx, 'preReleaseRemove')).toEqual([])
+            expect(readHookCalls(ctx, 'postReleaseRemove')).toEqual([])
+        })
+    })
+
     describe('release add', { timeout: 30000 }, () => {
         test('tells hooks which feature is added to the release', async (ctx) => {
             await runCli(ctx, 'feature start f1')
@@ -744,7 +835,7 @@ describe('hook context', () => {
 
             expectBothHooksCalledWith(ctx, releaseAddHooks, [
                 '0.1.0',
-                releaseAddContext({ features: [featureSummary('f1')] }),
+                releaseFeaturesContext({ features: [featureSummary('f1')] }),
             ])
         })
 
@@ -757,7 +848,7 @@ describe('hook context', () => {
 
             expectBothHooksCalledWith(ctx, releaseAddHooks, [
                 '0.1.0',
-                releaseAddContext({
+                releaseFeaturesContext({
                     features: [featureSummary('f1'), featureSummary('f2')],
                 }),
             ])
@@ -813,6 +904,7 @@ describe('hook context', () => {
                 message: expect.stringContaining(
                     'Preview p1 started, but hook postPreviewStart failed: postPreviewStart exploded'
                 ),
+                stdout: expect.not.stringContaining(successLine('Preview p1 started')),
             })
             expect(await ctx.cliLocal('git branch --show-current')).toBe(
                 'preview-p1'
@@ -847,6 +939,7 @@ describe('hook context', () => {
                 message: expect.stringContaining(
                     'Feature f1 started, but hook postFeatureStart failed: postFeatureStart exploded'
                 ),
+                stdout: expect.not.stringContaining(successLine('Feature f1 started')),
             })
             expect(await ctx.cliLocal('git branch --show-current')).toBe(
                 'feature-f1'
@@ -864,6 +957,7 @@ describe('hook context', () => {
                 message: expect.stringContaining(
                     'Release 0.1.0 started, but hook postReleaseStart failed: postReleaseStart exploded'
                 ),
+                stdout: expect.not.stringContaining(successLine('Release 0.1.0 started')),
             })
             expect(await ctx.cliLocal('git branch --show-current')).toBe(
                 'release-0.1.0'
@@ -914,6 +1008,7 @@ describe('hook context', () => {
                 message: expect.stringContaining(
                     'Feature f1 removed, but hook postFeatureRemove failed: postFeatureRemove exploded'
                 ),
+                stdout: expect.not.stringContaining(successLine('Feature f1 removed')),
             })
             expect(await ctx.cliLocal('git branch -a')).not.toContain(
                 'feature-f1'
@@ -953,6 +1048,7 @@ describe('hook context', () => {
                 message: expect.stringContaining(
                     'Preview p1 removed, but hook postPreviewRemove failed: postPreviewRemove exploded'
                 ),
+                stdout: expect.not.stringContaining(successLine('Preview p1 removed')),
             })
             expect(await ctx.cliLocal('git branch -a')).not.toContain(
                 'preview-p1'
@@ -977,6 +1073,46 @@ describe('hook context', () => {
             expect(await ctx.cliRemote('git branch --list preview-p1')).toContain(
                 'preview-p1'
             )
+        })
+
+        test('reports that the release was removed when postReleaseRemove fails', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+
+            const releaseRemove = runCliWithFailingHook(ctx, {
+                hook: 'postReleaseRemove',
+                args: 'release remove',
+            })
+
+            await expect(releaseRemove).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Release release-0.1.0 removed, but hook postReleaseRemove failed: postReleaseRemove exploded'
+                ),
+                stdout: expect.not.stringContaining(successLine('Release release-0.1.0 removed')),
+            })
+            expect(await ctx.cliLocal('git branch -a')).not.toContain(
+                'release-0.1.0'
+            )
+        })
+
+        test('keeps the release when preReleaseRemove fails', async (ctx) => {
+            await runCli(ctx, 'release start 0.1.0')
+
+            const releaseRemove = runCliWithFailingHook(ctx, {
+                hook: 'preReleaseRemove',
+                args: 'release remove',
+            })
+
+            await expect(releaseRemove).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining('preReleaseRemove exploded'),
+            })
+            expect(await ctx.cliLocal('git branch --show-current')).toBe(
+                'release-0.1.0'
+            )
+            expect(
+                await ctx.cliRemote('git branch --list release-0.1.0')
+            ).toContain('release-0.1.0')
         })
 
         test('aborts before touching git when a pre hook fails', async (ctx) => {

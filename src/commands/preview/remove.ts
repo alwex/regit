@@ -1,21 +1,14 @@
 import { Command } from 'commander'
-import { branchPreview, branchStable } from '../../const.js'
+import { branchPreview } from '../../const.js'
 import {
     assertCurrentBranchIsClean,
     branchExists,
-    deleteBranch,
-    getCurrentBranch,
     listBranchesInBranch,
-    startOrCheckoutBranch,
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
-import { logger } from '../../services/logger.js'
 import { toFeatureSummary } from '../../services/featureHelpers.js'
-import {
-    PreviewRemoveContext,
-    getHooks,
-    runPostHook,
-} from '../../services/hooks.js'
+import { PreviewRemoveContext, getHooks } from '../../services/hooks.js'
+import { removeBranchWithHooks } from '../../services/removeHelpers.js'
 
 const action = async (name: string) => {
     await warmupGitRepo()
@@ -36,23 +29,19 @@ const action = async (name: string) => {
         previewBranch: branchName,
         features: features.map(toFeatureSummary),
     }
-    await hooks.prePreviewRemove(name, context)
-
-    const currentBranch = await getCurrentBranch()
-    if (currentBranch === branchName) {
-        await startOrCheckoutBranch(branchStable)
-    }
-
-    await deleteBranch(branchName)
-    await runPostHook({
-        hook: 'postPreviewRemove',
+    await removeBranchWithHooks({
+        branch: branchName,
         completed: `Preview ${name} removed`,
-        run: () => {
-            return hooks.postPreviewRemove(name, context)
+        pre: () => {
+            return hooks.prePreviewRemove(name, context)
+        },
+        post: {
+            hook: 'postPreviewRemove',
+            run: () => {
+                return hooks.postPreviewRemove(name, context)
+            },
         },
     })
-
-    logger.success(`Preview ${name} removed`)
 }
 
 export default (program: Command) => {

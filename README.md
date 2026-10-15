@@ -102,6 +102,7 @@ module.exports = hooks
 | `preFeatureRemove`, `postFeatureRemove` | `feature remove` |
 | `preReleaseStart`, `postReleaseStart` | `release start`, `preview release` |
 | `preReleaseAdd`, `postReleaseAdd` | `release add` |
+| `preReleaseRemove`, `postReleaseRemove` | `release remove` |
 | `preReleaseFinish`, `getTagMessage`, `postReleaseFinish` | `release finish` |
 | `prePreviewStart`, `postPreviewStart` | `preview start` |
 | `prePreviewAdd`, `postPreviewAdd` | `preview add` |

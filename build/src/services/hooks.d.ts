@@ -43,6 +43,11 @@ export type ReleaseAddContext = {
     releaseBranch: string;
     features: FeatureSummary[];
 };
+export type ReleaseRemoveContext = {
+    version: string;
+    releaseBranch: string;
+    features: FeatureSummary[];
+};
 export type PreviewStartContext = BranchInspection & {
     kind: 'preview';
     id: string;
@@ -71,6 +76,8 @@ export interface Hooks {
     postReleaseFinish: (version: string, context: ReleaseFinishedContext) => Promise<void>;
     preReleaseAdd: (version: string, context: ReleaseAddContext) => Promise<void>;
     postReleaseAdd: (version: string, context: ReleaseAddContext) => Promise<void>;
+    preReleaseRemove: (version: string, context: ReleaseRemoveContext) => Promise<void>;
+    postReleaseRemove: (version: string, context: ReleaseRemoveContext) => Promise<void>;
     prePreviewStart: (preview: string, context: PreviewStartContext) => Promise<void>;
     postPreviewStart: (preview: string, context: PreviewStartContext) => Promise<void>;
     prePreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>;

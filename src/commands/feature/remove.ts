@@ -1,19 +1,12 @@
 import { Command } from 'commander'
-import { branchFeature, branchStable } from '../../const.js'
+import { branchFeature } from '../../const.js'
 import {
     assertCurrentBranchIsClean,
-    deleteBranch,
-    getCurrentBranch,
-    startOrCheckoutBranch,
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
-import { logger } from '../../services/logger.js'
 import { assertFeatureExists } from '../../services/featureHelpers.js'
-import {
-    FeatureRemoveContext,
-    getHooks,
-    runPostHook,
-} from '../../services/hooks.js'
+import { FeatureRemoveContext, getHooks } from '../../services/hooks.js'
+import { removeBranchWithHooks } from '../../services/removeHelpers.js'
 
 const action = async (id: string) => {
     await warmupGitRepo()
@@ -25,23 +18,19 @@ const action = async (id: string) => {
     await assertFeatureExists(id)
 
     const context: FeatureRemoveContext = { id, branch: branchName }
-    await hooks.preFeatureRemove(id, context)
-
-    const currentBranch = await getCurrentBranch()
-    if (currentBranch === branchName) {
-        await startOrCheckoutBranch(branchStable)
-    }
-
-    await deleteBranch(branchName)
-    await runPostHook({
-        hook: 'postFeatureRemove',
+    await removeBranchWithHooks({
+        branch: branchName,
         completed: `Feature ${id} removed`,
-        run: () => {
-            return hooks.postFeatureRemove(id, context)
+        pre: () => {
+            return hooks.preFeatureRemove(id, context)
+        },
+        post: {
+            hook: 'postFeatureRemove',
+            run: () => {
+                return hooks.postFeatureRemove(id, context)
+            },
         },
     })
-
-    logger.success(`Feature ${id} removed`)
 }
 
 export default (program: Command) => {

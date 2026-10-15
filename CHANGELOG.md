@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   receiving `{ preview, previewBranch, features }`, where `features` lists the
   features the preview contains (read before it is deleted). The pre hook can
   stop the removal. Works for a preview that only exists on origin.
+- New `preReleaseRemove` / `postReleaseRemove` hooks for `release remove`,
+  receiving `{ version, releaseBranch, features }`, where `features` lists the
+  features the release contains (read before it is deleted). The pre hook can
+  stop the removal. Not called when `release finish` deletes the release branch.
 - TypeScript types for hooks: annotate `.regit/hooks.js` with
   `/** @type {import('regit-cli').Hooks} */` for editor completion and type
   checking. Every context type is exported as well.
@@ -74,6 +78,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   teammate is checked out instead of being recreated.
 - `preview add` and `release add` without a feature id print "Feature f1 merged
   into …" (the feature id), like the single-feature form already did.
+- `preview start`, `release start` and `preview release` print their success
+  line after the post hook, like `feature start`. When `postPreviewStart` or
+  `postReleaseStart` fails, only the "…started, but hook … failed" error is shown,
+  no success line.
 - `feature remove <id>` on a feature that does not exist now fails with
   "Feature <id> does not exist" instead of git's "remote ref does not exist".
 
