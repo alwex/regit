@@ -36,9 +36,9 @@ export const assertFeatureExists = (id) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 export const formatFeatureForDisplay = (branch) => __awaiter(void 0, void 0, void 0, function* () {
-    const { from, name, show } = branch;
+    const { from, name, ref } = branch;
     const remoteName = yield getRemoteFeatureName(name);
-    return chalk.bold(`Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(remoteName)}`);
+    return chalk.bold(`Feature: ${ref} ${chalk.dim(`(from ${from})`)} ${chalk.blue(remoteName)}`);
 });
 export const displayFeatureBranch = (branch) => __awaiter(void 0, void 0, void 0, function* () {
     const { from, name, show } = branch;

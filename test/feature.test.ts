@@ -122,6 +122,16 @@ describe('feature', async () => {
         expect(resultStatus).toContain('Date')
     })
 
+    test('feature list shows a feature branch that only exists locally', async (ctx) => {
+        await ctx.cliLocal('git checkout -b feature-1')
+        await ctx.cliLocal('git commit --allow-empty -m "work on 1"')
+
+        const result = await ctx.regit('feature list')
+
+        expect(result).toContain('Feature: feature-1 (from v0.0.0)')
+        expect(result).toContain('commit')
+    })
+
     test('feature push pushes the current feature branch to origin', async (ctx) => {
         await ctx.regit('feature start f1')
         await ctx.cliLocal('git commit --allow-empty -m "work on f1"')

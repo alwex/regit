@@ -43,10 +43,10 @@ export const assertFeatureExists = async (id: string) => {
 }
 
 export const formatFeatureForDisplay = async (branch: ListBranchResult) => {
-    const { from, name, show } = branch
+    const { from, name, ref } = branch
     const remoteName = await getRemoteFeatureName(name)
     return chalk.bold(
-        `Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(
+        `Feature: ${ref} ${chalk.dim(`(from ${from})`)} ${chalk.blue(
             remoteName
         )}`
     )

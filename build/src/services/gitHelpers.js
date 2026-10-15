@@ -117,13 +117,21 @@ const getLatestTagMergedInto = (ref) => __awaiter(void 0, void 0, void 0, functi
     const mergedTags = yield git.raw(['tag', '--merged', ref]);
     return mergedTags.trim().split('\n').sort(semver.rcompare)[0].trim();
 });
+const resolveBranchRef = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
+    if (yield remoteBranchExists(branchName)) {
+        return `origin/${branchName}`;
+    }
+    return branchName;
+});
 export const getBranchInfo = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
-    const from = yield getLatestTagMergedInto(`origin/${branchName}`);
-    const show = yield git.show([`origin/${branchName}`]);
+    const ref = yield resolveBranchRef(branchName);
+    const from = yield getLatestTagMergedInto(ref);
+    const show = yield git.show([ref]);
     const showDetails = show.trim().split('\n').slice(0, 3);
     const isPresentLocally = yield localBranchExists(branchName);
     return {
         name: branchName.replace('remotes/origin/', ''),
+        ref,
         from,
         show: showDetails,
         remoteName: '',

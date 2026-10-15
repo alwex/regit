@@ -155,6 +155,7 @@ export const pushStableBranch = async (version: string) => {
 
 export interface ListBranchResult {
     name: string
+    ref: string
     remoteName?: string
     from: string
     show: string[]
@@ -167,10 +168,20 @@ const getLatestTagMergedInto = async (ref: string) => {
     return mergedTags.trim().split('\n').sort(semver.rcompare)[0].trim()
 }
 
-export const getBranchInfo = async (branchName: string) => {
-    const from = await getLatestTagMergedInto(`origin/${branchName}`)
+const resolveBranchRef = async (branchName: string) => {
+    if (await remoteBranchExists(branchName)) {
+        return `origin/${branchName}`
+    }
 
-    const show = await git.show([`origin/${branchName}`])
+    return branchName
+}
+
+export const getBranchInfo = async (branchName: string) => {
+    const ref = await resolveBranchRef(branchName)
+
+    const from = await getLatestTagMergedInto(ref)
+
+    const show = await git.show([ref])
 
     const showDetails = show.trim().split('\n').slice(0, 3)
 
@@ -178,6 +189,7 @@ export const getBranchInfo = async (branchName: string) => {
 
     return {
         name: branchName.replace('remotes/origin/', ''),
+        ref,
         from,
         show: showDetails,
         remoteName: '',

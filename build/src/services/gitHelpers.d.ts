@@ -31,6 +31,7 @@ export declare const initStableBranch: () => Promise<void>;
 export declare const pushStableBranch: (version: string) => Promise<void>;
 export interface ListBranchResult {
     name: string;
+    ref: string;
     remoteName?: string;
     from: string;
     show: string[];
@@ -38,6 +39,7 @@ export interface ListBranchResult {
 }
 export declare const getBranchInfo: (branchName: string) => Promise<{
     name: string;
+    ref: string;
     from: string;
     show: string[];
     remoteName: string;
