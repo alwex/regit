@@ -311,5 +311,8 @@ export const deleteBranch = (branchName) => __awaiter(void 0, void 0, void 0, fu
     if (isPresentLocally) {
         yield git.deleteLocalBranch(branchName, true);
     }
-    yield git.push(['origin', '--delete', branchName]);
+    const isPresentRemotely = yield remoteBranchExists(branchName);
+    if (isPresentRemotely) {
+        yield git.push(['origin', '--delete', branchName]);
+    }
 });

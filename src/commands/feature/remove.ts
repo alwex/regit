@@ -8,12 +8,14 @@ import {
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { logger } from '../../services/logger.js'
+import { assertFeatureExists } from '../../services/featureHelpers.js'
 
 const action = async (id: string) => {
     await warmupGitRepo()
 
     const branchName = `${branchFeature}${id}`
     await assertCurrentBranchIsClean()
+    await assertFeatureExists(id)
 
     const currentBranch = await getCurrentBranch()
     if (currentBranch === branchName) {

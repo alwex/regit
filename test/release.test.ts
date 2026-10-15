@@ -138,6 +138,27 @@ describe('release', async (ctx) => {
         const result = await ctx.regit('release remove')
 
         expect(result).toContain('✔  success   Release release-1.0.0 removed')
+        expect(await ctx.cliLocal('git branch --show-current')).toBe('stable')
+        expect(await ctx.cliLocal('git branch --list release-1.0.0')).toBe('')
+        expect(await ctx.cliRemote('git branch --list release-1.0.0')).toBe('')
+    })
+
+    test('release remove keeps the features of the release', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('release start 1.0.0')
+        await ctx.regit('release add f1')
+
+        await ctx.regit('release remove')
+
+        expect(await ctx.cliRemote('git branch --list feature-f1')).toContain(
+            'feature-f1'
+        )
+    })
+
+    test('release remove without an open release is rejected', async (ctx) => {
+        const releaseRemove = ctx.regit('release remove')
+
+        await expect(releaseRemove).rejects.toThrowError('No open release found')
     })
 
     test('release start with existing version', async (ctx) => {

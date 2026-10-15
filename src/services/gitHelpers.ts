@@ -455,5 +455,8 @@ export const deleteBranch = async (branchName: string) => {
         await git.deleteLocalBranch(branchName, true)
     }
 
-    await git.push(['origin', '--delete', branchName])
+    const isPresentRemotely = await remoteBranchExists(branchName)
+    if (isPresentRemotely) {
+        await git.push(['origin', '--delete', branchName])
+    }
 }

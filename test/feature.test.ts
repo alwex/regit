@@ -86,14 +86,39 @@ describe('feature', async () => {
 
         const resultF1remove = await ctx.regit('feature remove f1')
         expect(resultF1remove).toContain('✔  success   Feature f1 removed')
+        expect(await ctx.cliLocal('git branch --show-current')).toBe('stable')
+        expect(await ctx.cliLocal('git branch --list feature-f1')).toBe('')
+        expect(await ctx.cliRemote('git branch --list feature-f1')).toBe('')
+    })
+
+    test('feature remove of a feature that only exists on origin', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.cliLocal('git checkout stable')
+        await ctx.cliLocal('git branch -D feature-f1')
+
+        const result = await ctx.regit('feature remove f1')
+
+        expect(result).toContain('✔  success   Feature f1 removed')
+        expect(await ctx.cliRemote('git branch --list feature-f1')).toBe('')
     })
 
     test('feature remove non existing', async (ctx) => {
         const resultF1remove = ctx.regit('feature remove f1')
 
         await expect(resultF1remove).rejects.toThrowError(
-            "unable to delete 'feature-f1': remote ref does not exist"
+            'Feature f1 does not exist'
         )
+    })
+
+    test('feature remove of a feature that only exists locally', async (ctx) => {
+        await ctx.cliLocal('git checkout -b feature-1')
+        await ctx.cliLocal('git commit --allow-empty -m "work on 1"')
+        await ctx.cliLocal('git checkout stable')
+
+        const result = await ctx.regit('feature remove 1')
+
+        expect(result).toContain('✔  success   Feature 1 removed')
+        expect(await ctx.cliLocal('git branch --list feature-1')).toBe('')
     })
 
     test('feature remove with dirty state', async (ctx) => {

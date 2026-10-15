@@ -66,6 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   teammate is checked out instead of being recreated.
 - `preview add` and `release add` without a feature id print "Feature f1 merged
   into …" (the feature id), like the single-feature form already did.
+- `feature remove <id>` on a feature that does not exist now fails with
+  "Feature <id> does not exist" instead of git's "remote ref does not exist".
 
 ### Fixed
 
@@ -87,6 +89,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.regit/hooks.js` is evaluated once per command. Previously, top-level code in
   a CommonJS hooks file re-ran for every feature shown by `feature list`,
   `release status`, `tag list`, etc.
+- `feature list` no longer crashes with "malformed object name origin/<branch>"
+  when a feature branch exists only locally; it is listed without the `origin/`
+  prefix.
+- `feature remove`, `preview remove` and `release remove` now work on a branch
+  that was never pushed (or was already deleted on origin). Previously the local
+  branch was deleted and the command then failed with "remote ref does not
+  exist".
 
 ## [1.5.0] - 2025-06-07
 
