@@ -99,11 +99,13 @@ module.exports = hooks
 | --- | --- |
 | `preFeatureStart`, `postFeatureStart` | `feature start` |
 | `postFeaturePush` | `feature push` |
+| `preFeatureRemove`, `postFeatureRemove` | `feature remove` |
 | `preReleaseStart`, `postReleaseStart` | `release start`, `preview release` |
 | `preReleaseAdd`, `postReleaseAdd` | `release add` |
 | `preReleaseFinish`, `getTagMessage`, `postReleaseFinish` | `release finish` |
 | `prePreviewStart`, `postPreviewStart` | `preview start` |
 | `prePreviewAdd`, `postPreviewAdd` | `preview add` |
+| `prePreviewRemove`, `postPreviewRemove` | `preview remove` |
 | `getFeatureName` | listings (`feature list`, `release status`, `tag list`, …) |
 
 The `@type` comment gives editor completion and type checking when `regit-cli` is installed

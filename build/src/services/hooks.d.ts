@@ -34,6 +34,10 @@ export type FeaturePushContext = {
     id: string;
     branch: string;
 };
+export type FeatureRemoveContext = {
+    id: string;
+    branch: string;
+};
 export type ReleaseAddContext = {
     version: string;
     releaseBranch: string;
@@ -48,12 +52,19 @@ export type PreviewAddContext = {
     previewBranch: string;
     features: FeatureSummary[];
 };
+export type PreviewRemoveContext = {
+    preview: string;
+    previewBranch: string;
+    features: FeatureSummary[];
+};
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>;
     getTagMessage: (version: string, context: ReleaseFinishContext) => Promise<string>;
     preFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>;
     postFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>;
     postFeaturePush: (id: string, context: FeaturePushContext) => Promise<void>;
+    preFeatureRemove: (id: string, context: FeatureRemoveContext) => Promise<void>;
+    postFeatureRemove: (id: string, context: FeatureRemoveContext) => Promise<void>;
     preReleaseStart: (version: string, context: ReleaseStartContext) => Promise<void>;
     postReleaseStart: (version: string, context: ReleaseStartContext) => Promise<void>;
     preReleaseFinish: (version: string, context: ReleaseFinishContext) => Promise<void>;
@@ -64,6 +75,8 @@ export interface Hooks {
     postPreviewStart: (preview: string, context: PreviewStartContext) => Promise<void>;
     prePreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>;
     postPreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>;
+    prePreviewRemove: (preview: string, context: PreviewRemoveContext) => Promise<void>;
+    postPreviewRemove: (preview: string, context: PreviewRemoveContext) => Promise<void>;
 }
 export declare const runPostHook: ({ hook, completed, run, }: {
     hook: keyof Hooks;

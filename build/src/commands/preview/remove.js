@@ -8,21 +8,38 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchPreview, branchStable } from '../../const.js';
-import { assertCurrentBranchIsClean, branchExists, deleteBranch, getCurrentBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, branchExists, deleteBranch, getCurrentBranch, listBranchesInBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
+import { toFeatureSummary } from '../../services/featureHelpers.js';
+import { getHooks, runPostHook, } from '../../services/hooks.js';
 const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
+    const hooks = yield getHooks();
     const branchName = `${branchPreview}${name}`;
     yield assertCurrentBranchIsClean();
     const previewBranchExists = yield branchExists(branchName);
     if (!previewBranchExists) {
         throw new Error(`Preview ${name} does not exist`);
     }
+    const features = yield listBranchesInBranch(branchName);
+    const context = {
+        preview: name,
+        previewBranch: branchName,
+        features: features.map(toFeatureSummary),
+    };
+    yield hooks.prePreviewRemove(name, context);
     const currentBranch = yield getCurrentBranch();
     if (currentBranch === branchName) {
         yield startOrCheckoutBranch(branchStable);
     }
     yield deleteBranch(branchName);
+    yield runPostHook({
+        hook: 'postPreviewRemove',
+        completed: `Preview ${name} removed`,
+        run: () => {
+            return hooks.postPreviewRemove(name, context);
+        },
+    });
     logger.success(`Preview ${name} removed`);
 });
 export default (program) => {

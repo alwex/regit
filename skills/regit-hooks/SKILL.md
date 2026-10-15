@@ -53,12 +53,14 @@ without `feature-`), the release version (`1.3.0`, without `v`) or the preview n
 | --- | --- | --- | --- |
 | `preFeatureStart` / `postFeatureStart` | `feature start` | id | branch start: `branch`, `origin`, `baseTag`, `latestTag`, `isOutdated` |
 | `postFeaturePush` | `feature push`, after the push | id | `{ id, branch }` |
+| `preFeatureRemove` / `postFeatureRemove` | `feature remove` (not when `release finish` deletes merged features) | id | `{ id, branch }` |
 | `preReleaseStart` / `postReleaseStart` | `release start`, `preview release` | version | branch start + `version`, `trigger`, `preview?` |
 | `preReleaseAdd` / `postReleaseAdd` | `release add` | version | `{ version, releaseBranch, features }` |
 | `preReleaseFinish` / `postReleaseFinish` | `release finish` | version | `{ version, tag, previousTag, releaseBranch, features }`; post adds `stableCommit`, `deletedBranches` |
 | `getTagMessage` | `release finish`, after `preReleaseFinish` | version | same as `preReleaseFinish`; **returns** the tag message |
 | `prePreviewStart` / `postPreviewStart` | `preview start` | preview name | branch start (`kind: 'preview'`) |
 | `prePreviewAdd` / `postPreviewAdd` | `preview add` | preview name | `{ preview, previewBranch, features }` |
+| `prePreviewRemove` / `postPreviewRemove` | `preview remove` | preview name | `{ preview, previewBranch, features }` (features the preview contains) |
 | `getFeatureName` | listings (`feature list/status`, `release status`, `preview status/list`, `tag list`) | full branch name (`feature-PAY-12`) | none; **returns** a label shown next to the branch (`''` for none) |
 
 `features` entries are `{ id, branch, baseTag }`. `origin` is `'new'` (branch created now
@@ -67,7 +69,7 @@ checked out for the first time on this machine).
 
 Pick the hook from the moment you need, not from the command name: "when a ticket's branch is
 first created" → `postFeatureStart` + `origin === 'new'`; "when work is shared" →
-`postFeaturePush`; "when QA gets a build" → `postPreviewAdd`; "when it ships" →
+`postFeaturePush`; "when a ticket is abandoned" → `postFeatureRemove`; "when QA gets a build" → `postPreviewAdd`; "tear down a staging env" → `postPreviewRemove`; "when it ships" →
 `postReleaseFinish`.
 
 ## How regit treats hook results

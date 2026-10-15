@@ -70,6 +70,10 @@ module.exports = {
     preReleaseAdd: record('preReleaseAdd'),
     postReleaseAdd: record('postReleaseAdd'),
     postFeaturePush: record('postFeaturePush'),
+    preFeatureRemove: record('preFeatureRemove'),
+    postFeatureRemove: record('postFeatureRemove'),
+    prePreviewRemove: record('prePreviewRemove'),
+    postPreviewRemove: record('postPreviewRemove'),
 }
 `
 
@@ -111,6 +115,9 @@ const tagStable = async (ctx: TestContext, tag: string) => {
 
 const readHookCalls = (ctx: TestContext, hook: string): HookCall[] => {
     const logFile = path.join(ctx.tempDirLocal, '.git', 'hook-calls.jsonl')
+    if (!fs.existsSync(logFile)) {
+        return []
+    }
 
     return fs
         .readFileSync(logFile, 'utf8')
@@ -211,7 +218,7 @@ const previewStartContext = (overrides: Record<string, unknown>) => {
     }
 }
 
-const previewAddContext = (overrides: Record<string, unknown>) => {
+const previewFeaturesContext = (overrides: Record<string, unknown>) => {
     return {
         preview: 'p1',
         previewBranch: 'preview-p1',
@@ -234,6 +241,16 @@ const releaseAddContext = (overrides: Record<string, unknown>) => {
 }
 
 const releaseAddHooks = { pre: 'preReleaseAdd', post: 'postReleaseAdd' }
+
+const featureRemoveHooks = {
+    pre: 'preFeatureRemove',
+    post: 'postFeatureRemove',
+}
+
+const previewRemoveHooks = {
+    pre: 'prePreviewRemove',
+    post: 'postPreviewRemove',
+}
 
 describe('hook context', () => {
     beforeEach(async (ctx) => {
@@ -484,6 +501,53 @@ describe('hook context', () => {
         })
     })
 
+    describe('feature remove', { timeout: 30000 }, () => {
+        test('tells hooks which feature is removed', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+
+            await runCli(ctx, 'feature remove f1')
+
+            expectBothHooksCalledWith(ctx, featureRemoveHooks, [
+                'f1',
+                { id: 'f1', branch: 'feature-f1' },
+            ])
+        })
+
+        test('runs preFeatureRemove before leaving the branch being removed', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+
+            await runCli(ctx, 'feature remove f1')
+
+            expect(lastHookCall(ctx, 'preFeatureRemove')?.branch).toBe(
+                'feature-f1'
+            )
+            expect(lastHookCall(ctx, 'postFeatureRemove')?.branch).toBe(
+                'stable'
+            )
+        })
+
+        test('does not fire remove hooks for a feature that does not exist', async (ctx) => {
+            const featureRemove = runCli(ctx, 'feature remove f1')
+
+            await expect(featureRemove).rejects.toMatchObject({
+                message: expect.stringContaining('Feature f1 does not exist'),
+            })
+            expect(readHookCalls(ctx, 'preFeatureRemove')).toEqual([])
+            expect(readHookCalls(ctx, 'postFeatureRemove')).toEqual([])
+        })
+
+        test('does not fire remove hooks when release finish deletes features', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'release start 0.1.0')
+            await runCli(ctx, 'release add f1')
+
+            await runCli(ctx, 'release finish')
+
+            expect(readHookCalls(ctx, 'preFeatureRemove')).toEqual([])
+            expect(readHookCalls(ctx, 'postFeatureRemove')).toEqual([])
+        })
+    })
+
     describe('tag message', { timeout: 30000 }, () => {
         test('uses getTagMessage for the release tag', async (ctx) => {
             await runCli(ctx, 'feature start f1')
@@ -582,7 +646,7 @@ describe('hook context', () => {
 
             expectBothHooksCalledWith(ctx, previewAddHooks, [
                 'p1',
-                previewAddContext({ features: [featureSummary('f1')] }),
+                previewFeaturesContext({ features: [featureSummary('f1')] }),
             ])
         })
 
@@ -595,10 +659,79 @@ describe('hook context', () => {
 
             expectBothHooksCalledWith(ctx, previewAddHooks, [
                 'p1',
-                previewAddContext({
+                previewFeaturesContext({
                     features: [featureSummary('f1'), featureSummary('f2')],
                 }),
             ])
+        })
+    })
+
+    describe('preview remove', { timeout: 30000 }, () => {
+        test('tells hooks which features the removed preview contains', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'feature start f2')
+            await runCli(ctx, 'preview start p1')
+            await runCli(ctx, 'preview add p1 f1')
+            await runCli(ctx, 'preview add p1 f2')
+
+            await runCli(ctx, 'preview remove p1')
+
+            expectBothHooksCalledWith(ctx, previewRemoveHooks, [
+                'p1',
+                previewFeaturesContext({
+                    features: [featureSummary('f1'), featureSummary('f2')],
+                }),
+            ])
+        })
+
+        test('tells hooks an empty preview has no features', async (ctx) => {
+            await runCli(ctx, 'preview start p1')
+
+            await runCli(ctx, 'preview remove p1')
+
+            expectBothHooksCalledWith(ctx, previewRemoveHooks, [
+                'p1',
+                previewFeaturesContext({ features: [] }),
+            ])
+        })
+
+        test('lists the features of a preview that only exists on origin', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+            await runCli(ctx, 'preview start p1')
+            await runCli(ctx, 'preview add p1 f1')
+            await ctx.cliLocal('git checkout stable')
+            await ctx.cliLocal('git branch -D preview-p1')
+
+            await runCli(ctx, 'preview remove p1')
+
+            expectBothHooksCalledWith(ctx, previewRemoveHooks, [
+                'p1',
+                previewFeaturesContext({ features: [featureSummary('f1')] }),
+            ])
+            expect(await ctx.cliRemote('git branch --list preview-p1')).toBe('')
+        })
+
+        test('runs prePreviewRemove before leaving the preview being removed', async (ctx) => {
+            await runCli(ctx, 'preview start p1')
+
+            await runCli(ctx, 'preview remove p1')
+
+            expect(lastHookCall(ctx, 'prePreviewRemove')?.branch).toBe(
+                'preview-p1'
+            )
+            expect(lastHookCall(ctx, 'postPreviewRemove')?.branch).toBe(
+                'stable'
+            )
+        })
+
+        test('does not fire remove hooks for a preview that does not exist', async (ctx) => {
+            const previewRemove = runCli(ctx, 'preview remove p1')
+
+            await expect(previewRemove).rejects.toMatchObject({
+                message: expect.stringContaining('Preview p1 does not exist'),
+            })
+            expect(readHookCalls(ctx, 'prePreviewRemove')).toEqual([])
+            expect(readHookCalls(ctx, 'postPreviewRemove')).toEqual([])
         })
     })
 
@@ -766,6 +899,84 @@ describe('hook context', () => {
                     'Feature f1 started, but hook postFeatureStart failed: jira-unreachable'
                 ),
             })
+        })
+
+        test('reports that the feature was removed when postFeatureRemove fails', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+
+            const featureRemove = runCliWithFailingHook(ctx, {
+                hook: 'postFeatureRemove',
+                args: 'feature remove f1',
+            })
+
+            await expect(featureRemove).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Feature f1 removed, but hook postFeatureRemove failed: postFeatureRemove exploded'
+                ),
+            })
+            expect(await ctx.cliLocal('git branch -a')).not.toContain(
+                'feature-f1'
+            )
+        })
+
+        test('keeps the feature when preFeatureRemove fails', async (ctx) => {
+            await runCli(ctx, 'feature start f1')
+
+            const featureRemove = runCliWithFailingHook(ctx, {
+                hook: 'preFeatureRemove',
+                args: 'feature remove f1',
+            })
+
+            await expect(featureRemove).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining('preFeatureRemove exploded'),
+            })
+            expect(await ctx.cliLocal('git branch --show-current')).toBe(
+                'feature-f1'
+            )
+            expect(await ctx.cliRemote('git branch --list feature-f1')).toContain(
+                'feature-f1'
+            )
+        })
+
+        test('reports that the preview was removed when postPreviewRemove fails', async (ctx) => {
+            await runCli(ctx, 'preview start p1')
+
+            const previewRemove = runCliWithFailingHook(ctx, {
+                hook: 'postPreviewRemove',
+                args: 'preview remove p1',
+            })
+
+            await expect(previewRemove).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining(
+                    'Preview p1 removed, but hook postPreviewRemove failed: postPreviewRemove exploded'
+                ),
+            })
+            expect(await ctx.cliLocal('git branch -a')).not.toContain(
+                'preview-p1'
+            )
+        })
+
+        test('keeps the preview when prePreviewRemove fails', async (ctx) => {
+            await runCli(ctx, 'preview start p1')
+
+            const previewRemove = runCliWithFailingHook(ctx, {
+                hook: 'prePreviewRemove',
+                args: 'preview remove p1',
+            })
+
+            await expect(previewRemove).rejects.toMatchObject({
+                exitCode: 2,
+                message: expect.stringContaining('prePreviewRemove exploded'),
+            })
+            expect(await ctx.cliLocal('git branch --show-current')).toBe(
+                'preview-p1'
+            )
+            expect(await ctx.cliRemote('git branch --list preview-p1')).toContain(
+                'preview-p1'
+            )
         })
 
         test('aborts before touching git when a pre hook fails', async (ctx) => {

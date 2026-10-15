@@ -36,6 +36,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `postFeaturePush(id, context)` hook, called after `feature push` has pushed
   the current feature branch, with the feature `id` and `branch` (e.g. to open a
   merge request).
+- New `preFeatureRemove` / `postFeatureRemove` hooks for `feature remove`,
+  receiving `{ id, branch }`. The pre hook runs before anything is deleted (and
+  before switching to stable when you remove the feature you are on), so it can
+  stop the removal. Not called when `release finish` deletes merged features.
+- New `prePreviewRemove` / `postPreviewRemove` hooks for `preview remove`,
+  receiving `{ preview, previewBranch, features }`, where `features` lists the
+  features the preview contains (read before it is deleted). The pre hook can
+  stop the removal. Works for a preview that only exists on origin.
 - TypeScript types for hooks: annotate `.regit/hooks.js` with
   `/** @type {import('regit-cli').Hooks} */` for editor completion and type
   checking. Every context type is exported as well.

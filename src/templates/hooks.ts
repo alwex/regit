@@ -24,6 +24,12 @@ const hooks = {
     postFeaturePush: async (id, context) => {
         // after feature push
     },
+    preFeatureRemove: async (id, context) => {
+        // before a feature branch is deleted locally and on origin
+    },
+    postFeatureRemove: async (id, context) => {
+        // after a feature branch is deleted
+    },
     preReleaseStart: async (version, context) => {
         // before a release branch is created or checked out
     },
@@ -53,6 +59,12 @@ const hooks = {
     },
     postPreviewAdd: async (preview, context) => {
         // after context.features are merged into the preview
+    },
+    prePreviewRemove: async (preview, context) => {
+        // before a preview branch is deleted (context.features it contains)
+    },
+    postPreviewRemove: async (preview, context) => {
+        // after a preview branch is deleted
     },
 }
 

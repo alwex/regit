@@ -60,8 +60,8 @@ TypeScript only types the hook arguments and does not check what hooks return.
 
 Every context type is exported too: `FeatureStartContext`, `ReleaseStartContext`,
 `ReleaseAddContext`, `ReleaseFinishContext`, `ReleaseFinishedContext`, `PreviewStartContext`,
-`PreviewAddContext`, `FeaturePushContext`, `FeatureSummary`. Every hook is optional
-(`Hooks` is a `Partial`):
+`PreviewAddContext`, `PreviewRemoveContext`, `FeaturePushContext`, `FeatureRemoveContext`,
+`FeatureSummary`. Every hook is optional (`Hooks` is a `Partial`):
 
 ```ts
 type Hooks = Partial<{
@@ -70,6 +70,8 @@ type Hooks = Partial<{
     preFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
     postFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
     postFeaturePush: (id: string, context: FeaturePushContext) => Promise<void>
+    preFeatureRemove: (id: string, context: FeatureRemoveContext) => Promise<void>
+    postFeatureRemove: (id: string, context: FeatureRemoveContext) => Promise<void>
     preReleaseStart: (version: string, context: ReleaseStartContext) => Promise<void>
     postReleaseStart: (version: string, context: ReleaseStartContext) => Promise<void>
     preReleaseAdd: (version: string, context: ReleaseAddContext) => Promise<void>
@@ -80,6 +82,8 @@ type Hooks = Partial<{
     postPreviewStart: (preview: string, context: PreviewStartContext) => Promise<void>
     prePreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>
     postPreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>
+    prePreviewRemove: (preview: string, context: PreviewRemoveContext) => Promise<void>
+    postPreviewRemove: (preview: string, context: PreviewRemoveContext) => Promise<void>
 }>
 ```
 
@@ -96,6 +100,8 @@ name (`feature-f1`).
 | `preFeatureStart` | Before a feature branch is created or checked out (`feature start`). |
 | `postFeatureStart` | After a feature branch is created or checked out. |
 | `postFeaturePush` | After `feature push` has pushed the current feature branch. Receives `{ id, branch }`. |
+| `preFeatureRemove` | Before a feature branch is deleted (`feature remove`). Receives `{ id, branch }`. Runs on the branch you are on: when you remove the feature you are on, regit switches to stable only after this hook. Not called when `release finish` deletes merged features. |
+| `postFeatureRemove` | After the feature branch is deleted locally and on origin. Receives the same `{ id, branch }`. |
 | `preReleaseStart` | Before a release branch is created or checked out (`release start`, including when a release is already open, and `preview release`). |
 | `postReleaseStart` | After a release branch is created or checked out. |
 | `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). Runs with the release branch checked out, so anything the hook commits ships in the release. |
@@ -106,19 +112,22 @@ name (`feature-f1`).
 | `postPreviewStart` | After a preview branch is created or checked out. |
 | `prePreviewAdd` | Before features are merged into a preview (`preview add`). |
 | `postPreviewAdd` | After the features are merged and the preview is pushed. |
+| `prePreviewRemove` | Before a preview branch is deleted (`preview remove`). Runs on the branch you are on: when you remove the preview you are on, regit switches to stable only after this hook. |
+| `postPreviewRemove` | After the preview branch is deleted locally and on origin. The features it contained are kept. |
 
 ## When a hook fails
 
-- **Pre hooks** (`preFeatureStart`, `preReleaseStart`, `preReleaseAdd`,
-  `preReleaseFinish`, `prePreviewStart`, `prePreviewAdd`) can stop a command: if one
-  throws, regit aborts before creating, merging, tagging or deleting anything, prints the
-  hook's error and exits with code 2.
+- **Pre hooks** (`preFeatureStart`, `preFeatureRemove`, `preReleaseStart`, `preReleaseAdd`,
+  `preReleaseFinish`, `prePreviewStart`, `prePreviewAdd`, `prePreviewRemove`) can stop a
+  command: if one throws, regit aborts before creating, merging, tagging or deleting
+  anything, prints the hook's error and exits with code 2.
 - **`getTagMessage`** behaves like a pre hook: if it throws, or returns anything other than a
   non-empty string, `release finish` stops before pushing or merging anything.
-- **Post hooks** (`postFeatureStart`, `postFeaturePush`, `postReleaseStart`,
-  `postReleaseAdd`, `postReleaseFinish`, `postPreviewStart`, `postPreviewAdd`) run after
-  the git work is done. If one throws, the work is **not** rolled back. regit says so and
-  names the hook, then exits with code 2 so scripts and CI still notice:
+- **Post hooks** (`postFeatureStart`, `postFeaturePush`, `postFeatureRemove`,
+  `postReleaseStart`, `postReleaseAdd`, `postReleaseFinish`, `postPreviewStart`,
+  `postPreviewAdd`, `postPreviewRemove`) run after the git work is done. If one throws, the
+  work is **not** rolled back. regit says so and names the hook, then exits with code 2 so
+  scripts and CI still notice:
 
 ```
 ✖  error     Release 1.2.0 finished, but hook postReleaseFinish failed: Slack API unreachable
@@ -188,6 +197,21 @@ Passed to `prePreviewAdd` and `postPreviewAdd`. The first argument is the previe
 | `preview` | `'p1'` | Preview name, without the `preview-` prefix. |
 | `previewBranch` | `'preview-p1'` | Preview branch the features are merged into. |
 | `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features merged by this `preview add` (the one given on the command line, or the ones picked in the prompt). |
+
+### Preview remove context
+
+Passed to `prePreviewRemove` and `postPreviewRemove` (same object for both). The first argument
+is the preview name.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `preview` | `'p1'` | Preview name, without the `preview-` prefix. |
+| `previewBranch` | `'preview-p1'` | Preview branch being deleted. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features the preview contains, read before it is deleted. `[]` for an empty preview. The feature branches themselves are not deleted. |
+
+When the preview only exists on origin (e.g. a teammate's preview), regit reads it from
+`origin/preview-p1`. Fully merged features are always listed; a feature whose latest commits
+were not merged yet may be missing on a fresh clone.
 
 ### Release finish context
 

@@ -32,6 +32,18 @@ const typeCheckHooksFile = async (ctx: TestContext, source: string) => {
 }
 
 const validHooksFile = `
+/** @type {(context: import('regit-cli').FeatureRemoveContext) => string} */
+const describeRemoval = (context) => {
+    return context.id + ' ' + context.branch
+}
+
+/** @type {(context: import('regit-cli').PreviewRemoveContext) => string[]} */
+const previewFeatureBranches = (context) => {
+    return context.features.map((feature) => {
+        return context.previewBranch + ':' + feature.branch
+    })
+}
+
 /** @type {import('regit-cli').Hooks} */
 const hooks = {
     postFeatureStart: async (id, context) => {
@@ -48,6 +60,12 @@ const hooks = {
     },
     postReleaseFinish: async (version, context) => {
         console.log(context.stableCommit, context.deletedBranches.length)
+    },
+    postFeatureRemove: async (id, context) => {
+        console.log(describeRemoval(context))
+    },
+    postPreviewRemove: async (preview, context) => {
+        console.log(previewFeatureBranches(context))
     },
 }
 

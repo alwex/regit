@@ -47,6 +47,11 @@ export type FeaturePushContext = {
     branch: string
 }
 
+export type FeatureRemoveContext = {
+    id: string
+    branch: string
+}
+
 export type ReleaseAddContext = {
     version: string
     releaseBranch: string
@@ -64,6 +69,12 @@ export type PreviewAddContext = {
     features: FeatureSummary[]
 }
 
+export type PreviewRemoveContext = {
+    preview: string
+    previewBranch: string
+    features: FeatureSummary[]
+}
+
 export interface Hooks {
     getFeatureName: (id: string) => Promise<string>
     getTagMessage: (
@@ -73,6 +84,14 @@ export interface Hooks {
     preFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
     postFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
     postFeaturePush: (id: string, context: FeaturePushContext) => Promise<void>
+    preFeatureRemove: (
+        id: string,
+        context: FeatureRemoveContext
+    ) => Promise<void>
+    postFeatureRemove: (
+        id: string,
+        context: FeatureRemoveContext
+    ) => Promise<void>
     preReleaseStart: (
         version: string,
         context: ReleaseStartContext
@@ -106,6 +125,14 @@ export interface Hooks {
     postPreviewAdd: (
         preview: string,
         context: PreviewAddContext
+    ) => Promise<void>
+    prePreviewRemove: (
+        preview: string,
+        context: PreviewRemoveContext
+    ) => Promise<void>
+    postPreviewRemove: (
+        preview: string,
+        context: PreviewRemoveContext
     ) => Promise<void>
 }
 
@@ -172,6 +199,8 @@ const defaultHooks: Hooks = {
     preFeatureStart: async (id: string) => {},
     postFeatureStart: async (id: string) => {},
     postFeaturePush: async (id: string) => {},
+    preFeatureRemove: async (id: string) => {},
+    postFeatureRemove: async (id: string) => {},
     preReleaseStart: async (version: string) => {},
     postReleaseStart: async (version: string) => {},
     preReleaseFinish: async (version: string) => {},
@@ -182,6 +211,8 @@ const defaultHooks: Hooks = {
     postPreviewStart: async (preview: string) => {},
     prePreviewAdd: async (preview: string) => {},
     postPreviewAdd: async (preview: string) => {},
+    prePreviewRemove: async (preview: string) => {},
+    postPreviewRemove: async (preview: string) => {},
 }
 
 const compileCommonJs = (hookPath: string) => {

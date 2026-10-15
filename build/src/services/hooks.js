@@ -50,6 +50,8 @@ const defaultHooks = {
     preFeatureStart: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
     postFeatureStart: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
     postFeaturePush: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
+    preFeatureRemove: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
+    postFeatureRemove: (id) => __awaiter(void 0, void 0, void 0, function* () { }),
     preReleaseStart: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
     postReleaseStart: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
     preReleaseFinish: (version) => __awaiter(void 0, void 0, void 0, function* () { }),
@@ -60,6 +62,8 @@ const defaultHooks = {
     postPreviewStart: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
     prePreviewAdd: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
     postPreviewAdd: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
+    prePreviewRemove: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
+    postPreviewRemove: (preview) => __awaiter(void 0, void 0, void 0, function* () { }),
 };
 const compileCommonJs = (hookPath) => {
     try {

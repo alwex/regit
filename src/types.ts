@@ -4,9 +4,11 @@ export type Hooks = Partial<AllHooks>
 
 export type {
     FeaturePushContext,
+    FeatureRemoveContext,
     FeatureStartContext,
     FeatureSummary,
     PreviewAddContext,
+    PreviewRemoveContext,
     PreviewStartContext,
     ReleaseAddContext,
     ReleaseFinishContext,

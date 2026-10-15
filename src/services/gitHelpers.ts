@@ -168,7 +168,7 @@ const getLatestTagMergedInto = async (ref: string) => {
     return mergedTags.trim().split('\n').sort(semver.rcompare)[0].trim()
 }
 
-const resolveBranchRef = async (branchName: string) => {
+const resolveRemoteFirstBranchRef = async (branchName: string) => {
     if (await remoteBranchExists(branchName)) {
         return `origin/${branchName}`
     }
@@ -176,8 +176,16 @@ const resolveBranchRef = async (branchName: string) => {
     return branchName
 }
 
+const resolveLocalFirstBranchRef = async (branchName: string) => {
+    if (await localBranchExists(branchName)) {
+        return branchName
+    }
+
+    return `origin/${branchName}`
+}
+
 export const getBranchInfo = async (branchName: string) => {
-    const ref = await resolveBranchRef(branchName)
+    const ref = await resolveRemoteFirstBranchRef(branchName)
 
     const from = await getLatestTagMergedInto(ref)
 
@@ -328,11 +336,13 @@ export interface ListBranchesInBranchResult extends ListBranchResult {
 export const listBranchesInBranch = async (
     targetBranch: string
 ): Promise<ListBranchesInBranchResult[]> => {
+    const targetRef = await resolveLocalFirstBranchRef(targetBranch)
+
     const allCommits = await git.raw([
         'reflog',
         'show',
         '--no-abbrev',
-        targetBranch,
+        targetRef,
     ])
 
     const allCommitsHashes = allCommits
@@ -350,7 +360,7 @@ export const listBranchesInBranch = async (
     }
 
     const allCommitsOnBranch = await git.log([
-        targetBranch,
+        targetRef,
         `${firstCommit}..${lastCommit}`,
     ])
 
@@ -374,7 +384,7 @@ export const listBranchesInBranch = async (
         '--no-color',
         '-r',
         '--merged',
-        targetBranch,
+        targetRef,
     ])
 
     const allCompletelyMergedFeatureNames = allCompletelyMergedFeatures.all

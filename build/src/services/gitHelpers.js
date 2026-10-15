@@ -117,14 +117,20 @@ const getLatestTagMergedInto = (ref) => __awaiter(void 0, void 0, void 0, functi
     const mergedTags = yield git.raw(['tag', '--merged', ref]);
     return mergedTags.trim().split('\n').sort(semver.rcompare)[0].trim();
 });
-const resolveBranchRef = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
+const resolveRemoteFirstBranchRef = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
     if (yield remoteBranchExists(branchName)) {
         return `origin/${branchName}`;
     }
     return branchName;
 });
+const resolveLocalFirstBranchRef = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
+    if (yield localBranchExists(branchName)) {
+        return branchName;
+    }
+    return `origin/${branchName}`;
+});
 export const getBranchInfo = (branchName) => __awaiter(void 0, void 0, void 0, function* () {
-    const ref = yield resolveBranchRef(branchName);
+    const ref = yield resolveRemoteFirstBranchRef(branchName);
     const from = yield getLatestTagMergedInto(ref);
     const show = yield git.show([ref]);
     const showDetails = show.trim().split('\n').slice(0, 3);
@@ -215,11 +221,12 @@ export const mergeBranch = (branchName) => __awaiter(void 0, void 0, void 0, fun
     const result = yield git.merge(['--no-ff', `origin/${branchName}`]);
 });
 export const listBranchesInBranch = (targetBranch) => __awaiter(void 0, void 0, void 0, function* () {
+    const targetRef = yield resolveLocalFirstBranchRef(targetBranch);
     const allCommits = yield git.raw([
         'reflog',
         'show',
         '--no-abbrev',
-        targetBranch,
+        targetRef,
     ]);
     const allCommitsHashes = allCommits
         .trim()
@@ -233,7 +240,7 @@ export const listBranchesInBranch = (targetBranch) => __awaiter(void 0, void 0, 
         return [];
     }
     const allCommitsOnBranch = yield git.log([
-        targetBranch,
+        targetRef,
         `${firstCommit}..${lastCommit}`,
     ]);
     const allMergedFeatureNames = allCommitsOnBranch.all
@@ -255,7 +262,7 @@ export const listBranchesInBranch = (targetBranch) => __awaiter(void 0, void 0, 
         '--no-color',
         '-r',
         '--merged',
-        targetBranch,
+        targetRef,
     ]);
     const allCompletelyMergedFeatureNames = allCompletelyMergedFeatures.all
         .filter((name) => {
