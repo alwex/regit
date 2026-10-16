@@ -11,6 +11,7 @@ describe('release', async (ctx) => {
             'Creating Branch release-1.0.0 from tag v0.0.0'
         )
         expect(result).toContain('✔  success   Release 1.0.0 started')
+        expect(result).not.toContain('Release already exists')
     })
 
     test('release start existing', async (ctx) => {
@@ -24,6 +25,7 @@ describe('release', async (ctx) => {
         expect(result2).toContain(
             '⚠  warning   Release already exists release-1.0.0'
         )
+        expect(result2).not.toContain('Release 1.0.0 started')
     })
 
     test('release start with multiple versions', async (ctx) => {
@@ -73,6 +75,50 @@ describe('release', async (ctx) => {
         expect(result).toContain('Cleanup merged features')
     })
 
+    test('release finish lists the merged features in the tag message', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('feature start f2')
+        await ctx.regit('release start 1.0.0')
+        await ctx.regit('release add f1')
+        await ctx.regit('release add f2')
+
+        await ctx.regit('release finish')
+
+        const tagMessage = await ctx.cliLocal(
+            "git tag -l --format='%(contents)' v1.0.0"
+        )
+        expect(tagMessage.trim()).toBe('[regit] v1.0.0. (feature-f1,feature-f2)')
+    })
+
+    test('release add pushes the release branch to origin', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('release start 1.0.0')
+
+        await ctx.regit('release add f1')
+
+        expect(await ctx.cliRemote('git rev-parse release-1.0.0')).toBe(
+            await ctx.cliLocal('git rev-parse release-1.0.0')
+        )
+    })
+
+    test('release add without an open release is rejected', async (ctx) => {
+        await ctx.regit('feature start f1')
+
+        const releaseAdd = ctx.regit('release add f1')
+
+        await expect(releaseAdd).rejects.toThrowError('No release branch found')
+    })
+
+    test('release add of a non-existent feature is rejected', async (ctx) => {
+        await ctx.regit('release start 1.0.0')
+
+        const releaseAdd = ctx.regit('release add doesnotexist')
+
+        await expect(releaseAdd).rejects.toThrowError(
+            'Feature doesnotexist does not exist'
+        )
+    })
+
     test('release status', async (ctx) => {
         await ctx.regit('feature start f1')
         await ctx.regit('feature start f2')
@@ -92,6 +138,27 @@ describe('release', async (ctx) => {
         const result = await ctx.regit('release remove')
 
         expect(result).toContain('✔  success   Release release-1.0.0 removed')
+        expect(await ctx.cliLocal('git branch --show-current')).toBe('stable')
+        expect(await ctx.cliLocal('git branch --list release-1.0.0')).toBe('')
+        expect(await ctx.cliRemote('git branch --list release-1.0.0')).toBe('')
+    })
+
+    test('release remove keeps the features of the release', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('release start 1.0.0')
+        await ctx.regit('release add f1')
+
+        await ctx.regit('release remove')
+
+        expect(await ctx.cliRemote('git branch --list feature-f1')).toContain(
+            'feature-f1'
+        )
+    })
+
+    test('release remove without an open release is rejected', async (ctx) => {
+        const releaseRemove = ctx.regit('release remove')
+
+        await expect(releaseRemove).rejects.toThrowError('No open release found')
     })
 
     test('release start with existing version', async (ctx) => {
@@ -165,6 +232,26 @@ describe('release', async (ctx) => {
         expect(releaseStatus2).toContain('Included features')
         expect(releaseStatus2).toContain('- origin/feature-f1 [merged]')
         expect(releaseStatus2).toContain('- origin/feature-f2 [merged]')
+    })
+
+    test('release status parses author and date on a merge-tip branch', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('release start 1.0.0')
+        await ctx.regit('release add f1')
+
+        const result = await ctx.regit('release status')
+
+        expect(result).toContain('Author: Test User')
+        expect(result).not.toContain('Date: Test User')
+    })
+
+    test('release finish tags prerelease versions in full', async (ctx) => {
+        await ctx.regit('release start 1.0.0-beta.1')
+        await ctx.regit('release finish')
+
+        const tags = await ctx.cliLocal('git tag -l')
+
+        expect(tags).toContain('v1.0.0-beta.1')
     })
 
     test('release finish', async (ctx) => {

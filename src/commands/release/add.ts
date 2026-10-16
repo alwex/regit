@@ -1,61 +1,90 @@
 import { Command } from 'commander'
-import { branchFeature } from '../../const.js'
+import { branchFeature, branchRelease } from '../../const.js'
 import {
     assertFeatureExists,
     promptSelectMultipleFeatures,
+    summarizeFeatures,
 } from '../../services/featureHelpers.js'
 import {
     assertCurrentBranchIsClean,
-    branchExists,
     mergeBranch,
     pushBranch,
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
+import {
+    ReleaseAddContext,
+    getHooks,
+    runPostHook,
+} from '../../services/hooks.js'
 import { logger } from '../../services/logger.js'
 import { openRelease } from '../../services/releaseHelpers.js'
 
+const mergeFeaturesIntoRelease = async ({
+    releaseBranch,
+    featureBranches,
+}: {
+    releaseBranch: string
+    featureBranches: string[]
+}) => {
+    const hooks = await getHooks()
+    const version = releaseBranch.replace(branchRelease, '')
+    const context: ReleaseAddContext = {
+        version,
+        releaseBranch,
+        features: await summarizeFeatures(featureBranches),
+    }
+
+    await hooks.preReleaseAdd(version, context)
+
+    for (const feature of context.features) {
+        await mergeBranch(feature.branch)
+        logger.success(`Feature ${feature.id} merged into ${releaseBranch}`)
+    }
+    await pushBranch(releaseBranch)
+
+    await runPostHook({
+        hook: 'postReleaseAdd',
+        completed: `Merged ${featureBranches.join(', ')} into ${releaseBranch}`,
+        run: () => {
+            return hooks.postReleaseAdd(version, context)
+        },
+    })
+}
+
 const addSingleFeature = async (id: string) => {
     await assertCurrentBranchIsClean()
-    const { name, from } = await openRelease()
+    const { name } = await openRelease()
 
     await assertFeatureExists(id)
 
-    const branchName = `${branchFeature}${id}`
-    await mergeBranch(branchName)
-    await pushBranch(name)
-
-    logger.success(`Feature ${id} merged into ${name}`)
+    await mergeFeaturesIntoRelease({
+        releaseBranch: name,
+        featureBranches: [`${branchFeature}${id}`],
+    })
 }
 
 const addMultipleFeatures = async () => {
     await assertCurrentBranchIsClean()
 
-    const { name, from } = await openRelease()
+    const { name } = await openRelease()
 
     const selectedFeatures = await promptSelectMultipleFeatures(
         `Select features to add to release ${name}`
     )
 
-    for (const featureBranchName of selectedFeatures) {
-        const featureExists = await branchExists(featureBranchName)
-        if (!featureExists) {
-            throw new Error(`Feature ${featureBranchName} does not exist`)
-        }
-
-        await mergeBranch(featureBranchName)
-
-        logger.success(`Feature ${featureBranchName} merged into ${name}`)
-    }
-    await pushBranch(name)
+    await mergeFeaturesIntoRelease({
+        releaseBranch: name,
+        featureBranches: selectedFeatures,
+    })
 }
 
 const action = async (id?: string) => {
     await warmupGitRepo()
 
     if (id) {
-        addSingleFeature(id)
+        await addSingleFeature(id)
     } else {
-        addMultipleFeatures()
+        await addMultipleFeatures()
     }
 }
 

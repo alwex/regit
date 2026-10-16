@@ -21,7 +21,9 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     const { name } = currentReleaseBranch;
     const details = yield getBranchDetails(name);
     const result = yield listBranchesInBranch(currentReleaseBranch.name);
-    const branches = result.filter((data) => data.name.startsWith(branchFeature));
+    const branches = result.filter((data) => {
+        return data.name.startsWith(branchFeature);
+    });
     displayReleaseHeader(details, currentReleaseBranch);
     for (const branch of branches) {
         yield displaySubFeatureBranch(branch);

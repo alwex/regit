@@ -7,9 +7,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean, getBranchInfo, getLatestTag, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, getBranchInfo, getLatestTag, inspectBranch, startInspectedBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { branchFeature } from '../../const.js';
-import { getHooks } from '../../services/hooks.js';
+import { getHooks, runPostHook, } from '../../services/hooks.js';
 import { logger } from '../../services/logger.js';
 import semver from 'semver';
 import { promptSelectSingleFeature } from '../../services/featureHelpers.js';
@@ -17,9 +17,17 @@ const startFeatureWithId = (id) => __awaiter(void 0, void 0, void 0, function* (
     const hooks = yield getHooks();
     yield assertCurrentBranchIsClean();
     const branchName = `${branchFeature}${id}`;
-    yield hooks.preFeatureStart(id);
-    yield startOrCheckoutBranch(branchName);
-    yield hooks.postFeatureStart(id);
+    const inspection = yield inspectBranch(branchName);
+    const context = Object.assign({ kind: 'feature', id }, inspection);
+    yield hooks.preFeatureStart(id, context);
+    yield startInspectedBranch(inspection);
+    yield runPostHook({
+        hook: 'postFeatureStart',
+        completed: `Feature ${id} started`,
+        run: () => {
+            return hooks.postFeatureStart(id, context);
+        },
+    });
     const latestTag = yield getLatestTag();
     const branchInfo = yield getBranchInfo(branchName);
     logger.success(`Feature ${id} started`);
@@ -36,10 +44,10 @@ const startFeatureWithPrompt = () => __awaiter(void 0, void 0, void 0, function*
 const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     if (id) {
-        startFeatureWithId(id);
+        yield startFeatureWithId(id);
     }
     else {
-        startFeatureWithPrompt();
+        yield startFeatureWithPrompt();
     }
 });
 export default (program) => {

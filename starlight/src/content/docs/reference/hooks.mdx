@@ -1,41 +1,339 @@
 ---
 title: Hooks
-description: Hooks
+description: Customize regit by running your own code before and after feature, preview and release actions.
 sidebar:
     order: 6
 ---
 
+Hooks let you plug your own logic into regit's lifecycle — fetch a human-readable feature
+name from an issue tracker, generate a changelog before a release finishes, notify a chat
+channel, and so on.
+
+## The hooks file
+
+`regit init` generates a `.regit/hooks.js` file at the root of your repository, listing every
+hook with a one-line comment. It uses CommonJS (`module.exports`) and is shallow-merged over
+regit's defaults, so you only need to keep the hooks you care about — the others fall back to
+the defaults (no-ops, and the default release tag message).
+
+The file is loaded the same way whatever your project's `package.json` says: CommonJS
+(`module.exports`) works even when the project declares `"type": "module"`, and an ES
+module with `export default { ... }` works too. `.regit/hooks.cjs` and `.regit/hooks.mjs`
+are also picked up. Hooks run in Node (18 or later, so `fetch` is available), and `require`
+resolves relative to `.regit/`.
+
+### Which hooks file runs
+
+- **The file of the branch that is checked out.** regit reads `.regit/hooks.js` from your
+  working tree when a command starts (once per command). Branches regit creates are cut from
+  the latest release *tag*, so they carry the hooks file of that tag. A hook you just
+  committed on `stable` only applies when you run commands from `stable` (or from a branch
+  that contains the commit) until it ships in a release.
+- **Commit hook changes before running regit.** The hooks file is tracked, and most commands
+  refuse to run on a dirty tree (`Current branch is dirty, cannot continue`).
+- **Keep secrets out of it.** Read tokens and webhook URLs from environment variables
+  (`process.env.SLACK_WEBHOOK_URL`): the file is committed.
+
+### Editor completion and type checking
+
+`regit-cli` ships TypeScript types for hooks. Annotate the hooks object with
+`import('regit-cli').Hooks` to get completion on every `context` field, and — with
+`// @ts-check` or `checkJs` — errors when a hook misuses its context or returns the wrong type.
+`regit-cli` must be installed in the project (e.g. as a dev dependency) for the import to
+resolve.
+
+```js title=".regit/hooks.js"
+// @ts-check
+
+/** @type {import('regit-cli').Hooks} */
+const hooks = {
+    getTagMessage: async (version, context) => {
+        return `Release ${context.tag}`
+    },
+}
+
+module.exports = hooks
+```
+
+Annotate a variable and export it, as above. With `/** @type … */ module.exports = { … }`,
+TypeScript only types the hook arguments and does not check what hooks return.
+
+Every context type is exported too: `FeatureStartContext`, `ReleaseStartContext`,
+`ReleaseAddContext`, `ReleaseRemoveContext`, `ReleaseFinishContext`, `ReleaseFinishedContext`,
+`PreviewStartContext`, `PreviewAddContext`, `PreviewRemoveContext`, `FeaturePushContext`,
+`FeatureRemoveContext`, `FeatureSummary`. Every hook is optional (`Hooks` is a `Partial`):
+
 ```ts
-export interface Hooks {
-    getFeatureName: (id: string) => Promise<string>
-    preFeatureStart: (id: string) => Promise<void>
-    postFeatureStart: (id: string) => Promise<void>
-    preReleaseFinish: (version: string) => Promise<void>
-    postReleaseFinish: (version: string) => Promise<void>
+type Hooks = Partial<{
+    getFeatureName: (branch: string) => Promise<string>
+    getTagMessage: (version: string, context: ReleaseFinishContext) => Promise<string>
+    preFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
+    postFeatureStart: (id: string, context: FeatureStartContext) => Promise<void>
+    postFeaturePush: (id: string, context: FeaturePushContext) => Promise<void>
+    preFeatureRemove: (id: string, context: FeatureRemoveContext) => Promise<void>
+    postFeatureRemove: (id: string, context: FeatureRemoveContext) => Promise<void>
+    preReleaseStart: (version: string, context: ReleaseStartContext) => Promise<void>
+    postReleaseStart: (version: string, context: ReleaseStartContext) => Promise<void>
+    preReleaseAdd: (version: string, context: ReleaseAddContext) => Promise<void>
+    postReleaseAdd: (version: string, context: ReleaseAddContext) => Promise<void>
+    preReleaseRemove: (version: string, context: ReleaseRemoveContext) => Promise<void>
+    postReleaseRemove: (version: string, context: ReleaseRemoveContext) => Promise<void>
+    preReleaseFinish: (version: string, context: ReleaseFinishContext) => Promise<void>
+    postReleaseFinish: (version: string, context: ReleaseFinishedContext) => Promise<void>
+    prePreviewStart: (preview: string, context: PreviewStartContext) => Promise<void>
+    postPreviewStart: (preview: string, context: PreviewStartContext) => Promise<void>
+    prePreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>
+    postPreviewAdd: (preview: string, context: PreviewAddContext) => Promise<void>
+    prePreviewRemove: (preview: string, context: PreviewRemoveContext) => Promise<void>
+    postPreviewRemove: (preview: string, context: PreviewRemoveContext) => Promise<void>
+}>
+```
+
+The first argument is the feature id (`f1`, without `feature-`), the release version (`1.2.0`,
+without `v`) or the preview name — except `getFeatureName`, which receives the full branch
+name (`feature-f1`).
+
+## When each hook fires
+
+| Hook | Fires |
+| --- | --- |
+| `getFeatureName` | When regit renders a feature in `feature list`, `feature status`, release/preview/tag listings and the selection prompts. Receives the full branch name; return a label (e.g. the issue title from GitLab/Jira) shown next to it, or `''`. Called once per feature shown: keep it fast and return `''` instead of throwing, or the listing fails. |
+| `getTagMessage` | During `release finish`, right after `preReleaseFinish` and before anything is pushed or merged. Returns the message of the release tag. |
+| `preFeatureStart` | Before a feature branch is created or checked out (`feature start`). |
+| `postFeatureStart` | After a feature branch is created or checked out. |
+| `postFeaturePush` | After `feature push` has pushed the current feature branch. Receives `{ id, branch }`. |
+| `preFeatureRemove` | Before a feature branch is deleted (`feature remove`). Receives `{ id, branch }`. Runs on the branch you are on: when you remove the feature you are on, regit switches to stable only after this hook. Not called when `release finish` deletes merged features. |
+| `postFeatureRemove` | After the feature branch is deleted locally and on origin. Receives the same `{ id, branch }`. |
+| `preReleaseStart` | Before a release branch is created or checked out (`release start`, including when a release is already open, and `preview release`). |
+| `postReleaseStart` | After a release branch is created or checked out. |
+| `preReleaseFinish` | Before a release is merged into stable, tagged, and cleaned up (`release finish`). Runs with the release branch checked out, so anything the hook commits ships in the release. |
+| `postReleaseFinish` | After a release has been merged, tagged, and cleaned up. |
+| `preReleaseAdd` | Before features are merged into the open release (`release add`). |
+| `postReleaseAdd` | After the features are merged and the release is pushed. |
+| `preReleaseRemove` | Before the open release branch is deleted (`release remove`). Runs on the branch you are on: when you remove the release you are on, regit switches to stable only after this hook. Not called when `release finish` deletes the release branch. |
+| `postReleaseRemove` | After the release branch is deleted locally and on origin. The features it contained are kept. |
+| `prePreviewStart` | Before a preview branch is created or checked out (`preview start`). |
+| `postPreviewStart` | After a preview branch is created or checked out. |
+| `prePreviewAdd` | Before features are merged into a preview (`preview add`). |
+| `postPreviewAdd` | After the features are merged and the preview is pushed. |
+| `prePreviewRemove` | Before a preview branch is deleted (`preview remove`). Runs on the branch you are on: when you remove the preview you are on, regit switches to stable only after this hook. |
+| `postPreviewRemove` | After the preview branch is deleted locally and on origin. The features it contained are kept. |
+
+## When a hook fails
+
+- **Pre hooks** (`preFeatureStart`, `preFeatureRemove`, `preReleaseStart`, `preReleaseAdd`,
+  `preReleaseRemove`, `preReleaseFinish`, `prePreviewStart`, `prePreviewAdd`,
+  `prePreviewRemove`) can stop a command: if one throws, regit aborts before creating, merging, tagging or deleting
+  anything, prints the hook's error and exits with code 2.
+- **`getTagMessage`** behaves like a pre hook: if it throws, or returns anything other than a
+  non-empty string, `release finish` stops before pushing or merging anything.
+- **Post hooks** (`postFeatureStart`, `postFeaturePush`, `postFeatureRemove`,
+  `postReleaseStart`, `postReleaseAdd`, `postReleaseRemove`, `postReleaseFinish`,
+  `postPreviewStart`, `postPreviewAdd`, `postPreviewRemove`) run after the git work is done. If one throws, the
+  work is **not** rolled back. regit says so and names the hook, then exits with code 2 so
+  scripts and CI still notice:
+
+```
+✖  error     Release 1.2.0 finished, but hook postReleaseFinish failed: Slack API unreachable
+```
+
+## Hook context
+
+Some hooks receive a second `context` argument describing what regit is about to do (pre
+hooks) or just did (post hooks). Hooks written with a single argument keep working.
+
+### Branch start context
+
+Passed to `preFeatureStart`, `postFeatureStart`, `preReleaseStart`, `postReleaseStart`,
+`prePreviewStart` and `postPreviewStart` (types `FeatureStartContext`, `ReleaseStartContext`,
+`PreviewStartContext`). Start hooks also fire when the command only checks out an existing
+branch: guard "first time" automations with `context.origin === 'new'`.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `kind` | `'feature'` | `'feature'`, `'release'` or `'preview'`. |
+| `id` | `'f1'` | Feature id, release version or preview name, without the `feature-` / `release-` / `preview-` prefix. |
+| `branch` | `'feature-f1'` | Full branch name. |
+| `origin` | `'new'` | `'new'`: the branch is created from the latest release tag. `'local'`: the branch already exists locally and is checked out. `'remote'`: the branch only exists on `origin` (e.g. a teammate's feature) and is checked out for the first time. |
+| `baseTag` | `'v1.1.0'` | Latest release tag merged into the branch that gets checked out. For a new branch, the tag it is created from. |
+| `latestTag` | `'v1.2.0'` | Latest release tag in the repository. |
+| `isOutdated` | `true` | `baseTag` is older than `latestTag`: the branch does not contain the latest release. |
+
+Release hooks also receive:
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `version` | `'1.2.0'` | Release version. When a release is already open, `release start` checks it out and this is the open release's version, not the one passed on the command line. |
+| `trigger` | `'release-start'` | `'release-start'` for `release start`, `'preview-release'` for `preview release`. |
+| `preview` | `'p1'` | Preview name, only when `trigger` is `'preview-release'`. |
+
+```js title=".regit/hooks.js"
+module.exports = {
+    postFeatureStart: async (id, context) => {
+        if (context.origin === 'new') {
+            console.log(`Move ticket ${id} to "In progress"`)
+        }
+    },
+    postReleaseStart: async (version, context) => {
+        if (context.origin === 'new' && context.trigger === 'preview-release') {
+            console.log(`Release ${version} created from preview ${context.preview}`)
+        }
+    },
 }
 ```
+
+### Release add context
+
+Passed to `preReleaseAdd` and `postReleaseAdd`. The first argument is the release version.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `version` | `'1.2.0'` | Version of the open release. |
+| `releaseBranch` | `'release-1.2.0'` | Release branch the features are merged into. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features merged by this `release add` (the one given on the command line, or the ones picked in the prompt). |
+
+### Release remove context
+
+Passed to `preReleaseRemove` and `postReleaseRemove` (same object for both). The first
+argument is the version of the open release.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `version` | `'1.2.0'` | Version of the release being removed. |
+| `releaseBranch` | `'release-1.2.0'` | Release branch being deleted. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features the release contains, read before it is deleted. `[]` for an empty release. The feature branches themselves are not deleted. |
+
+A release that only exists on origin is read from `origin/release-1.2.0`, with the same
+caveat as for previews: a partially merged feature can be missing on a fresh clone.
+
+### Preview add context
+
+Passed to `prePreviewAdd` and `postPreviewAdd`. The first argument is the preview name.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `preview` | `'p1'` | Preview name, without the `preview-` prefix. |
+| `previewBranch` | `'preview-p1'` | Preview branch the features are merged into. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features merged by this `preview add` (the one given on the command line, or the ones picked in the prompt). |
+
+### Preview remove context
+
+Passed to `prePreviewRemove` and `postPreviewRemove` (same object for both). The first argument
+is the preview name.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `preview` | `'p1'` | Preview name, without the `preview-` prefix. |
+| `previewBranch` | `'preview-p1'` | Preview branch being deleted. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Features the preview contains, read before it is deleted. `[]` for an empty preview. The feature branches themselves are not deleted. |
+
+When the preview only exists on origin (e.g. a teammate's preview), regit reads it from
+`origin/preview-p1`. Fully merged features are always listed; a feature whose latest commits
+were not merged yet may be missing on a fresh clone.
+
+### Release finish context
+
+Passed to `preReleaseFinish` and `postReleaseFinish`.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `version` | `'1.2.0'` | Release version. |
+| `tag` | `'v1.2.0'` | Tag created on stable. |
+| `previousTag` | `'v1.1.0'` | Latest release tag before this release. |
+| `releaseBranch` | `'release-1.2.0'` | Release branch being finished. |
+| `features` | `[{ id: 'f1', branch: 'feature-f1', baseTag: 'v1.1.0' }]` | Feature branches merged into the release (directly with `release add`, or through a preview). Commits made directly on the release branch are not features and are not listed. A release can have no features: `[]`. |
+
+`postReleaseFinish` also receives:
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| `stableCommit` | `'4f2c9e1…'` | Commit on stable that the release tag points to. |
+| `deletedBranches` | `['release-1.2.0', 'feature-f1']` | Branches regit deleted (locally and on origin) after the merge. |
+
+Feature display names are not included. Call your own `getFeatureName` if you need them:
+
+```js title=".regit/hooks.js"
+const getFeatureName = async (branch) => {
+    return `title of ${branch} from your issue tracker`
+}
+
+module.exports = {
+    getFeatureName,
+    postReleaseFinish: async (version, context) => {
+        const names = await Promise.all(
+            context.features.map((feature) => {
+                return getFeatureName(feature.branch)
+            })
+        )
+        console.log(`${context.tag} released: ${names.join(', ')}`)
+    },
+}
+```
+
+## Release tag message
+
+`release finish` creates an annotated tag on stable. By default its message lists the merged
+feature branches:
+
+```
+[regit] v1.2.0. (feature-f1,feature-f2)
+```
+
+Return your own message from `getTagMessage`. It receives the release version and the
+[release finish context](#release-finish-context), and must return a non-empty string.
+Because it runs after `preReleaseFinish`, it can read anything that hook committed (e.g. a
+generated changelog).
+
+```js title=".regit/hooks.js"
+const getFeatureName = async (branch) => {
+    return `title of ${branch} from your issue tracker`
+}
+
+module.exports = {
+    getFeatureName,
+    getTagMessage: async (version, context) => {
+        const lines = await Promise.all(
+            context.features.map(async (feature) => {
+                return `- ${await getFeatureName(feature.branch)} (${feature.branch})`
+            })
+        )
+        return [`Release ${context.tag}`, '', ...lines].join('\n')
+    },
+}
+```
+
 ## Example
 
-
-```js title="regit.js"
+```js title=".regit/hooks.js"
 module.exports = {
-    getFeatureName: async (id) => {
-        console.log('fetch feature name from somewhere')
-        return Promise.resolve('feature name from gitlab')
+    getFeatureName: async (branch) => {
+        return `title of ${branch} from gitlab`
     },
-    preFeatureStart: async (id) => {
+    preFeatureStart: async (id, context) => {
         console.log('doing something clever BEFORE feature start')
     },
-    postFeatureStart: async (id) => {
-        console.log('doing something clever AFTER feature start')
+    postFeatureStart: async (id, context) => {
+        console.log(`feature ${context.branch} started (${context.origin})`)
     },
-    preReleaseFinish:  async (version) => {
-        console.log('doing something clever BEFORE release finish')
-        // generate changelog and add it to CHANGELOG.md
-        // commit and push
+    postFeaturePush: async (id, context) => {
+        console.log(`open a merge request for ${context.branch}`)
     },
-    postReleaseFinish:  async (version) => {
-        console.log('doing something clever AFTER release finish')
+    preReleaseStart: async (version, context) => {
+        console.log(`about to open release ${version} (${context.origin})`)
+    },
+    postReleaseStart: async (version, context) => {
+        console.log(`release ${version} ready on ${context.branch}`)
+    },
+    postReleaseAdd: async (version, context) => {
+        console.log(`added ${context.features.length} feature(s) to ${context.releaseBranch}`)
+    },
+    preReleaseFinish: async (version, context) => {
+        console.log(`preparing ${context.tag} with ${context.features.length} features`)
+        // the release branch is checked out: generate CHANGELOG.md and commit it,
+        // regit pushes the release branch right after this hook
+    },
+    postReleaseFinish: async (version, context) => {
+        console.log(`${context.tag} released at ${context.stableCommit}`)
     },
 }
 ```

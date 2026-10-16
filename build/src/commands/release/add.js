@@ -7,41 +7,59 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { branchFeature } from '../../const.js';
-import { assertFeatureExists, promptSelectMultipleFeatures, } from '../../services/featureHelpers.js';
-import { assertCurrentBranchIsClean, branchExists, mergeBranch, pushBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { branchFeature, branchRelease } from '../../const.js';
+import { assertFeatureExists, promptSelectMultipleFeatures, summarizeFeatures, } from '../../services/featureHelpers.js';
+import { assertCurrentBranchIsClean, mergeBranch, pushBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { getHooks, runPostHook, } from '../../services/hooks.js';
 import { logger } from '../../services/logger.js';
 import { openRelease } from '../../services/releaseHelpers.js';
+const mergeFeaturesIntoRelease = ({ releaseBranch, featureBranches, }) => __awaiter(void 0, void 0, void 0, function* () {
+    const hooks = yield getHooks();
+    const version = releaseBranch.replace(branchRelease, '');
+    const context = {
+        version,
+        releaseBranch,
+        features: yield summarizeFeatures(featureBranches),
+    };
+    yield hooks.preReleaseAdd(version, context);
+    for (const feature of context.features) {
+        yield mergeBranch(feature.branch);
+        logger.success(`Feature ${feature.id} merged into ${releaseBranch}`);
+    }
+    yield pushBranch(releaseBranch);
+    yield runPostHook({
+        hook: 'postReleaseAdd',
+        completed: `Merged ${featureBranches.join(', ')} into ${releaseBranch}`,
+        run: () => {
+            return hooks.postReleaseAdd(version, context);
+        },
+    });
+});
 const addSingleFeature = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
-    const { name, from } = yield openRelease();
+    const { name } = yield openRelease();
     yield assertFeatureExists(id);
-    const branchName = `${branchFeature}${id}`;
-    yield mergeBranch(branchName);
-    yield pushBranch(name);
-    logger.success(`Feature ${id} merged into ${name}`);
+    yield mergeFeaturesIntoRelease({
+        releaseBranch: name,
+        featureBranches: [`${branchFeature}${id}`],
+    });
 });
 const addMultipleFeatures = () => __awaiter(void 0, void 0, void 0, function* () {
     yield assertCurrentBranchIsClean();
-    const { name, from } = yield openRelease();
+    const { name } = yield openRelease();
     const selectedFeatures = yield promptSelectMultipleFeatures(`Select features to add to release ${name}`);
-    for (const featureBranchName of selectedFeatures) {
-        const featureExists = yield branchExists(featureBranchName);
-        if (!featureExists) {
-            throw new Error(`Feature ${featureBranchName} does not exist`);
-        }
-        yield mergeBranch(featureBranchName);
-        logger.success(`Feature ${featureBranchName} merged into ${name}`);
-    }
-    yield pushBranch(name);
+    yield mergeFeaturesIntoRelease({
+        releaseBranch: name,
+        featureBranches: selectedFeatures,
+    });
 });
 const action = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     if (id) {
-        addSingleFeature(id);
+        yield addSingleFeature(id);
     }
     else {
-        addMultipleFeatures();
+        yield addMultipleFeatures();
     }
 });
 export default (program) => {

@@ -3,9 +3,10 @@ import {
     ListBranchResult,
     ListBranchesInBranchResult,
     branchExists,
+    getBranchInfo,
     listBranchStartingWith,
 } from './gitHelpers.js'
-import { getHooks } from './hooks.js'
+import { FeatureSummary, getHooks } from './hooks.js'
 import { branchFeature } from '../const.js'
 import { checkbox, select } from '@inquirer/prompts'
 
@@ -14,6 +15,23 @@ export const getRemoteFeatureName = async (branch: string) => {
     const name = await hooks.getFeatureName(branch)
 
     return name
+}
+
+export const toFeatureSummary = ({
+    name,
+    from,
+}: ListBranchResult): FeatureSummary => {
+    return {
+        id: name.replace(branchFeature, ''),
+        branch: name,
+        baseTag: from,
+    }
+}
+
+export const summarizeFeatures = async (featureBranches: string[]) => {
+    const featureInfos = await Promise.all(featureBranches.map(getBranchInfo))
+
+    return featureInfos.map(toFeatureSummary)
 }
 
 export const assertFeatureExists = async (id: string) => {
@@ -25,10 +43,10 @@ export const assertFeatureExists = async (id: string) => {
 }
 
 export const formatFeatureForDisplay = async (branch: ListBranchResult) => {
-    const { from, name, show } = branch
+    const { from, name, ref } = branch
     const remoteName = await getRemoteFeatureName(name)
     return chalk.bold(
-        `Feature: origin/${name} ${chalk.dim(`(from ${from})`)} ${chalk.blue(
+        `Feature: ${ref} ${chalk.dim(`(from ${from})`)} ${chalk.blue(
             remoteName
         )}`
     )

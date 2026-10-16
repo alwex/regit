@@ -8,19 +8,37 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { confirm, select } from '@inquirer/prompts';
-import { branchRelease, branchStable } from '../const.js';
-import { deleteBranch, getCurrentBranch, getLatestTag, getOpenReleaseBranch, listBranchStartingWith, startOrCheckoutBranch, } from './gitHelpers.js';
-import { getHooks } from './hooks.js';
+import { branchRelease } from '../const.js';
+import { getLatestTag, getOpenReleaseBranch, inspectBranch, listBranchStartingWith, listBranchesInBranch, startInspectedBranch, startOrCheckoutBranch, } from './gitHelpers.js';
+import { getHooks, runPostHook, } from './hooks.js';
+import { toFeatureSummary } from './featureHelpers.js';
+import { removeBranchWithHooks } from './removeHelpers.js';
 import { logger } from './logger.js';
 import semver from 'semver';
 import chalk from 'chalk';
-export const startRelease = (version) => __awaiter(void 0, void 0, void 0, function* () {
+const logReleaseStart = ({ version, inspection, }) => {
+    if (inspection.origin === 'new') {
+        logger.success(`Release ${version} started`);
+        return;
+    }
+    logger.warn(`Release already exists ${inspection.branch}`);
+};
+export const startRelease = (options) => __awaiter(void 0, void 0, void 0, function* () {
+    const { version } = options;
     const hooks = yield getHooks();
-    yield hooks.preReleaseStart(version);
     const branchName = `${branchRelease}${version}`;
-    yield startOrCheckoutBranch(branchName);
-    logger.success(`Release ${version} started`);
-    yield hooks.postReleaseStart(version);
+    const inspection = yield inspectBranch(branchName);
+    const context = Object.assign(Object.assign({ kind: 'release', id: version }, options), inspection);
+    yield hooks.preReleaseStart(version, context);
+    yield startInspectedBranch(inspection);
+    yield runPostHook({
+        hook: 'postReleaseStart',
+        completed: `Release ${version} started`,
+        run: () => {
+            return hooks.postReleaseStart(version, context);
+        },
+    });
+    logReleaseStart({ version, inspection });
     return { name: branchName };
 });
 export const openRelease = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -34,17 +52,32 @@ export const openRelease = () => __awaiter(void 0, void 0, void 0, function* () 
     return { from, name, show };
 });
 export const removeRelease = () => __awaiter(void 0, void 0, void 0, function* () {
+    const hooks = yield getHooks();
     const openRelease = yield getOpenReleaseBranch();
     if (!openRelease) {
         throw new Error('No open release found');
     }
     const branchName = openRelease.name;
-    const currentBranch = yield getCurrentBranch();
-    if (currentBranch === branchName) {
-        yield startOrCheckoutBranch(branchStable);
-    }
-    yield deleteBranch(branchName);
-    logger.success(`Release ${branchName} removed`);
+    const version = branchName.replace(branchRelease, '');
+    const features = yield listBranchesInBranch(branchName);
+    const context = {
+        version,
+        releaseBranch: branchName,
+        features: features.map(toFeatureSummary),
+    };
+    yield removeBranchWithHooks({
+        branch: branchName,
+        completed: `Release ${branchName} removed`,
+        pre: () => {
+            return hooks.preReleaseRemove(version, context);
+        },
+        post: {
+            hook: 'postReleaseRemove',
+            run: () => {
+                return hooks.postReleaseRemove(version, context);
+            },
+        },
+    });
 });
 export const validateVersion = (version) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;

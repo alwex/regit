@@ -2,7 +2,8 @@ import { $ } from 'execa'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { afterEach, beforeAll, beforeEach } from 'vitest'
+import { afterEach, beforeEach } from 'vitest'
+import { makeProgram } from '../build/src/program.js'
 
 declare module 'vitest' {
     export interface TestContext {
@@ -15,22 +16,10 @@ declare module 'vitest' {
     }
 }
 
-const PROJECT_ROOT = path.resolve(__dirname, '..')
-
-beforeAll(async () => {
-    // build the project to make sure the latest version
-    // is used in the tests
-    // console.log('Building the project...')
-    // await $('yarn build', {
-    //     cwd: PROJECT_ROOT,
-    //     shell: true,
-    // })
-})
-
 beforeEach(async (context) => {
     const tempDirLocal = fs.mkdtempSync(path.join(os.tmpdir(), 'regit-local-'))
     const tempDirRemote = fs.mkdtempSync(
-        path.join(os.tmpdir(), 'regit-remote-')
+        path.join(os.tmpdir(), 'regit-remote-'),
     )
 
     context.tempDirLocal = tempDirLocal
@@ -49,19 +38,24 @@ beforeEach(async (context) => {
     context.cliLocal = cliLocal
     context.cliRemote = cliRemote
 
-    const regit = async (args: any) => {
-        const { stdout } = await $(
-            `NODE_ENV=dev node build/src/index.js ${args}`,
-            {
-                cwd: PROJECT_ROOT,
-                env: {
-                    GIT_BASE_DIR: tempDirLocal,
-                },
-                shell: true,
-            }
-        )
+    const regit = async (args: string): Promise<string> => {
+        process.env.GIT_BASE_DIR = tempDirLocal
+        process.env.NODE_ENV = 'dev'
 
-        return stdout
+        const writeStdout = process.stdout.write.bind(process.stdout)
+        let output = ''
+        process.stdout.write = ((chunk: unknown) => {
+            output += typeof chunk === 'string' ? chunk : String(chunk)
+            return true
+        }) as typeof process.stdout.write
+
+        try {
+            const program = makeProgram()
+            await program.parseAsync(['node', 'regit', ...args.split(' ')])
+            return output.replace(/\r?\n$/, '')
+        } finally {
+            process.stdout.write = writeStdout
+        }
     }
 
     context.regit = regit

@@ -1,6 +1,6 @@
 {
     "name": "regit-cli",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "description": "git helper cli",
     "repository": {
         "type": "git",
@@ -11,6 +11,7 @@
     },
     "homepage": "https://github.com/alwex/regit/blob/main/README.md",
     "main": "build/src/index.js",
+    "types": "build/src/types.d.ts",
     "bin": {
         "regit": "build/src/index.js"
     },
@@ -46,7 +47,7 @@
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
         "v": "yarn version --no-git-tag-version --new-version",
-        "postv": "echo \"export default '1.4.1'\" > ./src/version.ts"
+        "postv": "node scripts/sync-version.mjs"
     },
     "devDependencies": {
         "@types/chalk": "^2.2.0",
@@ -62,5 +63,6 @@
     },
     "resolutions": {
         "wrap-ansi": "^9.0.0"
-    }
+    },
+    "packageManager": "yarn@1.22.19+sha512.ff4579ab459bb25aa7c0ff75b62acebe576f6084b36aa842971cf250a5d8c6cd3bc9420b22ce63c7f93a0857bc6ef29291db39c3e7a23aab5adfd5a4dd6c5d71"
 }

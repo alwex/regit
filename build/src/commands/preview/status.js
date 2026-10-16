@@ -19,10 +19,14 @@ export const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error(`Preview ${name} does not exist`);
     }
     const previewBranches = yield listBranchStartingWith(branchPreview);
-    const previewBranch = previewBranches.find((data) => data.name === previewBranchName);
+    const previewBranch = previewBranches.find((data) => {
+        return data.name === previewBranchName;
+    });
     const details = yield getBranchDetails(previewBranchName);
     const result = yield listBranchesInBranch(previewBranchName);
-    const branches = result.filter((data) => data.name.startsWith(branchFeature));
+    const branches = result.filter((data) => {
+        return data.name.startsWith(branchFeature);
+    });
     displayReleaseHeader(details, previewBranch);
     for (const branch of branches) {
         yield displaySubFeatureBranch(branch);
