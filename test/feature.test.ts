@@ -24,6 +24,23 @@ describe('feature', async () => {
         expect(resultF1_2).toContain('✔  success   Feature f1 started')
     })
 
+    test('feature start existing only on origin', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.cliLocal('git checkout stable')
+        await ctx.cliLocal('git branch -D feature-f1')
+
+        const result = await ctx.regit('feature start f1')
+
+        expect(result).toContain('Branch feature-f1 already exists')
+        expect(result).toContain('✔  success   Feature f1 started')
+        expect(await ctx.cliLocal('git branch --show-current')).toBe(
+            'feature-f1'
+        )
+        expect(
+            await ctx.cliLocal('git rev-parse --abbrev-ref feature-f1@{upstream}')
+        ).toBe('origin/feature-f1')
+    })
+
     test('feature start new from latest version', async (ctx) => {
         await ctx.regit('release start 0.1.0')
         await ctx.regit('release finish')
@@ -69,14 +86,39 @@ describe('feature', async () => {
 
         const resultF1remove = await ctx.regit('feature remove f1')
         expect(resultF1remove).toContain('✔  success   Feature f1 removed')
+        expect(await ctx.cliLocal('git branch --show-current')).toBe('stable')
+        expect(await ctx.cliLocal('git branch --list feature-f1')).toBe('')
+        expect(await ctx.cliRemote('git branch --list feature-f1')).toBe('')
+    })
+
+    test('feature remove of a feature that only exists on origin', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.cliLocal('git checkout stable')
+        await ctx.cliLocal('git branch -D feature-f1')
+
+        const result = await ctx.regit('feature remove f1')
+
+        expect(result).toContain('✔  success   Feature f1 removed')
+        expect(await ctx.cliRemote('git branch --list feature-f1')).toBe('')
     })
 
     test('feature remove non existing', async (ctx) => {
         const resultF1remove = ctx.regit('feature remove f1')
 
         await expect(resultF1remove).rejects.toThrowError(
-            "unable to delete 'feature-f1': remote ref does not exist"
+            'Feature f1 does not exist'
         )
+    })
+
+    test('feature remove of a feature that only exists locally', async (ctx) => {
+        await ctx.cliLocal('git checkout -b feature-1')
+        await ctx.cliLocal('git commit --allow-empty -m "work on 1"')
+        await ctx.cliLocal('git checkout stable')
+
+        const result = await ctx.regit('feature remove 1')
+
+        expect(result).toContain('✔  success   Feature 1 removed')
+        expect(await ctx.cliLocal('git branch --list feature-1')).toBe('')
     })
 
     test('feature remove with dirty state', async (ctx) => {
@@ -103,5 +145,46 @@ describe('feature', async () => {
         expect(resultStatus).toContain('commit')
         expect(resultStatus).toContain('Author')
         expect(resultStatus).toContain('Date')
+    })
+
+    test('feature list shows a feature branch that only exists locally', async (ctx) => {
+        await ctx.cliLocal('git checkout -b feature-1')
+        await ctx.cliLocal('git commit --allow-empty -m "work on 1"')
+
+        const result = await ctx.regit('feature list')
+
+        expect(result).toContain('Feature: feature-1 (from v0.0.0)')
+        expect(result).toContain('commit')
+    })
+
+    test('feature push pushes the current feature branch to origin', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.cliLocal('git commit --allow-empty -m "work on f1"')
+
+        await ctx.regit('feature push')
+
+        expect(await ctx.cliRemote('git rev-parse feature-f1')).toBe(
+            await ctx.cliLocal('git rev-parse feature-f1')
+        )
+    })
+
+    test('feature push outside a feature branch is rejected', async (ctx) => {
+        const featurePush = ctx.regit('feature push')
+
+        await expect(featurePush).rejects.toThrowError(
+            'You must be on a feature branch to push a features'
+        )
+    })
+})
+
+describe('feature without regit init', () => {
+    test('feature start fails when no release tag exists', async (ctx) => {
+        await ctx.cliLocal('git commit --allow-empty -m "first commit"')
+
+        const featureStart = ctx.regit('feature start f1')
+
+        await expect(featureStart).rejects.toThrowError(
+            'No release tag found, run regit init first'
+        )
     })
 })

@@ -1,29 +1,71 @@
 import { confirm, select } from '@inquirer/prompts'
-import { branchRelease, branchStable } from '../const.js'
+import { branchRelease } from '../const.js'
 import {
+    BranchInspection,
     ListBranchResult,
     ReleaseHeaderResult,
-    deleteBranch,
-    getCurrentBranch,
     getLatestTag,
     getOpenReleaseBranch,
+    inspectBranch,
     listBranchStartingWith,
+    listBranchesInBranch,
+    startInspectedBranch,
     startOrCheckoutBranch,
 } from './gitHelpers.js'
-import { getHooks } from './hooks.js'
+import {
+    ReleaseRemoveContext,
+    ReleaseStartContext,
+    ReleaseTrigger,
+    getHooks,
+    runPostHook,
+} from './hooks.js'
+import { toFeatureSummary } from './featureHelpers.js'
+import { removeBranchWithHooks } from './removeHelpers.js'
 import { logger } from './logger.js'
 import semver from 'semver'
 import chalk from 'chalk'
 
-export const startRelease = async (version: string) => {
+const logReleaseStart = ({
+    version,
+    inspection,
+}: {
+    version: string
+    inspection: BranchInspection
+}) => {
+    if (inspection.origin === 'new') {
+        logger.success(`Release ${version} started`)
+        return
+    }
+
+    logger.warn(`Release already exists ${inspection.branch}`)
+}
+
+export const startRelease = async (
+    options: { version: string } & ReleaseTrigger
+) => {
+    const { version } = options
     const hooks = await getHooks()
-    await hooks.preReleaseStart(version)
-
     const branchName = `${branchRelease}${version}`
-    await startOrCheckoutBranch(branchName)
-    logger.success(`Release ${version} started`)
+    const inspection = await inspectBranch(branchName)
+    const context: ReleaseStartContext = {
+        kind: 'release',
+        id: version,
+        ...options,
+        ...inspection,
+    }
 
-    await hooks.postReleaseStart(version)
+    await hooks.preReleaseStart(version, context)
+    await startInspectedBranch(inspection)
+
+    await runPostHook({
+        hook: 'postReleaseStart',
+        completed: `Release ${version} started`,
+        run: () => {
+            return hooks.postReleaseStart(version, context)
+        },
+    })
+
+    logReleaseStart({ version, inspection })
 
     return { name: branchName }
 }
@@ -42,19 +84,34 @@ export const openRelease = async () => {
 }
 
 export const removeRelease = async () => {
+    const hooks = await getHooks()
+
     const openRelease = await getOpenReleaseBranch()
     if (!openRelease) {
         throw new Error('No open release found')
     }
 
     const branchName = openRelease.name
-    const currentBranch = await getCurrentBranch()
-    if (currentBranch === branchName) {
-        await startOrCheckoutBranch(branchStable)
+    const version = branchName.replace(branchRelease, '')
+    const features = await listBranchesInBranch(branchName)
+    const context: ReleaseRemoveContext = {
+        version,
+        releaseBranch: branchName,
+        features: features.map(toFeatureSummary),
     }
-
-    await deleteBranch(branchName)
-    logger.success(`Release ${branchName} removed`)
+    await removeBranchWithHooks({
+        branch: branchName,
+        completed: `Release ${branchName} removed`,
+        pre: () => {
+            return hooks.preReleaseRemove(version, context)
+        },
+        post: {
+            hook: 'postReleaseRemove',
+            run: () => {
+                return hooks.postReleaseRemove(version, context)
+            },
+        },
+    })
 }
 
 export const validateVersion = async (version: string) => {

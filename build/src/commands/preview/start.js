@@ -7,28 +7,40 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { assertCurrentBranchIsClean, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, inspectBranch, startInspectedBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { logger } from '../../services/logger.js';
 import { branchPreview } from '../../const.js';
 import { promptSelectSinglePreview } from '../../services/previewHelpers.js';
+import { getHooks, runPostHook, } from '../../services/hooks.js';
 const startPreviewWithName = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    const hooks = yield getHooks();
     const branchName = `${branchPreview}${name}`;
-    yield startOrCheckoutBranch(branchName);
+    const inspection = yield inspectBranch(branchName);
+    const context = Object.assign({ kind: 'preview', id: name }, inspection);
+    yield hooks.prePreviewStart(name, context);
+    yield startInspectedBranch(inspection);
+    yield runPostHook({
+        hook: 'postPreviewStart',
+        completed: `Preview ${name} started`,
+        run: () => {
+            return hooks.postPreviewStart(name, context);
+        },
+    });
     logger.success(`Preview ${name} started`);
 });
 const startPreviewWithPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield warmupGitRepo();
     const selectedPreview = yield promptSelectSinglePreview('Select preview to open');
     const previewName = selectedPreview.replace(branchPreview, '');
     yield startPreviewWithName(previewName);
 });
 const action = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     yield assertCurrentBranchIsClean();
     if (name) {
-        startPreviewWithName(name);
+        yield startPreviewWithName(name);
     }
     else {
-        startPreviewWithPrompt();
+        yield startPreviewWithPrompt();
     }
 });
 export default (program) => {

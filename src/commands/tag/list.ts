@@ -40,7 +40,9 @@ const action = async (options: TagListOptions) => {
 
         const tagDetails = await getTagDetails(tag2)
         const result = await listBranchesBetweenTags(tag1, tag2)
-        const branches = result.filter((name) => name.startsWith(branchFeature))
+        const branches = result.filter((name) => {
+            return name.startsWith(branchFeature)
+        })
 
         displayTagHeader(tagDetails)
 

@@ -20,16 +20,16 @@ export const action = async (name: string) => {
     }
 
     const previewBranches = await listBranchStartingWith(branchPreview)
-    const previewBranch = previewBranches.find(
-        (data) => data.name === previewBranchName
-    )!
+    const previewBranch = previewBranches.find((data) => {
+        return data.name === previewBranchName
+    })!
 
     const details = await getBranchDetails(previewBranchName)
 
     const result = await listBranchesInBranch(previewBranchName)
-    const branches = result.filter((data) =>
-        data.name.startsWith(branchFeature)
-    )
+    const branches = result.filter((data) => {
+        return data.name.startsWith(branchFeature)
+    })
 
     displayReleaseHeader(details, previewBranch)
 

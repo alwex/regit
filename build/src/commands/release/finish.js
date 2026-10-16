@@ -7,11 +7,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { branchFeature, branchRelease, branchStable } from '../../const.js';
+import { branchRelease, branchStable } from '../../const.js';
 import { git } from '../../services/git.js';
-import { assertCurrentBranchIsClean, createTag, deleteBranch, listBranchStartingWith, listBranchesInBranch, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
+import { assertCurrentBranchIsClean, createTag, deleteBranch, getRequiredLatestTag, listBranchStartingWith, listBranchesInBranch, mergeBranch, pushBranch, startOrCheckoutBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import chalk from 'chalk';
-import { getHooks } from '../../services/hooks.js';
+import { toFeatureSummary } from '../../services/featureHelpers.js';
+import { getHooks, resolveTagMessage, runPostHook, } from '../../services/hooks.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
     yield warmupGitRepo();
     const hooks = yield getHooks();
@@ -20,37 +21,55 @@ const action = () => __awaiter(void 0, void 0, void 0, function* () {
     if (releaseBranches.length === 0) {
         throw new Error('No release branch found');
     }
-    const currentReleaseBranch = releaseBranches[0];
-    const { from, name, show } = currentReleaseBranch;
-    const newVersion = `v${name.split('-')[1]}`;
-    const result = yield listBranchesInBranch(name);
-    const features = result.filter((data) => data.name.startsWith(branchFeature));
-    const canFinishRelease = features.every((feature) => feature.upToDate);
+    const { name } = releaseBranches[0];
+    const version = name.replace(branchRelease, '');
+    const newVersion = `v${version}`;
+    const features = yield listBranchesInBranch(name);
+    const canFinishRelease = features.every((feature) => {
+        return feature.upToDate;
+    });
     if (!canFinishRelease) {
         throw new Error('Not all features are merged into the release branch. Please merge all features into the release branch before finishing the release.');
     }
-    const version = name.split('-')[1];
-    yield hooks.preReleaseFinish(version);
-    // push the release branch
+    const context = {
+        version,
+        tag: newVersion,
+        previousTag: yield getRequiredLatestTag(),
+        releaseBranch: name,
+        features: features.map(toFeatureSummary),
+    };
+    yield git.checkout(name);
+    yield hooks.preReleaseFinish(version, context);
+    const tagMessage = yield resolveTagMessage({ hooks, version, context });
     console.log(chalk.dim(`Push release to origin`));
     yield git.push(['-u', 'origin', name]);
-    // mege the release branch into stable
     console.log(chalk.dim(`Merge release into stable`));
     yield startOrCheckoutBranch(branchStable);
     yield git.fetch();
     yield git.pull();
     yield mergeBranch(name);
-    yield createTag(newVersion, features.map((data) => data.name));
+    yield createTag({ tag: newVersion, message: tagMessage });
     yield pushBranch(branchStable);
+    const stableCommit = yield git.revparse([branchStable]);
     console.log(chalk.dim(`Delete release branch`));
     yield deleteBranch(name);
-    // cleanup merged features
     console.log(chalk.dim(`Cleanup merged features`));
-    for (let i = 0; i < features.length; i++) {
-        const feature = features[i];
-        yield deleteBranch(feature.name);
+    for (const feature of context.features) {
+        yield deleteBranch(feature.branch);
     }
-    yield hooks.postReleaseFinish(version);
+    const finishedContext = Object.assign(Object.assign({}, context), { stableCommit, deletedBranches: [
+            name,
+            ...context.features.map((feature) => {
+                return feature.branch;
+            }),
+        ] });
+    yield runPostHook({
+        hook: 'postReleaseFinish',
+        completed: `Release ${version} finished`,
+        run: () => {
+            return hooks.postReleaseFinish(version, finishedContext);
+        },
+    });
 });
 export default (program) => {
     program.command('finish').action(action);

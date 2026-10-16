@@ -39,6 +39,28 @@ describe('preview', async (ctx) => {
 
         const result2 = await ctx.regit('preview remove p1')
         expect(result2).toContain('✔  success   Preview p1 removed')
+        expect(await ctx.cliLocal('git branch --show-current')).toBe('stable')
+        expect(await ctx.cliLocal('git branch --list preview-p1')).toBe('')
+        expect(await ctx.cliRemote('git branch --list preview-p1')).toBe('')
+    })
+
+    test('preview remove of a non-existent preview is rejected', async (ctx) => {
+        const previewRemove = ctx.regit('preview remove doesnotexist')
+
+        await expect(previewRemove).rejects.toThrowError(
+            'Preview doesnotexist does not exist'
+        )
+    })
+
+    test('preview remove of a preview that only exists locally', async (ctx) => {
+        await ctx.cliLocal('git checkout -b preview-p1')
+        await ctx.cliLocal('git commit --allow-empty -m "work on p1"')
+        await ctx.cliLocal('git checkout stable')
+
+        const result = await ctx.regit('preview remove p1')
+
+        expect(result).toContain('✔  success   Preview p1 removed')
+        expect(await ctx.cliLocal('git branch --list preview-p1')).toBe('')
     })
 
     test('preview add feature', async (ctx) => {
@@ -94,6 +116,34 @@ describe('preview', async (ctx) => {
 
         expect(result).toContain('Branch preview-p1 already exists')
         expect(result).toContain('✔  success   Preview p1 started')
+    })
+
+    test('preview release on a non-existent preview is rejected', async (ctx) => {
+        const previewRelease = ctx.regit('preview release doesnotexist')
+
+        await expect(previewRelease).rejects.toThrowError(
+            'Preview doesnotexist does not exist'
+        )
+    })
+
+    test('preview add to a non-existent preview is rejected', async (ctx) => {
+        await ctx.regit('feature start f1')
+
+        const previewAdd = ctx.regit('preview add doesnotexist f1')
+
+        await expect(previewAdd).rejects.toThrowError(
+            'Preview doesnotexist does not exist'
+        )
+    })
+
+    test('preview add of a non-existent feature is rejected', async (ctx) => {
+        await ctx.regit('preview start p1')
+
+        const previewAdd = ctx.regit('preview add p1 doesnotexist')
+
+        await expect(previewAdd).rejects.toThrowError(
+            'Feature doesnotexist does not exist'
+        )
     })
 
     test('preview list', async (ctx) => {

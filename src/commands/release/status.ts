@@ -24,9 +24,9 @@ const action = async () => {
     const details = await getBranchDetails(name)
 
     const result = await listBranchesInBranch(currentReleaseBranch.name)
-    const branches = result.filter((data) =>
-        data.name.startsWith(branchFeature)
-    )
+    const branches = result.filter((data) => {
+        return data.name.startsWith(branchFeature)
+    })
 
     displayReleaseHeader(details, currentReleaseBranch)
 

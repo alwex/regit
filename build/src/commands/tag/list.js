@@ -22,7 +22,9 @@ const action = (options) => __awaiter(void 0, void 0, void 0, function* () {
         const tag2 = tags[i];
         const tagDetails = yield getTagDetails(tag2);
         const result = yield listBranchesBetweenTags(tag1, tag2);
-        const branches = result.filter((name) => name.startsWith(branchFeature));
+        const branches = result.filter((name) => {
+            return name.startsWith(branchFeature);
+        });
         displayTagHeader(tagDetails);
         for (const branch of branches) {
             yield displayTagFeatureBranch(branch);

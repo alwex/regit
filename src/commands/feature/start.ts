@@ -3,11 +3,16 @@ import {
     assertCurrentBranchIsClean,
     getBranchInfo,
     getLatestTag,
-    startOrCheckoutBranch,
+    inspectBranch,
+    startInspectedBranch,
     warmupGitRepo,
 } from '../../services/gitHelpers.js'
 import { branchFeature } from '../../const.js'
-import { getHooks } from '../../services/hooks.js'
+import {
+    FeatureStartContext,
+    getHooks,
+    runPostHook,
+} from '../../services/hooks.js'
 import { logger } from '../../services/logger.js'
 import semver from 'semver'
 import { promptSelectSingleFeature } from '../../services/featureHelpers.js'
@@ -18,9 +23,18 @@ const startFeatureWithId = async (id: string) => {
     await assertCurrentBranchIsClean()
     const branchName = `${branchFeature}${id}`
 
-    await hooks.preFeatureStart(id)
-    await startOrCheckoutBranch(branchName)
-    await hooks.postFeatureStart(id)
+    const inspection = await inspectBranch(branchName)
+    const context: FeatureStartContext = { kind: 'feature', id, ...inspection }
+
+    await hooks.preFeatureStart(id, context)
+    await startInspectedBranch(inspection)
+    await runPostHook({
+        hook: 'postFeatureStart',
+        completed: `Feature ${id} started`,
+        run: () => {
+            return hooks.postFeatureStart(id, context)
+        },
+    })
 
     const latestTag = await getLatestTag()
     const branchInfo = await getBranchInfo(branchName)
@@ -47,9 +61,9 @@ const action = async (id?: string) => {
     await warmupGitRepo()
 
     if (id) {
-        startFeatureWithId(id)
+        await startFeatureWithId(id)
     } else {
-        startFeatureWithPrompt()
+        await startFeatureWithPrompt()
     }
 }
 

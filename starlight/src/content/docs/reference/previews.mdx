@@ -1,6 +1,6 @@
 ---
 title: Preview
-description: A reference page in my new Starlight docs site.
+description: Stage and review combinations of features on preview branches before release.
 sidebar:
     order: 3
 ---
@@ -16,6 +16,9 @@ Preview branches can be seen as a staging environment for your features. They ar
 ```bash
 regit preview start <preview-name>
 ```
+
+Fetches `origin`, then creates `preview-<name>` from the latest tag and pushes it — or checks
+it out if it already exists locally or on `origin` (e.g. created by a teammate).
 
 ## Open a preview
 
@@ -54,12 +57,57 @@ regit preview add <preview-name> <feature-name>
 ### Add multiple features
 
 ```bash
-
 regit preview add <preview-name>
 ```
+
+With no feature name, regit prompts an interactive multi-select of the available feature
+branches to merge into the preview.
+
+Each feature is merged with `--no-ff` and the preview is pushed after each merge. The
+command fails with `Preview <name> does not exist` / `Feature <name> does not exist` if one
+of them cannot be found locally or on `origin`.
+
+## Release a preview
+
+```bash
+regit preview release [preview-name]
+```
+
+Promotes a preview into a release: regit prompts for the next version (**Minor**, **Patch**
+or **Major**, computed from the latest tag), starts the matching `release-<version>` branch,
+merges the preview into it and pushes it. If no preview name is given, you are prompted to
+select one.
+
+This is the bridge from the staging (preview) flow to the [release](/regit/reference/releases/)
+flow: add more features with `regit release add`, then `regit release finish`. The features
+merged through the preview are listed as the release's features.
+
+:::tip[Non-interactive use (CI, scripts, coding agents)]
+The version menu always appears. Answer it on stdin — the choices are in this order:
+Minor, Patch, Major.
+
+```bash
+printf '\n'             | regit preview release staging   # Minor
+printf '\033[B\n'       | regit preview release staging   # Patch
+printf '\033[B\033[B\n' | regit preview release staging   # Major
+```
+:::
 
 ## Remove a preview
 
 ```bash
 regit preview remove <preview-name>
 ```
+
+Deletes the preview branch locally and on the remote. If you are currently on it, regit
+switches you back to `stable` first.
+
+## Hooks
+
+| Command | Hooks |
+| --- | --- |
+| `preview start` | `prePreviewStart` / `postPreviewStart`, with the same [branch start context](/regit/reference/hooks/#branch-start-context) as features (`kind: 'preview'`) |
+| `preview add` | `prePreviewAdd` / `postPreviewAdd`, with the features being merged — e.g. to redeploy a staging environment |
+| `preview release` | the release start hooks, with `trigger: 'preview-release'` and the preview name |
+
+See [Hooks](/regit/reference/hooks/).

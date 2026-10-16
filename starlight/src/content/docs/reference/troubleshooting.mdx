@@ -1,0 +1,127 @@
+---
+title: Troubleshooting
+description: Common regit errors, what causes them, and how to fix them.
+sidebar:
+    order: 7
+---
+
+regit stops with a clear message when the repository is not in a state it can safely act
+on. The most common messages are below, with the cause and the fix.
+
+## `Current branch is dirty, cannot continue`
+
+**Cause:** you have uncommitted changes. Commands that switch or create branches refuse to
+run on a dirty working tree.
+
+**Fix:** commit or stash your changes, then retry.
+
+```bash
+git stash      # or: git commit -am "wip"
+```
+
+## `Not all features are merged into the release branch...`
+
+Full message: *"Not all features are merged into the release branch. Please merge all
+features into the release branch before finishing the release."*
+
+**Cause:** `regit release finish` requires every feature in the release to be fully merged
+and up to date. At least one feature is still `[in progress]`.
+
+**Fix:** run `regit release status` to find the outdated feature, then re-add it with
+`regit release add <feature-name>` and finish again.
+
+## `Version <v> is not greater than the latest tag <t>`
+
+**Cause:** the version passed to `regit release start` is not strictly greater than the
+latest tag.
+
+**Fix:** choose a higher version, or run `regit release start` with no argument to pick a
+valid next version interactively.
+
+## `Invalid version: <v>` / `Invalid version number, please use semver eg 1.0.0`
+
+**Cause:** the version is not valid [semver](https://semver.org).
+
+**Fix:** use a semver string such as `1.2.0` (or `1.2.0-beta.1` for a prerelease).
+
+## `You must be on a feature branch ...` / `You must be on a release branch ...`
+
+**Cause:** `feature push` / `feature status` must run from a `feature-*` branch, and
+`release push` from a `release-*` branch.
+
+**Fix:** check out the right branch first (e.g. `regit feature start <name>`).
+
+## `stable branch already exists`
+
+**Cause:** `regit init` was run in a repository that is already initialized.
+
+**Fix:** no action needed — the repository is already set up. Start a feature instead.
+
+## `Feature <id> does not exist` / `Preview <name> does not exist`
+
+**Cause:** the referenced feature or preview branch can't be found locally or on the
+remote.
+
+**Fix:** list what exists (`regit feature list`, `regit preview list`) and use an exact
+name, or create it first. Commands take the name without its prefix: `PAY-12`, not
+`feature-PAY-12`.
+
+## `No release branch found` / `No open release found`
+
+**Cause:** a release command was run with no open release branch.
+
+**Fix:** start one with `regit release start [version]`.
+
+## `No release tag found, run regit init first`
+
+**Cause:** the repository has no release tag, so regit has nothing to branch from.
+
+**Fix:** run `regit init <version>` once (it creates `stable` and the first tag).
+
+## `<what happened>, but hook <name> failed: <reason>`
+
+Example: *"Release 1.2.0 finished, but hook postReleaseFinish failed: Slack API
+unreachable"*.
+
+**Cause:** a post hook from `.regit/hooks.js` threw **after** the git work was done. Nothing
+was rolled back: the release is finished, the feature is started, etc. regit exits with
+code 2 so scripts notice.
+
+**Fix:** do **not** rerun the command. Fix the hook, then do what it should have done by hand
+(send the notification, move the ticket…).
+
+## An error message that is not in this list
+
+**Cause:** most likely a pre hook from `.regit/hooks.js` (e.g. `preFeatureStart`,
+`preReleaseFinish`) threw. Pre hooks run before regit changes anything, so the command
+stopped with nothing created, merged or pushed.
+
+**Fix:** fix what the hook complains about (or the hook itself) and rerun the command.
+
+## `Hook getTagMessage must return a non-empty string`
+
+**Cause:** your `getTagMessage` hook returned nothing, an empty string or something that is
+not a string. `release finish` stopped before pushing or merging anything.
+
+**Fix:** make the hook return the tag message (see
+[Release tag message](/regit/reference/hooks/#release-tag-message)), commit it, and run
+`regit release finish` again.
+
+## My hook does not run
+
+**Cause:** regit reads `.regit/hooks.js` from the branch that is checked out. Branches it
+creates come from the latest release tag, so they carry the hooks file of that tag, not your
+latest edit on `stable`.
+
+**Fix:** run the command from a branch that contains your hooks change (e.g. commit a
+`postReleaseFinish` hook on the open release branch to use it for that release), or ship the
+change in a release. See [Which hooks file runs](/regit/reference/hooks/#which-hooks-file-runs).
+
+## A command waits forever (CI, scripts, coding agents)
+
+**Cause:** a missing optional argument opens an interactive menu (`feature start`,
+`release start`, `release add`, `preview start`, `preview add`, `preview release`).
+
+**Fix:** pass the argument (`regit release start 1.3.0`, `regit release add PAY-12`, …).
+`preview release` always asks for the version: answer it on stdin (see
+[Release a preview](/regit/reference/previews/#release-a-preview)).

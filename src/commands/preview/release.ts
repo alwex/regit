@@ -19,7 +19,7 @@ import { logger } from '../../services/logger.js'
 const releasePreviewWithName = async (name: string) => {
     await warmupGitRepo()
 
-    assertPreviewExists(name)
+    await assertPreviewExists(name)
 
     const previewBranchName = `${branchPreview}${name}`
 
@@ -27,7 +27,11 @@ const releasePreviewWithName = async (name: string) => {
         'What version do you want to release?'
     )
 
-    const { name: releaseBranchName } = await startRelease(versionToUse)
+    const { name: releaseBranchName } = await startRelease({
+        version: versionToUse,
+        trigger: 'preview-release',
+        preview: name,
+    })
     await mergeBranch(previewBranchName)
 
     logger.success(
