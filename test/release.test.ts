@@ -101,6 +101,18 @@ describe('release', async (ctx) => {
         )
     })
 
+    test('release push forgets features removed from origin by someone else', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('release start 1.0.0')
+        await ctx.cliRemote('git branch -D feature-f1')
+
+        await ctx.regit('release push')
+
+        expect(await ctx.cliLocal('git branch -r --list origin/feature-f1')).toBe(
+            ''
+        )
+    })
+
     test('release add without an open release is rejected', async (ctx) => {
         await ctx.regit('feature start f1')
 

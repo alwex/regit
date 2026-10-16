@@ -1,9 +1,15 @@
 import { Command } from 'commander'
 import { branchFeature } from '../../const.js'
-import { getCurrentBranch, pushBranch } from '../../services/gitHelpers.js'
+import {
+    getCurrentBranch,
+    pushBranch,
+    warmupGitRepo,
+} from '../../services/gitHelpers.js'
 import { getHooks, runPostHook } from '../../services/hooks.js'
 
 const action = async () => {
+    await warmupGitRepo()
+
     const currentBranch = await getCurrentBranch()
 
     if (!currentBranch.startsWith(branchFeature)) {

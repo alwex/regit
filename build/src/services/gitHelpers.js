@@ -16,7 +16,7 @@ export const getProjectRootDirectory = () => __awaiter(void 0, void 0, void 0, f
     return result;
 });
 export const warmupGitRepo = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield git.fetch();
+    yield git.fetch(['--prune', 'origin']);
 });
 export const getCurrentBranch = () => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield git.branch();

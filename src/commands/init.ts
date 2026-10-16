@@ -6,6 +6,7 @@ import {
     branchExists,
     initStableBranch,
     pushStableBranch,
+    warmupGitRepo,
 } from '../services/gitHelpers.js'
 import { initializeRegitFiles } from '../services/initHelpers.js'
 
@@ -14,6 +15,7 @@ const action = async (version: string) => {
         throw new Error('Invalid version number, please use semver eg 1.0.0')
     }
 
+    await warmupGitRepo()
     await assertCurrentBranchIsClean()
 
     const stableAlreadyExists = await branchExists(branchStable)

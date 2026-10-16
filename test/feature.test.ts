@@ -157,6 +157,17 @@ describe('feature', async () => {
         expect(result).toContain('commit')
     })
 
+    test('feature list hides a feature removed from origin by someone else', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.cliLocal('git checkout stable')
+        await ctx.cliLocal('git branch -D feature-f1')
+        await ctx.cliRemote('git branch -D feature-f1')
+
+        const result = await ctx.regit('feature list')
+
+        expect(result).not.toContain('feature-f1')
+    })
+
     test('feature push pushes the current feature branch to origin', async (ctx) => {
         await ctx.regit('feature start f1')
         await ctx.cliLocal('git commit --allow-empty -m "work on f1"')
@@ -165,6 +176,18 @@ describe('feature', async () => {
 
         expect(await ctx.cliRemote('git rev-parse feature-f1')).toBe(
             await ctx.cliLocal('git rev-parse feature-f1')
+        )
+    })
+
+    test('feature push forgets features removed from origin by someone else', async (ctx) => {
+        await ctx.regit('feature start f1')
+        await ctx.regit('feature start f2')
+        await ctx.cliRemote('git branch -D feature-f1')
+
+        await ctx.regit('feature push')
+
+        expect(await ctx.cliLocal('git branch -r --list origin/feature-f1')).toBe(
+            ''
         )
     })
 

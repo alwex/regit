@@ -87,6 +87,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Every command now syncs with origin first (`git fetch --prune origin`), so
+  branches deleted on origin by someone else no longer show up in `list` and
+  `status` output. `init`, `feature push` and `release push` now fetch too:
+  `init` fails with "stable branch already exists" when origin was already
+  initialized, instead of initializing on top of it.
 - `preReleaseFinish` now runs with the release branch checked out, so a hook
   that commits (e.g. a generated changelog) commits to the release and the
   change ships in the tag. Previously it ran on whatever branch was checked out.

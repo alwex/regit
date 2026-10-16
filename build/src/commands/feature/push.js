@@ -8,9 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { branchFeature } from '../../const.js';
-import { getCurrentBranch, pushBranch } from '../../services/gitHelpers.js';
+import { getCurrentBranch, pushBranch, warmupGitRepo, } from '../../services/gitHelpers.js';
 import { getHooks, runPostHook } from '../../services/hooks.js';
 const action = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield warmupGitRepo();
     const currentBranch = yield getCurrentBranch();
     if (!currentBranch.startsWith(branchFeature)) {
         throw new Error('You must be on a feature branch to push a features');

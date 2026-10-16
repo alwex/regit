@@ -10,7 +10,7 @@ export const getProjectRootDirectory = async () => {
 }
 
 export const warmupGitRepo = async () => {
-    await git.fetch()
+    await git.fetch(['--prune', 'origin'])
 }
 
 export const getCurrentBranch = async () => {
